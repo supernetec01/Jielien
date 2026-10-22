@@ -17,7 +17,15 @@
     "db:install": "bash scripts/install-postgres.sh",
     "test:management": "node tests/management.browser.mjs",
     "test:bank": "node tests/bank-checkout.browser.mjs",
-    "test:account": "node tests/account-settings.browser.mjs"
+    "test:account": "node tests/account-settings.browser.mjs",
+    "local:init": "node scripts/local.mjs init",
+    "local:start": "node scripts/local.mjs start",
+    "local:stop": "node scripts/local.mjs stop",
+    "local:status": "node scripts/local.mjs status",
+    "local:logs": "node scripts/local.mjs logs",
+    "local:admin": "node scripts/local.mjs admin",
+    "test:local": "node --test tests/local-setup.test.mjs",
+    "test:local:stack": "node tests/local-stack.mjs"
   },
   "engines": {
     "node": ">=24.11.0"

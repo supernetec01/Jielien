@@ -1,0 +1,43 @@
+name: jielien-local
+
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: jielien
+      POSTGRES_USER: jielien
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run npm run local:init first}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+    init: true
+    environment:
+      DATABASE_URL: ${LOCAL_DATABASE_URL:?Run npm run local:init first}
+      PORT: "3001"
+      NODE_ENV: development
+      COOKIE_SECURE: "false"
+      BANK_BIN: ${BANK_BIN:-}
+      BANK_NAME: ${BANK_NAME:-}
+      BANK_ACCOUNT_NUMBER: ${BANK_ACCOUNT_NUMBER:-}
+      BANK_ACCOUNT_NAME: ${BANK_ACCOUNT_NAME:-}
+    ports:
+      - "127.0.0.1:${JIELIEN_PORT:-3001}:3001"
+    volumes:
+      - type: bind
+        source: ${JIELIEN_DATA_DIR:-./data}
+        target: /app/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

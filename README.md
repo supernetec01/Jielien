@@ -6,8 +6,36 @@ Giai đoạn 1 theo thiết kế e-commerce người dùng cung cấp: **35 bả
 - [Phân tích và lộ trình](docs/ROADMAP.md)
 - [Kết quả kiểm chứng](docs/ACCEPTANCE.md)
 - [Giới hạn khảo sát website gốc](docs/REFERENCE_ANALYSIS.md)
+- [Cập nhật và chạy trên Windows/Docker Desktop](docs/LOCAL_WINDOWS.md)
 
-## Chạy trên cổng 3001
+## Chạy trên máy cá nhân bằng Docker Desktop
+
+Máy cá nhân và môi trường đám mây là hai bản chạy riêng. Push mã lên GitHub không cập nhật tiến trình `localhost` trên máy bạn. Bản mới dùng **cổng 3001**; giữ nguyên dịch vụ ở cổng **3000**.
+
+Cần Git, Node.js **18 trở lên** để chạy lệnh hỗ trợ, và Docker Desktop đang mở ở chế độ **Linux containers**. Node.js 24 và PostgreSQL 17 của ứng dụng chạy bên trong Docker; không cần cài PostgreSQL hoặc `npm ci` trên máy để dùng cách này.
+
+Mở PowerShell trong đúng thư mục repo đã clone, kiểm tra các thay đổi đang có rồi cập nhật:
+
+```powershell
+git status --short
+git pull --ff-only origin main
+npm run local:start
+```
+
+Nếu Git báo thay đổi xung đột hoặc không thể fast-forward, giữ nguyên công việc hiện có và xử lý thông báo trước khi tiếp tục; không reset/xóa dữ liệu để cập nhật. Lần đầu Docker cần tải image và build app. Lệnh `local:start` tạo `.env.local` nếu chưa có, dùng mật khẩu database ngẫu nhiên, rồi đợi app/database sẵn sàng. Mở **http://localhost:3001**, tài khoản ở **http://localhost:3001/tai-khoan**. Nếu cổng 3001 đã được dùng, xác định tiến trình đó trước; không dừng dịch vụ chưa rõ nguồn gốc.
+
+```powershell
+npm run local:status
+npm run local:logs
+npm run local:admin
+npm run local:stop
+```
+
+`local:admin` hỏi thông tin quản trị riêng; không có mật khẩu mặc định. `local:stop` giữ PostgreSQL volume, `.env.local` và thư mục `data`. Giữ ổn định mật khẩu database đã tạo và không xóa volume. `.env` native được giữ nguyên; Docker dùng URL database nội bộ của `.env.local`, không dùng đường dẫn socket cloud.
+
+VietQR local cần đủ bốn biến `BANK_*` trong `.env.local`. Lần khởi tạo đầu chỉ sao chép thông tin nhận tiền hợp lệ, đầy đủ từ biến môi trường hoặc `.env`; nếu thiếu sẽ để trống và chỉ bật COD. Điền đủ rồi chạy lại `npm run local:start`; không đưa file cấu hình lên Git. Xem [hướng dẫn Windows](docs/LOCAL_WINDOWS.md) về chuyển dữ liệu cũ, cổng bị chiếm và cấu hình ngân hàng.
+
+## Chạy trong môi trường đám mây đã chuẩn bị
 
 Cần **Node.js >=24.11** và PostgreSQL. Không chiếm hoặc dừng cổng **3000**.
 

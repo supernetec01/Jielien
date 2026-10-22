@@ -155,3 +155,14 @@ Chưa kiểm/triển khai: tải lớn/benchmark production, khôi phục PG qua
 Sau khởi động mới, `/api/health` trả `{status:"ok",database:"postgresql"}`; `/tai-khoan` và `/quan-tri` trả HTTP200; dịch vụ cổng3000 vẫn HTTP200. Import chạy lại không reset kho. Chưa tạo admin trên database live (0 tài khoản admin); người vận hành tự khởi tạo bằng CLI, không có mật khẩu dùng chung.
 
 Ảnh tài khoản/quản trị được chụp từ schema thử nghiệm riêng, không tạo tài khoản admin ở dữ liệu live: [tài khoản](screenshots/account-desktop.png), [quản trị](screenshots/admin-desktop.png), [SKU](screenshots/admin-products.png), [quản trị mobile](screenshots/admin-mobile.png). CLI tạo admin đã được chạy kiểm chứng bằng biến môi trường test trong schema tạm, sau đó schema được xóa.
+
+
+## Chạy local Windows qua Docker Desktop
+
+Đã thêm Dockerfile Node24.18.0, Compose PostgreSQL17 + app, helper `npm run local:*` và `docs/LOCAL_WINDOWS.md`. App chỉ publish loopback3001, database không mở cổng host. `.env.local` sinh mật khẩu ngẫu nhiên một lần, giữ nguyên `.env` native và dữ liệu.
+
+- `npm run test:local`: **5/5 đạt** — mật khẩu khác nhau giữa lần cài mới, ổn định khi chạy lại, không ghi đè cấu hình/dữ liệu, chỉ sao chép thông tin nhận tiền hợp lệ, từ chối cấu hình database sai mà không thay file.
+- `npm run test:local:stack`: **3/3 nhóm đạt** trên Docker Engine28.4.0/Compose2.40.3 Linux trong môi trường này — config DB nội bộ/cookieHTTP; đăng ký/CSRF checkout/VietQR; session/đơn/giá/giữ tồn vẫn đúng sau down/up toàn bộ stack với cùng volume. Dùng project riêng, cổng ngẫu nhiên, thông tin giả và volume tạm đã dọn; không chạm dịch vụ3000/3001.
+- ProxyTLS của cloud cần CA bổ sung qua BuildKit secret chỉ trong kiểm thử. Không tắt xác minhTLS và không chép CA/cấu hình ngân hàng thật vào image. Docker Desktop thông thường không cần override CA này.
+
+Chưa thực thi trên máy Windows của người dùng; kết quả DockerLinux không được coi là bằng chứng máy Windows đã cập nhật/khởi động.
