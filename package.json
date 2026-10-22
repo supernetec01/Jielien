@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env server.mjs",
     "start": "node --env-file-if-exists=.env server.mjs",
-    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs",
+    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs",
     "test:browser": "node tests/browser.test.mjs",
     "db:local": "bash scripts/dev-postgres.sh",
     "db:migrate": "node --env-file-if-exists=.env scripts/database.mjs migrate",
@@ -15,7 +15,9 @@
     "db:status": "node --env-file-if-exists=.env scripts/database.mjs status",
     "admin:create": "node --env-file-if-exists=.env scripts/create-admin.mjs",
     "db:install": "bash scripts/install-postgres.sh",
-    "test:management": "node tests/management.browser.mjs"
+    "test:management": "node tests/management.browser.mjs",
+    "test:bank": "node tests/bank-checkout.browser.mjs",
+    "test:account": "node tests/account-settings.browser.mjs"
   },
   "engines": {
     "node": ">=24.11.0"
@@ -25,6 +27,7 @@
   },
   "dependencies": {
     "bcryptjs": "3.0.2",
-    "pg": "8.16.3"
+    "pg": "8.16.3",
+    "qrcode": "1.5.4"
   }
 }

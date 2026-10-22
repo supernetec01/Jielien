@@ -1,6 +1,6 @@
 # Jielien — cửa hàng mẹ và bé, PostgreSQL
 
-Giai đoạn 1 theo thiết kế e-commerce người dùng cung cấp: **34 bảng nghiệp vụ + 1 bảng migration**, sản phẩm cha/SKU, kho/giữ tồn, đơn/chi tiết/thanh toán/giao hàng, tài khoản/phân quyền/nhật ký. Website độc lập, không liên kết với AVAKids; hàng hóa, thương hiệu và hình SVG vẫn là dữ liệu minh họa.
+Giai đoạn 1 theo thiết kế e-commerce người dùng cung cấp: **35 bảng nghiệp vụ + 1 bảng migration**, sản phẩm cha/SKU, kho/giữ tồn, đơn/chi tiết/thanh toán/giao hàng, tài khoản/phân quyền/nhật ký. Website độc lập, không liên kết với AVAKids; hàng hóa, thương hiệu và hình SVG vẫn là dữ liệu minh họa.
 
 - [Thiết kế database: cột, PK, FK và ERD](docs/DATABASE.md)
 - [Phân tích và lộ trình](docs/ROADMAP.md)
@@ -29,10 +29,10 @@ API cần Node/PostgreSQL và ổ đĩa bền vững; GitHub Pages không chạy
 - `/`: trang chủ, danh mục, ưu đãi, tìm kiếm không dấu.
 - `/san-pham`: lọc thương hiệu/độ tuổi/giá, sắp xếp, phân trang.
 - `/san-pham/:slug`: SKU, lựa chọn quy cách cùng sản phẩm cha, thông số và thêm giỏ.
-- `/gio-hang`, `/thanh-toan`: báo giá từ server, ưu đãi, checkout COD; có địa chỉ đã lưu cho người đăng nhập.
-- `/tai-khoan`: đăng ký/đăng nhập, địa chỉ, lịch sử đơn; giỏ tài khoản lưu PostgreSQL.
+- `/gio-hang`, `/thanh-toan`: báo giá từ server, ưu đãi, checkout COD hoặc chuyển khoản ngân hàng/VietQR; có địa chỉ đã lưu cho người đăng nhập.
+- `/tai-khoan`: đăng ký/đăng nhập, sửa họ tên/email, đổi mật khẩu, thêm/sửa/xóa địa chỉ và lịch sử đơn; giỏ tài khoản lưu PostgreSQL.
 - `/tra-cuu-don-hang`: khách mua không đăng nhập tra bằng mã đơn và điện thoại.
-- `/quan-tri`: tổng quan, sửa giá/trạng thái SKU, xử lý đơn, điều chỉnh kho có lý do, ghi nhận thu COD, nhật ký thao tác.
+- `/quan-tri`: tổng quan, sửa giá/trạng thái SKU, xử lý đơn, điều chỉnh kho có lý do, ghi nhận thu COD hoặc đối soát chuyển khoản, nhật ký thao tác.
 
 Tài khoản mới chỉ có quyền khách hàng. Mọi API quản trị kiểm quyền ở server, không dựa vào việc ẩn nút. Không có tài khoản/mật khẩu admin mặc định.
 
@@ -40,7 +40,24 @@ Tài khoản mới chỉ có quyền khách hàng. Mọi API quản trị kiểm
 npm run admin:create
 ```
 
-Lệnh hỏi email, điện thoại và mật khẩu riêng trong terminal; mật khẩu không hiển thị khi gõ. Có thể cấp `ADMIN_EMAIL`, `ADMIN_PHONE`, `ADMIN_PASSWORD` qua môi trường an toàn cho vận hành tự động; không commit các giá trị. Lệnh không tự nâng quyền một tài khoản khách đã có. Mật khẩu bcrypt 12 vòng, tối thiểu 10 ký tự/tối đa 72 byte UTF-8. Cookie session HttpOnly/SameSite, DB chỉ giữ hash token; mutation tài khoản cần CSRF.
+Lệnh hỏi email, điện thoại và mật khẩu riêng trong terminal; mật khẩu không hiển thị khi gõ. Có thể cấp `ADMIN_EMAIL`, `ADMIN_PHONE`, `ADMIN_PASSWORD` qua môi trường an toàn cho vận hành tự động; không commit các giá trị. Lệnh không tự nâng quyền một tài khoản khách đã có. Mật khẩu bcrypt 12 vòng, tối thiểu 10 ký tự/tối đa 72 byte UTF-8. Cookie session HttpOnly/SameSite, DB chỉ giữ hash token; mutation tài khoản cần CSRF. Đổi hoặc xóa email cần mật khẩu hiện tại; đổi mật khẩu thu hồi toàn bộ phiên, yêu cầu đăng nhập lại. Xóa địa chỉ mặc định tự chọn địa chỉ còn lại mới nhất làm mặc định; không thay địa chỉ đã chụp trong đơn cũ.
+
+## Cấu hình chuyển khoản / VietQR
+
+Cấp đủ bốn biến trong môi trường máy chủ hoặc `.env` đã được Git ignore:
+
+```dotenv
+BANK_BIN=
+BANK_NAME=
+BANK_ACCOUNT_NUMBER=
+BANK_ACCOUNT_NAME=
+```
+
+`BANK_BIN` là mã ngân hàng NAPAS 6 chữ số; `BANK_ACCOUNT_NUMBER` là tài khoản nhận tiền, `BANK_ACCOUNT_NAME` là tên chủ tài khoản. Ví dụ giữ trống trong `.env.example`; không cần mật khẩu ngân hàng hoặc khóa API. Khởi động lại máy chủ sau khi thay cấu hình. Thiếu hoặc sai cấu hình sẽ tắt lựa chọn chuyển khoản, và server từ chối tạo đơn chuyển khoản trước khi giữ tồn/ghi đơn.
+
+Khi tạo đơn, server tính số tiền và lưu cố định ngân hàng, tài khoản, tên người nhận, nội dung chuyển khoản, số tiền và payload QR trong `bank_transfer_details`. Thay cấu hình sau đó không làm đổi hướng dẫn của đơn cũ. Mã QR được tạo cục bộ theo NAPAS/EMVCo, không gọi dịch vụ QR bên ngoài. Khách có thể quét QR, sao chép thông tin và làm mới trạng thái đơn.
+
+**Quét QR hoặc gửi lệnh chuyển khoản không tự chuyển đơn thành đã thanh toán.** Nhân viên có quyền `orders.manage` phải kiểm tra tiền thực nhận trong ngân hàng rồi xác nhận ở quản trị. Xác nhận được khóa transaction, chống ghi nhận lặp và tạo `payment_events`/`audit_logs`. Chưa có webhook hoặc kết nối sao kê xác minh tự động. Hệ thống chặn xuất giao đơn chuyển khoản chưa xác nhận; đơn đã nhận chuyển khoản không hủy qua luồng thông thường vì cần quy trình hoàn tiền riêng.
 
 ## Dữ liệu và migration
 
@@ -66,16 +83,18 @@ Backup PostgreSQL bằng `pg_dump`, khôi phục vào database khác để kiể
 ## Kiểm thử
 
 ```sh
-npm test                 # 19 test API, migration, auth, RBAC, kho, coupon
+npm test                 # API, migration, tài khoản, RBAC, kho và thanh toán
 npm run test:browser      # 14 nhóm luồng storefront
-npm run test:management   # 9 nhóm tài khoản và quản trị thực qua trình duyệt
+npm run test:management   # tài khoản và quản trị thực qua trình duyệt
+npm run test:account      # sửa hồ sơ, địa chỉ, mật khẩu và phục hồi giỏ lỗi
+npm run test:bank         # chuyển khoản/VietQR và đối soát qua giao diện
 ```
 
 Browser tests cần Chromium (mặc định `/usr/bin/chromium`, đổi qua `CHROMIUM_PATH`). Tất cả test tạo schema PostgreSQL tạm, server cổng ngẫu nhiên, rồi dọn dẹp; không dùng đơn live, không tác động cổng 3000/3001. Kiểm cả mất response sau COMMIT và retry, cạnh tranh tồn/lượt mã, snapshot, phiên/cookie/CSRF, quyền sở hữu đơn/địa chỉ, UI mobile và lỗi tài nguyên.
 
 ## Phạm vi còn lại
 
-Đây là bản phát triển có luồng xử lý nội bộ. Chưa kết nối cổng thanh toán, giao hàng, OTP/email/SMS, chưa có hoàn trả/lô hạn dùng/đồng bộ sàn/tích điểm/livestream. Quản trị hiện sửa SKU, xử lý đơn và điều chỉnh kho; CRUD đầy đủ danh mục/sản phẩm cha/media/quyền nhân viên thuộc các bước tiếp theo. Không có bên bán thực tế tự giao đơn thử nghiệm.
+Đây là bản phát triển có luồng xử lý nội bộ. Chuyển khoản/VietQR dùng đối soát thủ công; chưa kết nối cổng thanh toán hoặc xác minh ngân hàng tự động, giao hàng, OTP/email/SMS, chưa có hoàn trả/lô hạn dùng/đồng bộ sàn/tích điểm/livestream. Quản trị hiện sửa SKU, xử lý đơn và điều chỉnh kho; CRUD đầy đủ danh mục/sản phẩm cha/media/quyền nhân viên thuộc các bước tiếp theo. Không có bên bán thực tế tự giao đơn thử nghiệm.
 
 ## Cấu trúc
 
@@ -84,6 +103,7 @@ server.mjs                HTTP, validation, cookie/CSRF, authorization, static p
 lib/database.mjs          PostgreSQL pool, connection configuration
 lib/auth.mjs              accounts, password/session hash, ownership, addresses
 lib/cart.mjs              account carts
+lib/vietqr.mjs            local NAPAS/EMVCo payload, CRC and bank configuration
 /db/migrations            versioned PostgreSQL SQL
 /db/store.mjs             pricing, order/stock/payment transactions and audit
 /db/seed.mjs              initial sample catalogue (no overwrites)

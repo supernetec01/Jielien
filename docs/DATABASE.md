@@ -1,6 +1,6 @@
 # Thiết kế database giai đoạn 1 — PostgreSQL
 
-Thiết kế dựa trên bản đề xuất người dùng cung cấp; không phải schema nội bộ được truy cập từ AVAKids. Đã triển khai PostgreSQL 17.11: **34 bảng nghiệp vụ và 1 bảng migration**. DDL đầy đủ ở `db/migrations/001_core.sql`; hợp đồng service ở `db/schema-contract.md`.
+Thiết kế dựa trên bản đề xuất người dùng cung cấp; không phải schema nội bộ được truy cập từ AVAKids. Đã triển khai PostgreSQL 17.11: **35 bảng nghiệp vụ và 1 bảng migration (36 bảng tổng cộng)**. DDL đầy đủ ở `db/migrations/001_core.sql` và `db/migrations/002_bank_transfers.sql`; hợp đồng service ở `db/schema-contract.md`.
 
 ## Quyết định kỹ thuật
 
@@ -34,6 +34,7 @@ erDiagram
  ORDERS ||--o{ INVENTORY_RESERVATIONS : reserves
  ORDERS ||--o{ PAYMENTS : attempts
  PAYMENTS ||--o{ PAYMENT_EVENTS : records
+ PAYMENTS ||--o| BANK_TRANSFER_DETAILS : snapshots
  ORDERS ||--o{ SHIPMENTS : delivers
  COUPONS ||--o{ COUPON_REDEMPTIONS : used
  ORDERS ||--o| COUPON_REDEMPTIONS : applies
@@ -41,17 +42,19 @@ erDiagram
 
 ## Luồng tồn và xử lý đơn
 
-`available = on_hand - reserved`, chỉ tính các kho normal đang active. Tạo đơn khóa các dòng tồn theo thứ tự SKU/kho rồi tăng reserved. Xác nhận/chuẩn bị chưa trừ thực có. Hủy trước khi xuất giao nhả reserved; xuất giao giảm cả on_hand lẫn reserved. Giao xong không tự coi là đã thu tiền: quản trị ghi nhận COD riêng, có payment_event và audit. Kho hư hỏng không cộng vào tồn bán.
+`available = on_hand - reserved`, chỉ tính các kho normal đang active. Tạo đơn khóa các dòng tồn theo thứ tự SKU/kho rồi tăng reserved. Xác nhận/chuẩn bị chưa trừ thực có. Hủy trước khi xuất giao nhả reserved; xuất giao giảm cả on_hand lẫn reserved. Giao xong không tự coi là đã thu tiền: quản trị ghi nhận COD riêng, có payment_event và audit. Kho hư hỏng không cộng vào tồn bán. Chuyển khoản bắt đầu ở trạng thái pending, chỉ nhân viên đối soát mới xác nhận paid; chưa trả tiền thì không xuất giao. Đơn chuyển khoản đã paid không hủy qua luồng thường khi chưa có hoàn tiền.
 
-Trạng thái: `pending → confirmed → processing → shipped → delivered`; có thể hủy ở pending/confirmed/processing. Không chuyển ngược hoặc hủy đơn đã xuất trong giai đoạn này; nghiệp vụ hoàn trả ở giai đoạn 2.
+Trạng thái: `pending → confirmed → processing → shipped → delivered`; có thể hủy ở pending/confirmed/processing khi chưa nhận chuyển khoản. Không chuyển ngược hoặc hủy đơn đã xuất trong giai đoạn này; nghiệp vụ hoàn trả ở giai đoạn 2.
 
 ## Xác thực và phân quyền
 
 Mật khẩu bcrypt 12 vòng; session cookie HttpOnly/SameSite=Lax, token gốc không lưu trong database. Phiên 7 ngày có thể thu hồi, mutation tài khoản/quản trị cần CSRF token. Đăng ký chỉ được vai trò customer. Admin tạo rõ ràng bằng `npm run admin:create`, không có mật khẩu mặc định. Quyền: catalog.manage, orders.manage, inventory.manage, users.manage, audit.read; giao diện chỉ là phần hiển thị, server kiểm quyền độc lập. Quyền users.manage được dự phòng trong model, chưa có màn hình quản lý cấp quyền tùy ý.
 
+Tài khoản sửa họ tên/email; thay hoặc xóa email cần mật khẩu hiện tại. Đổi mật khẩu thu hồi toàn bộ phiên trong transaction. Địa chỉ được thêm/sửa/xóa theo chủ sở hữu; xóa mặc định tự chọn địa chỉ còn lại mới nhất. Nhật ký chỉ lưu loại thao tác/trường thay đổi, không lưu mật khẩu hoặc bản chụp hồ sơ.
+
 ## Danh mục bảng, cột và khóa
 
-Bảng sau sinh từ metadata PostgreSQL của migration đã chạy trên schema tạm. `NOT NULL` là bắt buộc; `identity` là ID tự sinh. PK/FK/UNIQUE được liệt kê ngay dưới mỗi bảng. CHECK và partial index xem trong DDL để giữ nguyên biểu thức chính xác.
+Các bảng lõi sau sinh từ metadata PostgreSQL của migration 001 đã chạy trên schema tạm; bảng chuyển khoản và thay đổi phương thức được cập nhật theo DDL migration 002. `NOT NULL` là bắt buộc; `identity` là ID tự sinh. PK/FK/UNIQUE được liệt kê ngay dưới mỗi bảng. CHECK và partial index xem trong DDL để giữ nguyên biểu thức chính xác.
 
 ### attribute_values
 
@@ -96,6 +99,28 @@ Nhật ký thao tác quản trị và nghiệp vụ.
 
 - `FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE RESTRICT`
 - `PRIMARY KEY (id)`
+
+### bank_transfer_details
+
+Thông tin nhận chuyển khoản chụp cố định tại thời điểm đặt đơn; mỗi payment có tối đa một bản ghi.
+
+| Cột | Kiểu PostgreSQL | Bắt buộc / mặc định |
+| --- | --- | --- |
+| `payment_id` | `int8` | NOT NULL; PK đồng thời FK tới `payments.id` |
+| `bank_bin` | `text` | NOT NULL; đúng 6 chữ số NAPAS |
+| `bank_name` | `text` | NOT NULL; 2–100 ký tự |
+| `account_number` | `text` | NOT NULL; 6–30 chữ số, giữ số 0 đầu |
+| `account_name` | `text` | NOT NULL; 2–100 ký tự |
+| `reference` | `text` | NOT NULL; UNIQUE; 1–25 ký tự chữ/số/dấu cách/gạch ngang, bắt đầu bằng chữ/số |
+| `amount` | `int8` | NOT NULL; 1–9007199254740991 VND |
+| `qr_payload` | `text` | NOT NULL; payload NAPAS/EMVCo kèm CRC |
+| `created_at` | `timestamptz` | NOT NULL; `CURRENT_TIMESTAMP` |
+
+- `PRIMARY KEY (payment_id)`
+- `FOREIGN KEY (payment_id) REFERENCES payments(id) ON DELETE RESTRICT`
+- `UNIQUE (reference)`
+
+Quan hệ `payments` 1–0/1 `bank_transfer_details`; thanh toán COD không có bản ghi này. Không lưu thông tin đăng nhập ngân hàng. QR được tạo ở server, không gửi tài khoản tới API tạo ảnh ngoài. Đổi cấu hình nhận tiền không sửa snapshot của đơn cũ. Server kiểm cấu hình trước khi tạo đơn; chỉ quyền `orders.manage` được xác nhận tiền thực nhận, chống trùng bằng transaction/payment event. Chưa có webhook hoặc sao kê tự động.
 
 ### brands
 
@@ -308,6 +333,8 @@ Lịch sử chuyển trạng thái cùng người thao tác và ghi chú.
 
 ### orders
 
+`payment_method` cho phép `cod` hoặc `bank_transfer` sau migration 002; mặc định vẫn `cod`.
+
 Đơn tổng thể với người nhận, địa chỉ snapshot và các tổng tiền.
 
 | Cột               | Kiểu PostgreSQL | Bắt buộc / mặc định           |
@@ -358,6 +385,8 @@ Sự kiện thanh toán duy nhất để tránh ghi nhận trùng.
 - `UNIQUE (provider_event_id)`
 
 ### payments
+
+`method` cho phép `cod` hoặc `bank_transfer` sau migration 002; mặc định vẫn `cod`. `orders` 1–N `payments`; một lần xác nhận chuyển khoản tạo một event và audit, không phát sinh thu tiền bên ngoài.
 
 Ghi nhận thanh toán; giai đoạn này dùng COD.
 

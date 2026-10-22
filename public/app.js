@@ -57,6 +57,32 @@ let pendingOrder = null;
 let identity = null;
 let csrfToken = "";
 let cartSync = Promise.resolve();
+let paymentMethods = [
+  {
+    id: "cod",
+    enabled: true,
+    label: "Thanh toán khi nhận hàng (COD)",
+    description: "Thanh toán cho nhân viên giao hàng khi nhận hàng.",
+  },
+];
+function paymentLabel(method) {
+  return method === "bank_transfer"
+    ? "Chuyển khoản ngân hàng / VietQR"
+    : "Thanh toán khi nhận hàng (COD)";
+}
+function orderButtonLabel(method = $("input[name=payment]:checked")?.value) {
+  return method === "bank_transfer"
+    ? "Đặt hàng và xem VietQR →"
+    : "Đặt hàng COD →";
+}
+function paymentOptions() {
+  return paymentMethods
+    .map(
+      (method) =>
+        `<label class="payment-option${method.enabled ? "" : " payment-disabled"}"><input type="radio" name="payment" value="${escape(method.id)}" ${method.id === "cod" ? "checked" : ""} ${method.enabled ? "" : "disabled"}><span><b>${escape(method.label || paymentLabel(method.id))}</b><small>${escape(method.description || "")}${!method.enabled ? " Hiện chưa khả dụng." : ""}</small></span></label>`,
+    )
+    .join("");
+}
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -81,6 +107,7 @@ async function api(path, options = {}) {
       body.message || "Không thể hoàn tất yêu cầu. Vui lòng thử lại.",
     );
     error.status = response.status;
+    error.code = body.error;
     throw error;
   }
   return body;
@@ -167,7 +194,7 @@ function home() {
   const sale = [...products]
     .sort((a, b) => 1 - b.price / b.oldPrice - (1 - a.price / a.oldPrice))
     .slice(0, 5);
-  return `<section class="hero-layout"><nav class="category-sidebar" aria-label="Danh mục">${categories.map(([name, img]) => `<a href="${escape(href({ category: name }))}" data-link><img src="/assets/${img}.svg" alt="">${name}<span style="margin-left:auto;color:#aaa">›</span></a>`).join("")}</nav><div id="hero-container">${heroMarkup()}</div></section>
+  return `${identity ? `<div class="account-invitation"><span>Xin chào, <b>${escape(identity.fullName)}</b></span><a href="/tai-khoan">Đơn hàng & tài khoản →</a></div>` : `<div class="account-invitation"><span>Lưu địa chỉ, giỏ hàng và theo dõi đơn của mẹ</span><div><a href="/tai-khoan">Đăng nhập</a><a href="/tai-khoan?mode=register">Đăng ký tài khoản →</a></div></div>`}<section class="hero-layout"><nav class="category-sidebar" aria-label="Danh mục">${categories.map(([name, img]) => `<a href="${escape(href({ category: name }))}" data-link><img src="/assets/${img}.svg" alt="">${name}<span style="margin-left:auto;color:#aaa">›</span></a>`).join("")}</nav><div id="hero-container">${heroMarkup()}</div></section>
     <div class="small-banners">${[
       ["DINH DƯỠNG MỖI NGÀY", "Bé khỏe, mẹ vui", "Sữa cho bé", "milk-gold"],
       ["ÊM ÁI SUỐT NGÀY DÀI", "Mềm như mẹ ôm", "Bỉm & tã", "diaper-blue"],
@@ -397,7 +424,7 @@ function summaryMarkup(q, checkout = false) {
   <div class="summary-line"><span>Tạm tính (${q.items.reduce((s, p) => s + p.quantity, 0)} sản phẩm)</span><b>${money(q.subtotal)}</b></div>
   <div class="summary-line discount"><span>Giảm giá</span><b>−${money(q.discount)}</b></div><div class="summary-line"><span>Phí giao hàng</span><b>${q.shipping ? money(q.shipping) : "Miễn phí"}</b></div><div class="summary-line total"><span>Tổng cộng</span><strong id="grand-total">${money(q.total)}</strong></div>
   ${checkout ? '<button class="primary" type="submit" form="checkout-form" id="place-order">Đặt hàng COD →</button>' : '<a href="/thanh-toan" data-link class="primary">Tiến hành đặt hàng →</a>'}
-  <p class="summary-note">${checkout ? "Đơn sẽ được lưu ở máy chủ thử nghiệm. Chưa phát sinh thu tiền hoặc giao hàng." : "Giá và ưu đãi được xác thực bởi máy chủ khi đặt hàng."}</p></aside>`;
+  <p class="summary-note">${checkout ? "Với chuyển khoản, chỉ thanh toán sau khi kiểm tra ngân hàng, người nhận và mã đơn trên màn hình tiếp theo." : "Giá và ưu đãi được xác thực bởi máy chủ khi đặt hàng."}</p></aside>`;
 }
 async function cartPage(version) {
   document.title = "Giỏ hàng | Jielien";
@@ -451,7 +478,7 @@ async function checkoutPage(version) {
   }
   if (version !== renderVersion) return "";
   if (!checkoutKey) checkoutKey = crypto.randomUUID();
-  return `${breadcrumbs([["Giỏ hàng", "/gio-hang"], ["Đặt hàng"]])}<div class="checkout-steps"><span>1. Giỏ hàng</span><span>→</span><span class="active">2. Thông tin giao hàng</span><span>→</span><span>3. Hoàn tất</span></div><div class="checkout-layout"><div><form id="checkout-form"><section class="panel form-section"><h2>Thông tin người nhận</h2><div class="fields"><div class="field"><label for="name">Họ và tên <span>*</span></label><input id="name" name="name" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên người nhận"></div><div class="field"><label for="phone">Số điện thoại <span>*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field full"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="150" placeholder="Email để ghi nhận trong đơn"></div></div></section><section class="panel form-section"><h2>Địa chỉ giao hàng</h2><div class="fields"><div class="field"><label for="province">Tỉnh / Thành phố <span>*</span></label><input id="province" name="province" autocomplete="address-level1" required minlength="2" maxlength="100" placeholder="Ví dụ: TP. Hồ Chí Minh"></div><div class="field"><label for="district">Quận / Huyện / Khu vực <span>*</span></label><input id="district" name="district" autocomplete="address-level2" required minlength="2" maxlength="100" placeholder="Khu vực giao hàng"></div><div class="field full"><label for="address">Địa chỉ chi tiết <span>*</span></label><input id="address" name="address" autocomplete="street-address" required minlength="8" maxlength="250" placeholder="Số nhà, tên đường, phường / xã"></div><div class="field full"><label for="note">Ghi chú cho đơn hàng</label><textarea id="note" name="note" maxlength="500" placeholder="Thông tin cần lưu ý khi giao hàng (nếu có)"></textarea></div></div></section><section class="panel form-section"><h2>Phương thức thanh toán</h2><label class="payment-option"><input type="radio" name="payment" value="cod" checked><span><b>Thanh toán khi nhận hàng (COD)</b><small>Không yêu cầu thông tin thẻ hoặc chuyển khoản.</small></span></label><label class="agreement"><input name="agreement" type="checkbox" required><span>Tôi đã kiểm tra thông tin và đồng ý với <a href="/chinh-sach/giao-hang" target="_blank" rel="noopener">điều kiện mua hàng</a> và <a href="/chinh-sach/bao-mat" target="_blank" rel="noopener">chính sách thông tin cá nhân</a>. Đây là đơn thử nghiệm, chưa được giao thực tế.</span></label><div id="checkout-error" class="form-error" role="alert"></div></section></form></div>${summaryMarkup(q, true)}</div>`;
+  return `${breadcrumbs([["Giỏ hàng", "/gio-hang"], ["Đặt hàng"]])}<div class="checkout-steps"><span>1. Giỏ hàng</span><span>→</span><span class="active">2. Thông tin giao hàng</span><span>→</span><span>3. Hoàn tất</span></div><div class="checkout-account">${identity ? `Đang đặt hàng với tài khoản <b>${escape(identity.fullName)}</b>. Đơn sẽ được lưu vào lịch sử mua hàng.` : `Mẹ có thể đặt hàng không cần tài khoản hoặc <a href="/tai-khoan?redirect=/thanh-toan">đăng nhập</a> / <a href="/tai-khoan?mode=register&redirect=/thanh-toan">đăng ký</a> để lưu địa chỉ và đơn hàng.`}</div><div class="checkout-layout"><div><form id="checkout-form"><section class="panel form-section"><h2>Thông tin người nhận</h2><div class="fields"><div class="field"><label for="name">Họ và tên <span>*</span></label><input id="name" name="name" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên người nhận"></div><div class="field"><label for="phone">Số điện thoại <span>*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field full"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="150" placeholder="Email để ghi nhận trong đơn"></div></div></section><section class="panel form-section"><h2>Địa chỉ giao hàng</h2><div class="fields"><div class="field"><label for="province">Tỉnh / Thành phố <span>*</span></label><input id="province" name="province" autocomplete="address-level1" required minlength="2" maxlength="100" placeholder="Ví dụ: TP. Hồ Chí Minh"></div><div class="field"><label for="district">Quận / Huyện / Khu vực <span>*</span></label><input id="district" name="district" autocomplete="address-level2" required minlength="2" maxlength="100" placeholder="Khu vực giao hàng"></div><div class="field full"><label for="address">Địa chỉ chi tiết <span>*</span></label><input id="address" name="address" autocomplete="street-address" required minlength="8" maxlength="250" placeholder="Số nhà, tên đường, phường / xã"></div><div class="field full"><label for="note">Ghi chú cho đơn hàng</label><textarea id="note" name="note" maxlength="500" placeholder="Thông tin cần lưu ý khi giao hàng (nếu có)"></textarea></div></div></section><section class="panel form-section"><h2>Phương thức thanh toán</h2>${paymentOptions()}<label class="agreement"><input name="agreement" type="checkbox" required><span>Tôi đã kiểm tra thông tin và đồng ý với <a href="/chinh-sach/giao-hang" target="_blank" rel="noopener">điều kiện mua hàng</a> và <a href="/chinh-sach/bao-mat" target="_blank" rel="noopener">chính sách thông tin cá nhân</a>. Đây là đơn thử nghiệm, chưa được giao thực tế.</span></label><div id="checkout-error" class="form-error" role="alert"></div></section></form></div>${summaryMarkup(q, true)}</div>`;
 }
 async function orderPage(id) {
   let order = lastOrder?.id === id ? lastOrder : null;
@@ -478,8 +505,19 @@ async function orderPage(id) {
   document.title = `Đơn ${order.id} | Jielien`;
   return `${breadcrumbs([["Đơn hàng " + order.id]])}<div class="success-head"><span class="success-mark">✓</span><h1>Đã ghi nhận đơn hàng của mẹ!</h1><p>Cảm ơn mẹ đã ghé Jielien. Đơn được lưu tại máy chủ thử nghiệm.</p></div>${orderMarkup(order)}<div class="button-row"><a href="/san-pham" data-link class="primary">Tiếp tục mua sắm →</a><a href="/tra-cuu-don-hang" data-link class="secondary">Tra cứu đơn hàng</a></div>`;
 }
+function transferMarkup(order) {
+  if (order.payment !== "bank_transfer") return "";
+  if (order.paymentStatus === "paid")
+    return `<div class="transfer-paid" role="status">✓ Đã nhận tiền chuyển khoản. Cảm ơn mẹ!</div>`;
+  if (order.status === "cancelled")
+    return `<p class="notice">Đơn đã hủy. Mẹ không chuyển khoản cho đơn này.</p>`;
+  const t = order.transfer;
+  if (!t)
+    return `<p class="notice">Chưa tải được thông tin nhận tiền. Mẹ thử cập nhật trạng thái đơn.</p>`;
+  return `<section class="transfer-panel" aria-label="Hướng dẫn chuyển khoản"><div class="transfer-qr">${t.qrDataUrl ? `<img id="transfer-qr" src="${escape(t.qrDataUrl)}" alt="VietQR chuyển khoản cho đơn ${escape(order.id)}" width="280" height="280">` : ""}<p>Quét bằng ứng dụng ngân hàng</p></div><div><h2>Chuyển khoản thanh toán đơn hàng</h2><dl class="transfer-details"><dt>Ngân hàng</dt><dd>${escape(t.bankName)}</dd><dt>Số tài khoản</dt><dd><b>${escape(t.accountNumber)}</b> <button class="copy-transfer" data-copy-transfer="${escape(t.accountNumber)}" aria-label="Sao chép số tài khoản">Sao chép</button></dd><dt>Chủ tài khoản</dt><dd>${escape(t.accountName)}</dd><dt>Số tiền</dt><dd><b>${money(t.amount)}</b> <button class="copy-transfer" data-copy-transfer="${t.amount}" aria-label="Sao chép số tiền">Sao chép</button></dd><dt>Nội dung chuyển khoản</dt><dd><b>${escape(t.reference)}</b> <button class="copy-transfer" data-copy-transfer="${escape(t.reference)}" aria-label="Sao chép nội dung chuyển khoản">Sao chép</button></dd></dl><p>Giữ nguyên số tiền và nội dung để cửa hàng đối soát đúng đơn. Kiểm tra tên người nhận trong ứng dụng ngân hàng trước khi xác nhận.</p><p class="notice">Đang chờ đối soát. Quét mã không tự xác nhận đã trả tiền; cửa hàng sẽ cập nhật sau khi nhận tiền. Nếu đã chuyển, mẹ không thanh toán lại.</p><button class="secondary" data-refresh-payment="${escape(order.id)}">Cập nhật trạng thái thanh toán</button></div></section>`;
+}
 function orderMarkup(order) {
-  return `<section class="panel order-card"><div class="order-number"><strong>Mã đơn: ${escape(order.id)}</strong><span class="status">${escape({ pending: "Chờ xác nhận", confirmed: "Đã xác nhận", processing: "Đang chuẩn bị", shipped: "Đang giao", delivered: "Đã giao", cancelled: "Đã hủy" }[order.status] || order.status)} · COD</span></div><div class="order-details"><div><h3>Người nhận</h3><p><b>${escape(order.customer.name)}</b></p><p>${escape(order.customer.phone)}</p><p>${escape(order.customer.address)}</p><p>${escape(order.customer.district)}, ${escape(order.customer.province)}</p></div><div><h3>Thông tin đơn</h3><p>Ngày đặt: ${new Date(order.createdAt).toLocaleString("vi-VN")}</p><p>Thanh toán: khi nhận hàng (COD)</p><p>Thanh toán: ${order.paymentStatus === "paid" ? "Đã ghi nhận thu COD" : "Chưa ghi nhận thu tiền"}</p>${order.note ? `<p>Ghi chú: ${escape(order.note)}</p>` : ""}</div></div>${order.items.map((item) => `<div class="checkout-mini"><img src="${escape(item.image)}" alt=""><div>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></div><strong>${money(item.lineTotal)}</strong></div>`).join("")}<div class="summary-line"><span>Tạm tính</span><b>${money(order.subtotal)}</b></div><div class="summary-line discount"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="summary-line"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="summary-line total"><span>Tổng thanh toán COD</span><strong>${money(order.total)}</strong></div><p class="notice">Mẹ lưu mã đơn để tra cứu cùng số điện thoại. Website thử nghiệm chưa kết nối đơn vị vận chuyển, email hoặc thu tiền.</p></section>`;
+  return `<section class="panel order-card"><div class="order-number"><strong>Mã đơn: ${escape(order.id)}</strong><span class="status">${escape({ pending: "Chờ xác nhận", confirmed: "Đã xác nhận", processing: "Đang chuẩn bị", shipped: "Đang giao", delivered: "Đã giao", cancelled: "Đã hủy" }[order.status] || order.status)} · ${escape(paymentLabel(order.payment))}</span></div>${transferMarkup(order)}<div class="order-details"><div><h3>Người nhận</h3><p><b>${escape(order.customer.name)}</b></p><p>${escape(order.customer.phone)}</p><p>${escape(order.customer.address)}</p><p>${escape(order.customer.district)}, ${escape(order.customer.province)}</p></div><div><h3>Thông tin đơn</h3><p>Ngày đặt: ${new Date(order.createdAt).toLocaleString("vi-VN")}</p><p>Phương thức: ${escape(paymentLabel(order.payment))}</p><p>Thanh toán: ${order.paymentStatus === "paid" ? "Đã ghi nhận thu tiền" : "Chưa ghi nhận thu tiền"}</p>${order.note ? `<p>Ghi chú: ${escape(order.note)}</p>` : ""}</div></div>${order.items.map((item) => `<div class="checkout-mini"><img src="${escape(item.image)}" alt=""><div>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></div><strong>${money(item.lineTotal)}</strong></div>`).join("")}<div class="summary-line"><span>Tạm tính</span><b>${money(order.subtotal)}</b></div><div class="summary-line discount"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="summary-line"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="summary-line total"><span>Tổng thanh toán</span><strong>${money(order.total)}</strong></div><p class="notice">Mẹ lưu mã đơn để tra cứu cùng số điện thoại. Vận chuyển được cửa hàng xử lý thủ công.</p></section>`;
 }
 function lookupPage() {
   document.title = "Tra cứu đơn hàng | Jielien";
@@ -488,11 +526,11 @@ function lookupPage() {
 const policies = {
   "gioi-thieu": [
     "Về Jielien",
-    "<p>Jielien là bản phát triển website thương mại điện tử dành cho mẹ và bé, xây dựng theo yêu cầu tham khảo mô hình AVAKids. Đây là website độc lập, không phải chi nhánh, đối tác hoặc kênh bán hàng chính thức của AVAKids.</p><h2>Những gì mẹ có thể trải nghiệm</h2><p>Tìm kiếm và lọc sản phẩm, xem thông tin chi tiết, lưu sản phẩm yêu thích, quản lý giỏ hàng, đặt đơn COD thử nghiệm và tra cứu đơn đã lưu.</p><h2>Dữ liệu minh họa</h2><p>Tên thương hiệu, sản phẩm, giá, ưu đãi và hình SVG là dữ liệu mẫu. Có đăng ký tài khoản, lưu địa chỉ và lịch sử đơn; chưa có thanh toán trực tuyến hoặc giao hàng thực tế. Không có đánh giá khách hàng hay số liệu bán hàng giả.</p>",
+    "<p>Jielien là bản phát triển website thương mại điện tử dành cho mẹ và bé, xây dựng theo yêu cầu tham khảo mô hình AVAKids. Đây là website độc lập, không phải chi nhánh, đối tác hoặc kênh bán hàng chính thức của AVAKids.</p><h2>Những gì mẹ có thể trải nghiệm</h2><p>Tìm kiếm và lọc sản phẩm, xem thông tin chi tiết, lưu sản phẩm yêu thích, quản lý giỏ hàng, đặt đơn COD hoặc chuyển khoản VietQR và tra cứu đơn đã lưu.</p><h2>Dữ liệu minh họa</h2><p>Tên thương hiệu, sản phẩm, giá, ưu đãi và hình SVG là dữ liệu mẫu. Có đăng ký tài khoản, lưu địa chỉ và lịch sử đơn; có chuyển khoản VietQR khi được cấu hình, đối soát thủ công; chưa tích hợp giao hàng tự động. Không có đánh giá khách hàng hay số liệu bán hàng giả.</p>",
   ],
   "giao-hang": [
     "Giao hàng & thanh toán",
-    "<h2>Phí giao hàng trong bản thử nghiệm</h2><p>Phí tiêu chuẩn: 25.000đ/đơn. Miễn phí khi tổng sản phẩm trước giảm giá từ 499.000đ. Mã FREESHIP miễn phí vận chuyển từ 299.000đ; mã MEBE50 giảm 50.000đ từ 500.000đ. Mỗi đơn dùng một mã.</p><h2>Đặt hàng COD</h2><p>Người nhận điền họ tên, số điện thoại và địa chỉ. Máy chủ xác thực giá, tồn kho, mã giảm giá và lưu đơn cùng chi tiết sản phẩm bằng PostgreSQL. Việc gửi lại cùng một yêu cầu đặt hàng không tạo đơn trùng.</p><h2>Phạm vi vận hành</h2><p>Đây là môi trường thử nghiệm. Đơn chưa được chuyển tới kho hoặc đơn vị vận chuyển, không có yêu cầu thu tiền. Thời gian giao hàng chưa được cam kết. Đơn vị kinh doanh cần bổ sung quy trình vận hành trước khi mở bán.</p>",
+    "<h2>Phí giao hàng trong bản thử nghiệm</h2><p>Phí tiêu chuẩn: 25.000đ/đơn. Miễn phí khi tổng sản phẩm trước giảm giá từ 499.000đ. Mã FREESHIP miễn phí vận chuyển từ 299.000đ; mã MEBE50 giảm 50.000đ từ 500.000đ. Mỗi đơn dùng một mã.</p><h2>Đặt hàng COD</h2><p>Người nhận điền họ tên, số điện thoại và địa chỉ. Máy chủ xác thực giá, tồn kho, mã giảm giá và lưu đơn cùng chi tiết sản phẩm bằng PostgreSQL. Việc gửi lại cùng một yêu cầu đặt hàng không tạo đơn trùng.</p><h2>Phạm vi vận hành</h2><p>Đây là môi trường thử nghiệm. Đơn chưa được chuyển tới kho hoặc đơn vị vận chuyển, Chuyển khoản VietQR hiển thị thông tin tài khoản đã cấu hình, số tiền và nội dung riêng cho từng đơn. Nhân viên đối soát và xác nhận sau khi nhận tiền; website chưa tự kết nối biến động số dư. Thời gian giao hàng chưa được cam kết. Đơn vị kinh doanh cần bổ sung quy trình vận hành trước khi mở bán.</p>",
   ],
   "doi-tra": [
     "Chính sách đổi trả",
@@ -618,6 +656,7 @@ function restoreDraft(data) {
     if (input?.type === "checkbox") input.checked = true;
     else if (input) input.value = value;
   }
+  if ($("#place-order")) $("#place-order").textContent = orderButtonLabel();
 }
 function bindPage() {
   if ($("#checkout-form") && identity) prefillCheckout();
@@ -753,7 +792,7 @@ async function submitOrder(event) {
       province: data.province.trim(),
       district: data.district.trim(),
     },
-    payment: "cod",
+    payment: data.payment,
     note: data.note.trim(),
     idempotencyKey: checkoutKey,
   };
@@ -783,7 +822,9 @@ async function submitOrder(event) {
     submitting = false;
     navigate("/don-hang/" + encodeURIComponent(order.id));
   } catch (error) {
-    const uncertain = !error.status || error.status >= 500;
+    const uncertain =
+      !error.status ||
+      (error.status >= 500 && error.code !== "payment_unavailable");
     pendingOrder = uncertain ? { payload } : null;
     if (!uncertain) checkoutKey = crypto.randomUUID();
     $("#checkout-error").textContent =
@@ -794,7 +835,11 @@ async function submitOrder(event) {
     $("#place-order").disabled = false;
     $("#place-order").textContent = uncertain
       ? "Kiểm tra đơn vừa gửi →"
-      : "Đặt hàng COD →";
+      : orderButtonLabel(payload.payment);
+    $$("#checkout-form input[type=radio]").forEach((input) => {
+      input.disabled =
+        uncertain || !paymentMethods.find((m) => m.id === input.value)?.enabled;
+    });
     $$(
       '#checkout-form input:not([type="radio"]):not([type="checkbox"]), #checkout-form textarea',
     ).forEach((input) => {
@@ -937,6 +982,58 @@ document.addEventListener("click", async (event) => {
     $("#detail-tab-content").setAttribute("aria-labelledby", tab.id);
     return;
   }
+  const copyTransfer = event.target.closest("[data-copy-transfer]");
+  if (copyTransfer) {
+    try {
+      await navigator.clipboard.writeText(copyTransfer.dataset.copyTransfer);
+      toast("Đã sao chép thông tin chuyển khoản.");
+    } catch {
+      toast(
+        "Chưa sao chép được. Mẹ chọn và sao chép thông tin đang hiển thị nhé.",
+      );
+    }
+    return;
+  }
+  const refresh = event.target.closest("[data-refresh-payment]");
+  if (refresh) {
+    refresh.disabled = true;
+    try {
+      const id = refresh.dataset.refreshPayment;
+      let result;
+      if ($("#lookup-form")) {
+        result = await api("/api/orders/lookup", {
+          method: "POST",
+          body: JSON.stringify(
+            Object.fromEntries(new FormData($("#lookup-form"))),
+          ),
+        });
+      } else {
+        let token;
+        try {
+          token = sessionStorage.getItem("jielien-order-" + id);
+        } catch {}
+        result = await api(
+          "/api/orders/" +
+            encodeURIComponent(id) +
+            (token ? "?token=" + encodeURIComponent(token) : ""),
+        );
+      }
+      lastOrder = result.order;
+      if ($("#lookup-result"))
+        $("#lookup-result").innerHTML = orderMarkup(result.order);
+      else await render({ scroll: false });
+      toast(
+        result.order.paymentStatus === "paid"
+          ? "Đã nhận tiền chuyển khoản."
+          : "Chưa có xác nhận mới. Nếu đã chuyển, mẹ không thanh toán lại.",
+      );
+    } catch (error) {
+      toast(error.message);
+    } finally {
+      if (refresh.isConnected) refresh.disabled = false;
+    }
+    return;
+  }
   const copy = event.target.closest("[data-copy]");
   if (copy) {
     try {
@@ -972,6 +1069,12 @@ document.addEventListener("click", async (event) => {
   if (event.target.closest("#retry-render")) render();
 });
 document.addEventListener("change", (event) => {
+  if (
+    event.target.matches("input[name=payment]") &&
+    !pendingOrder &&
+    !submitting
+  )
+    $("#place-order").textContent = orderButtonLabel();
   if (event.target.matches("[data-cart-quantity]")) {
     const id = Number(event.target.dataset.cartQuantity);
     const p = products.find((p) => p.id === id);
@@ -1099,23 +1202,8 @@ async function init() {
       const session = await api("/api/auth/me");
       identity = session.user;
       csrfToken = session.csrfToken;
-      const owner = storage.get("jielien-cart-owner", null);
-      if (owner && owner !== identity.id) cart = {};
-      const remote = await api("/api/cart");
-      for (const item of remote.items) {
-        const p = products.find((p) => p.id === item.id);
-        if (p?.stock)
-          cart[item.id] = Math.min(
-            p.stock,
-            99,
-            Math.max(item.quantity, cart[item.id] || 0),
-          );
-      }
-      storage.set("jielien-cart-owner", identity.id);
-      persistCart();
-      const label = $("#account-label");
-      if (label) label.textContent = identity.fullName;
     } catch (error) {
+      if (error.status !== 401) throw error;
       identity = null;
       csrfToken = "";
       if (storage.get("jielien-cart-owner", null)) {
@@ -1123,10 +1211,35 @@ async function init() {
         storage.set("jielien-cart-v2", {});
         storage.set("jielien-cart-owner", null);
       }
-      if (error.status !== 401)
+    }
+    if (identity) {
+      const owner = storage.get("jielien-cart-owner", null);
+      if (owner && owner !== identity.id) cart = {};
+      storage.set("jielien-cart-owner", identity.id);
+      try {
+        const remote = await api("/api/cart");
+        for (const item of remote.items) {
+          const p = products.find((p) => p.id === item.id);
+          if (p?.stock)
+            cart[item.id] = Math.min(
+              p.stock,
+              99,
+              Math.max(item.quantity, cart[item.id] || 0),
+            );
+        }
+        persistCart();
+      } catch {
         toast(
-          "Tạm thời chưa tải được giỏ tài khoản. Mẹ vẫn có thể mua không đăng nhập.",
+          "Chưa tải được giỏ đã lưu. Tài khoản vẫn đăng nhập; mẹ có thể thử tải lại trang.",
         );
+      }
+      const label = $("#account-label");
+      if (label) label.textContent = identity.fullName;
+    }
+    try {
+      ({ methods: paymentMethods } = await api("/api/payment-methods"));
+    } catch {
+      /* COD remains available if the method list cannot load. */
     }
     updateCartCount();
     $("#category-dropdown").innerHTML = categories

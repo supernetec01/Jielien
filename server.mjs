@@ -7,6 +7,7 @@ import { createPool } from "./lib/database.mjs";
 import { createStore } from "./db/store.mjs";
 import { createAuth } from "./lib/auth.mjs";
 import { createCartService } from "./lib/cart.mjs";
+import QRCode from "qrcode";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 const publicRoot = resolve(projectRoot, "public");
@@ -169,6 +170,28 @@ function stripToken(order) {
   const { token, ...safe } = order;
   return safe;
 }
+async function withTransferQr(order) {
+  if (
+    !order?.transfer?.qrPayload ||
+    order.status === "cancelled" ||
+    order.paymentStatus === "paid"
+  )
+    return order;
+  const svg = await QRCode.toString(order.transfer.qrPayload, {
+    type: "svg",
+    errorCorrectionLevel: "M",
+    margin: 2,
+    width: 320,
+  });
+  return {
+    ...order,
+    transfer: {
+      ...order.transfer,
+      qrDataUrl:
+        "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64"),
+    },
+  };
+}
 function sameOrigin(req) {
   if (req.headers["sec-fetch-site"] === "cross-site")
     fail(403, "origin_denied", "Yêu cầu phải gửi từ website này.");
@@ -216,11 +239,12 @@ export async function createApp({
   pool: externalPool,
   catalogPath = resolve(publicRoot, "catalog.json"),
   legacyPath = externalPool ? null : resolve(projectRoot, "data/store.sqlite"),
+  bankConfig,
 } = {}) {
   const pool = externalPool || createPool();
   let store;
   try {
-    store = await createStore({ pool, catalogPath, legacyPath });
+    store = await createStore({ pool, catalogPath, legacyPath, bankConfig });
   } catch (error) {
     if (!externalPool) await pool.end();
     throw error;
@@ -279,6 +303,8 @@ export async function createApp({
         }
         if (req.method === "GET" && path === "/api/products")
           return json(res, 200, { products: await store.listProducts() });
+        if (req.method === "GET" && path === "/api/payment-methods")
+          return json(res, 200, { methods: store.paymentMethods() });
         if (req.method === "GET" && path === "/api/categories") {
           const { rows } = await pool.query(
             'SELECT id,parent_id AS "parentId",name,slug,sort_order AS "sortOrder" FROM categories WHERE status=\'active\' ORDER BY sort_order,id',
@@ -320,6 +346,31 @@ export async function createApp({
           requireCsrf(req, session);
           await auth.logout(rawToken);
           res.setHeader("Set-Cookie", sessionCookie(req, "", true));
+          res.writeHead(204);
+          return res.end();
+        }
+        if (req.method === "PATCH" && path === "/api/account/profile") {
+          const user = requireUser(session);
+          requireCsrf(req, session);
+          rateLimit(req, "profile-update", 10);
+          return json(res, 200, {
+            user: await auth.updateProfile(user.id, await readBody(req)),
+          });
+        }
+        if (req.method === "POST" && path === "/api/account/password") {
+          const user = requireUser(session);
+          requireCsrf(req, session);
+          rateLimit(req, "password-change", 5);
+          await auth.changePassword(user.id, await readBody(req));
+          res.setHeader("Set-Cookie", sessionCookie(req, "", true));
+          res.writeHead(204);
+          return res.end();
+        }
+        const addressMatch = path.match(/^\/api\/account\/addresses\/(\d+)$/);
+        if (req.method === "DELETE" && addressMatch) {
+          const user = requireUser(session);
+          requireCsrf(req, session);
+          await auth.deleteAddress(user.id, Number(addressMatch[1]));
           res.writeHead(204);
           return res.end();
         }
@@ -374,11 +425,11 @@ export async function createApp({
           const body = await readBody(req),
             items = parseItems(body),
             customer = customerData(body.customer);
-          if (body.payment !== "cod")
+          if (!["cod", "bank_transfer"].includes(body.payment))
             fail(
               400,
               "invalid_payment",
-              "Hiện chỉ hỗ trợ thanh toán khi nhận hàng (COD).",
+              "Phương thức thanh toán không hợp lệ.",
             );
           const note =
             body.note == null || body.note === ""
@@ -402,12 +453,12 @@ export async function createApp({
             items,
             coupon: body.coupon,
             customer,
-            payment: "cod",
+            payment: body.payment,
             note,
             idempotencyKey,
             userId: session?.user.id || null,
           });
-          return json(res, 201, { order });
+          return json(res, 201, { order: await withTransferQr(order) });
         }
         if (req.method === "POST" && path === "/api/orders/lookup") {
           rateLimit(req, "lookup", 10);
@@ -421,7 +472,9 @@ export async function createApp({
               "order_not_found",
               "Không tìm thấy đơn hàng với thông tin đã nhập.",
             );
-          return json(res, 200, { order: stripToken(order) });
+          return json(res, 200, {
+            order: await withTransferQr(stripToken(order)),
+          });
         }
         const orderMatch = path.match(/^\/api\/orders\/([A-Za-z0-9-]{1,80})$/);
         if (req.method === "GET" && orderMatch) {
@@ -435,7 +488,9 @@ export async function createApp({
             order && sameSecret(url.searchParams.get("token"), order.token);
           if (!owner && !byToken)
             fail(404, "order_not_found", "Không tìm thấy đơn hàng.");
-          return json(res, 200, { order: byToken ? order : stripToken(order) });
+          return json(res, 200, {
+            order: await withTransferQr(byToken ? order : stripToken(order)),
+          });
         }
         if (path.startsWith("/api/admin/")) {
           const user = requireUser(session);
@@ -513,6 +568,18 @@ export async function createApp({
           const paidMatch = path.match(
             /^\/api\/admin\/orders\/([A-Za-z0-9-]{1,80})\/payment$/,
           );
+          const bankPaidMatch = path.match(
+            /^\/api\/admin\/orders\/([A-Za-z0-9-]{1,80})\/bank-transfer$/,
+          );
+          if (req.method === "POST" && bankPaidMatch) {
+            requirePermission(session, "orders.manage");
+            await readBody(req);
+            return json(res, 200, {
+              order: stripToken(
+                await store.recordBankTransfer(bankPaidMatch[1], user.id),
+              ),
+            });
+          }
           if (req.method === "POST" && paidMatch) {
             requirePermission(session, "orders.manage");
             await readBody(req);

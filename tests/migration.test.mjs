@@ -82,12 +82,12 @@ async function fixture(t) {
 
 test("versioned PostgreSQL migrations are repeatable and enforce actual foreign keys", async (t) => {
   const { pool } = await fixture(t);
-  await migrate(pool);
+  const migrationResult = await migrate(pool);
   await migrate(pool);
   const migrations = await pool.query(
     "SELECT count(*)::integer AS count FROM schema_migrations",
   );
-  assert.equal(migrations.rows[0].count, 1);
+  assert.equal(migrations.rows[0].count, migrationResult.versions.length);
   const foreignKeys = await pool.query(
     "SELECT count(*)::integer AS count FROM information_schema.table_constraints WHERE constraint_schema=current_schema() AND constraint_type='FOREIGN KEY'",
   );

@@ -1,8 +1,8 @@
 # Database contract — PostgreSQL phase 1
 
-This contract describes **implemented schema**, not AVAKids' private database. Migration: `db/migrations/001_core.sql`; runner: `migrate(pool)` from `db/migrate.mjs`.
+This contract describes **implemented schema**, not AVAKids' private database. Migrations: `db/migrations/001_core.sql` and `002_bank_transfers.sql`; runner: `migrate(pool)` from `db/migrate.mjs`.
 
-There are **34 domain tables**, plus `schema_migrations`. Only the role/permission/primary-warehouse defaults are inserted by SQL. Catalog and legacy-order import belong to the store/import code.
+There are **35 domain tables**, plus `schema_migrations` (36 total). Only the role/permission/primary-warehouse defaults are inserted by SQL. Catalog and legacy-order import belong to the store/import code.
 
 ## Shared conventions
 
@@ -29,6 +29,8 @@ There are **34 domain tables**, plus `schema_migrations`. Only the role/permissi
 
 Default roles: `customer`, `admin`. Default permission codes: `catalog.manage`, `orders.manage`, `inventory.manage`, `users.manage`, `audit.read`. Admin receives all five; customer receives no management permission. There is **no default administrator account or password** in the migration.
 
+Profile changes accept only full name/email; changing or removing email requires the current password. Password changes hash the new password, revoke all sessions and record a nonsecret audit event in the same transaction. The owner can edit/delete addresses; deleting the default promotes the most recently created remaining address. Orders retain their own address snapshots.
+
 ## Product catalog
 
 | Table | Columns and relationships |
@@ -52,7 +54,7 @@ Related SKU choices use the same `product_id`; unrelated products of the same br
 | --- | --- |
 | `carts` | `id` PK; `user_id` nullable FK; `session_id` nullable; at least one owner field required; `status` active/converted/abandoned; `created_at`, `updated_at`. Unique active cart per nonnull user or guest session. |
 | `cart_items` | `id` PK; `cart_id` FK; `variant_id` FK; `quantity` 1–99; UNIQUE (`cart_id`, `variant_id`) |
-| `orders` | `id` internal PK; `order_number` UNIQUE external code; `user_id` nullable FK; `status`; `recipient_name`, `recipient_phone`, `recipient_email` nullable; `address_detail`, `province`, `district`; `subtotal`, `discount_total`, `shipping_fee`, `grand_total`; `coupon_code` default empty; `payment_method` cod; `note`; `access_token`; `idempotency_key` UNIQUE; `fingerprint`; `created_at`, `updated_at` |
+| `orders` | `id` internal PK; `order_number` UNIQUE external code; `user_id` nullable FK; `status`; `recipient_name`, `recipient_phone`, `recipient_email` nullable; `address_detail`, `province`, `district`; `subtotal`, `discount_total`, `shipping_fee`, `grand_total`; `coupon_code` default empty; `payment_method` cod/bank_transfer; `note`; `access_token`; `idempotency_key` UNIQUE; `fingerprint`; `created_at`, `updated_at` |
 | `order_items` | `id` PK; `order_id` FK orders.id; `variant_id` FK; `sku_snapshot`, `name_snapshot`, `image_snapshot`; `quantity`; `unit_price`, `line_total` |
 | `order_status_history` | `id` PK; `order_id` FK; `old_status` nullable for initial creation; `new_status`; `changed_by` nullable FK users; `note`; `created_at` |
 
@@ -68,7 +70,8 @@ Legacy import must preserve order number, phone normalization, access token, ide
 
 | Table | Columns and relationships |
 | --- | --- |
-| `payments` | `id` PK; `order_id` FK; `provider` default manual; `method` cod; `amount`; `status` pending/paid/failed/cancelled/refunded; `paid_at` nullable; `created_at`. Multiple payment attempts per order are allowed. |
+| `payments` | `id` PK; `order_id` FK; `provider` default manual; `method` cod/bank_transfer; `amount`; `status` pending/paid/failed/cancelled/refunded; `paid_at` nullable; `created_at`. Multiple payment attempts per order are allowed. |
+| `bank_transfer_details` | `payment_id` PK/FK payments.id (one snapshot per payment); `bank_bin` 6 digits; `bank_name` 2–100 chars; `account_number` 6–30 digits; `account_name` 2–100 chars; `reference` UNIQUE, 1–25 alphanumeric/space/hyphen chars starting alphanumeric; `amount` positive safe-integer VND; `qr_payload`; `created_at`. No bank login credentials. |
 | `payment_events` | `id` PK; `payment_id` FK; `provider_event_id` UNIQUE; `event_type`; `received_at`; `payload` JSONB. Stores accounting events, not payment-card data. |
 | `warehouses` | `id` PK; `name`; `type` normal/damaged; `status` active/inactive. Seeded warehouse ID 1: Kho chính, normal/active. |
 | `inventory_balances` | composite PK (`warehouse_id`, `variant_id`), both FK; `on_hand`, `reserved`; `updated_at`. Checks `0 <= reserved <= on_hand`. |
@@ -76,6 +79,10 @@ Legacy import must preserve order number, phone normalization, access token, ide
 | `inventory_reservations` | `id` PK; `order_id`, `variant_id`, `warehouse_id` FKs; `quantity` positive; `status` active/consumed/released; `created_at`, `updated_at`; UNIQUE (`order_id`, `variant_id`, `warehouse_id`) |
 | `shipments` | `id` PK; `order_id` FK; `carrier`, `tracking_number` nullable; `status` pending/ready/processing/shipped/delivered/cancelled; `created_at`, `updated_at`. Multiple shipments per order are representable. |
 | `audit_logs` | `id` PK; `actor_id` nullable FK; `action`, `entity_type`; `entity_id` nullable text; `metadata` JSONB; `created_at`. Metadata must not contain passwords, raw session tokens or entire customer payloads. |
+
+Bank transfers are enabled only with valid server-side `BANK_BIN`, `BANK_NAME`, `BANK_ACCOUNT_NUMBER` and `BANK_ACCOUNT_NAME`. The service snapshots receiving details, server-calculated amount, unique order reference and locally generated NAPAS/EMVCo payload at checkout. Snapshots survive later configuration changes. No QR or banking API request is required.
+
+Payment starts pending. Only staff with `orders.manage` may confirm receipt after checking their bank; there is no provider webhook, automatic reconciliation or buyer “mark paid” action. Confirmation locks the order/payment and creates an idempotent `bank_transfer.confirmed` event plus audit. Unpaid transfers cannot be shipped/delivered; paid transfers cannot use ordinary cancellation because refunds are not yet implemented. QR instructions are hidden after payment or cancellation, while snapshots are retained.
 
 Movement types: **opening, reserve, release, sale, adjustment, transfer, return, legacy_import, receipt**.
 

@@ -2,7 +2,31 @@
 
 Cập nhật ngày **22/10/2026** (Asia/Bangkok). Phạm vi: storefront Jielien mẹ và bé, lấy AVAKids làm website tham khảo. Cổng chạy: **3001**; không thay đổi dịch vụ người dùng trên cổng **3000**.
 
-## Kết quả thực thi
+## Bổ sung tài khoản và chuyển khoản/VietQR
+
+Mã triển khai hiện có migration 002: **35 bảng nghiệp vụ + schema_migrations (36 bảng)**. COD tiếp tục hoạt động; chuyển khoản chỉ bật khi đủ cấu hình ngân hàng phía server. QR NAPAS/EMVCo tạo cục bộ với số tiền/nội dung do server xác định, thông tin nhận tiền lưu snapshot theo từng payment.
+
+Khách xem QR và làm mới trạng thái; chỉ nhân viên có `orders.manage` xác nhận đã nhận tiền sau đối soát ngân hàng. Không có webhook/sao kê hoặc xác minh tiền tự động. Không xuất giao chuyển khoản chưa paid; chuyển khoản đã paid phải đi qua quy trình hoàn tiền trong tương lai thay vì hủy thông thường.
+
+Tài khoản bổ sung sửa họ tên/email, xác nhận mật khẩu khi đổi/xóa email, đổi mật khẩu thu hồi phiên, sửa/xóa địa chỉ theo chủ sở hữu. Hồ sơ/địa chỉ trong đơn cũ giữ snapshot riêng.
+
+Kết quả sau khi tích hợp (22/10/2026):
+
+| Lệnh | Kết quả | Phạm vi |
+| --- | --- | --- |
+| `npm test` | **29/29 đạt** | API, migration, auth/RBAC, kho, tài khoản và chuyển khoản |
+| `npm run test:browser` | **14/14 nhóm đạt** | Storefront và COD, phục hồi đơn khi mất phản hồi |
+| `npm run test:management` | **9/9 nhóm đạt** | Địa chỉ, giỏ, đơn, quản trị SKU/kho và thu COD |
+| `npm run test:account` | **9/9 nhóm đạt** | Sửa hồ sơ/email, địa chỉ, đổi mật khẩu/thu hồi nhiều phiên; GET cart503 vẫn giữ đăng nhập, CSRF và quyền sở hữu đơn |
+| `npm run test:bank` | **7/7 nhóm đạt** | QR cục bộ, tổng tiền từ server, phân quyền, xác nhận một lần/audit, lịch sử, cấu hình thiếu, 503 cho đổi COD và mobile390px |
+
+Đã sửa lỗi input ẩn `name=id` che thuộc tính `form.id` khiến form địa chỉ không gửi; kiểm thử địa chỉ đã chạy lại thành công. Các kiểm thử dùng dữ liệu giả, schema PostgreSQL tạm và cổng ngẫu nhiên; không chuyển tiền thật.
+
+Sau sao lưu schema public bằng pg_dump, bản cổng3001 đã khởi động với migration002 và cấu hình ngân hàng do người dùng cung cấp trong `.env` đã ignore. Kiểm tra chỉ đọc: health200, danh sách phương thức có COD/chuyển khoản bật, `/tai-khoan` và `/quan-tri`200; cổng3000 vẫn lắng nghe. Mã BIN Techcombank970407 được đối chiếu từ danh mục công khai VietQR; không xác minh quyền sở hữu tài khoản hay giao dịch ngân hàng thật.
+
+Các con số ở phần lịch sử dưới đây mô tả lần chạy trước phần bổ sung này.
+
+## Kết quả thực thi trước khi bổ sung chuyển khoản
 
 | Lệnh/kiểm tra          | Kết quả                              | Phạm vi bằng chứng                                                     |
 | ---------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
@@ -10,7 +34,7 @@ Cập nhật ngày **22/10/2026** (Asia/Bangkok). Phạm vi: storefront Jielien 
 | `npm run test:browser` | **14/14 nhóm kiểm tra đạt**          | `tests/browser.test.mjs`, Chromium/Playwright, không phải 14 test Node |
 | `ss -ltn`              | Cổng **3000 và 3001** cùng lắng nghe | Không dừng hoặc chiếm cổng 3000                                        |
 
-API và browser test tạo app trên **cổng ngẫu nhiên** cùng thư mục SQLite tạm, rồi đóng app và xóa dữ liệu tạm. Chúng không dùng dữ liệu trình diễn hoặc bind cổng 3000/3001. Kết quả trên xác minh bản hiện tại, không xác minh khả năng vận hành thương mại hoặc độ giống AVAKids.
+API và browser test tạo app trên **cổng ngẫu nhiên** cùng thư mục SQLite tạm, rồi đóng app và xóa dữ liệu tạm. Chúng không dùng dữ liệu trình diễn hoặc bind cổng 3000/3001. Kết quả lịch sử trên không xác minh khả năng vận hành thương mại hoặc độ giống AVAKids.
 
 Trong các bảng: **Đạt** có bằng chứng thực thi; **Đạt một phần** ghi chính xác phần đã kiểm tra; **Chưa chạy** không được coi là đạt. Ký hiệu **A1–A10** theo thứ tự test trong file API; **B1–B14** theo thứ tự thông báo `PASS` của file browser.
 
@@ -95,7 +119,7 @@ Bản triển khai chưa được chứng nhận là bản sao chính xác AVAKi
 
 Các ô **Đạt một phần** giữ nguyên phần chưa chạy; không suy ra đã kiểm thử từ việc có mã triển khai. Kiểm tra không bao phủ toàn bộ tổ hợp đầu vào, mọi độ rộng màn hình, mọi trình duyệt hay audit WCAG hoàn chỉnh.
 
-Thanh toán trực tuyến, quản trị đơn có xác thực, gửi email/SMS, giao hàng, tích điểm và tồn kho chi nhánh ngoài phạm vi. Tạo đơn COD cục bộ không chứng minh có bên bán nhận giao hàng. Dữ liệu, giá, thương hiệu và hình minh họa là mẫu; chưa có bằng chứng AVAKids dùng cùng API hoặc cùng quy tắc nghiệp vụ.
+Trong bản storefront cũ ghi nhận ở phần lịch sử này, thanh toán trực tuyến, quản trị đơn có xác thực, gửi email/SMS, giao hàng, tích điểm và tồn kho chi nhánh ngoài phạm vi; phần PostgreSQL và bổ sung ở trên mô tả chức năng đã được phát triển tiếp. Tạo đơn COD cục bộ không chứng minh có bên bán nhận giao hàng. Dữ liệu, giá, thương hiệu và hình minh họa là mẫu; chưa có bằng chứng AVAKids dùng cùng API hoặc cùng quy tắc nghiệp vụ.
 
 ## Ảnh bản triển khai
 
@@ -113,7 +137,7 @@ Không có đơn được gửi khi tạo các ảnh trên. Kiểm tra cuối: A
 
 Phần này thay thế mô tả SQLite ở kết quả cũ bên trên; các kết quả cũ được giữ làm lịch sử. Nguồn thiết kế là đề xuất người dùng đã dán vào chat, không phải schema nội bộ AVAKids.
 
-- PostgreSQL 17.11 chạy thực: 34 bảng nghiệp vụ + schema_migrations; 41 FK, 53 CHECK, 19 UNIQUE trong migration đầu.
+- PostgreSQL 17.11 ở lần kiểm chứng migration 001: 34 bảng nghiệp vụ + schema_migrations; 41 FK, 53 CHECK, 19 UNIQUE trong migration đầu. Migration 002 bổ sung bảng chuyển khoản, nâng tổng hiện tại thành 35 bảng nghiệp vụ + schema_migrations.
 - `npm test`: 19/19 test đạt, gồm 10 test API cũ đã chuyển PG, 3 migration và 6 nhóm auth/ownership/admin/kho/coupon/cart.
 - `npm run test:browser`: 14/14 nhóm storefront đạt trên PostgreSQL.
 - `npm run test:management`: 9/9 nhóm tài khoản/quản trị đạt: đăng ký HttpOnly; địa chỉ tiếng Việt; giỏ server/reload; checkout địa chỉ lưu; quyền sở hữu lịch sử; chặn customer vào quản trị; sửa giá nhưng giữ giá đơn cũ; chuỗi trạng thái/thu COD riêng; điều chỉnh kho/audit/logout/mobile.

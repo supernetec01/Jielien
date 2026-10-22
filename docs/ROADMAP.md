@@ -4,13 +4,13 @@
 
 ## Giai đoạn 1 — đang hoàn tất và kiểm chứng
 
-- Chuẩn hóa 34 bảng nghiệp vụ, FK/CHECK/UNIQUE/index thật, migration có phiên bản và checksum.
+- Chuẩn hóa 35 bảng nghiệp vụ sau migration 002, FK/CHECK/UNIQUE/index thật, migration có phiên bản và checksum.
 - Giữ ID SKU và URL cũ; giá, danh mục, thông số và tồn đọc PostgreSQL.
-- Đăng ký/đăng nhập, phiên có hash, CSRF, địa chỉ, giỏ tài khoản và lịch sử đơn của từng người.
-- Khách vẫn mua COD không cần tài khoản; đơn đăng nhập gắn với user_id.
+- Đăng ký/đăng nhập, phiên có hash, CSRF, sửa hồ sơ/email có xác thực lại, đổi mật khẩu thu hồi phiên, thêm/sửa/xóa địa chỉ, giỏ tài khoản và lịch sử đơn của từng người.
+- Khách mua COD hoặc chuyển khoản/VietQR không cần tài khoản; đơn đăng nhập gắn với user_id. QR tạo cục bộ, thông tin nhận tiền/số tiền/nội dung được chụp theo đơn. Cấu hình thiếu thì không cho tạo đơn chuyển khoản.
 - Đơn/chi tiết tách bảng với snapshot; reservation và transaction ngăn vượt tồn; chống gửi lặp.
 - Mã giảm giá/điều kiện/thời hạn/lượt dùng lưu DB; một mã trên một đơn.
-- Màn hình quản trị: tổng quan, giá/trạng thái SKU, xử lý đơn, điều chỉnh tồn có lý do, thu COD thủ công và nhật ký.
+- Màn hình quản trị: tổng quan, giá/trạng thái SKU, xử lý đơn, điều chỉnh tồn có lý do, thu COD thủ công, xác nhận chuyển khoản sau đối soát và nhật ký. Chưa có xác minh tiền tự động qua webhook/sao kê; chặn xuất giao đơn chuyển khoản chưa nhận tiền và chặn hủy thường khi đã nhận tiền.
 - Kho normal/damaged riêng; không bán từ kho hư hỏng. Chuyển kho hai vế và chứng từ nhập/xuất đầy đủ chưa nằm trong UI hiện tại.
 - Sao lưu/nhập SQLite giữ tồn khả dụng và đơn cũ, không reset dữ liệu.
 
@@ -26,7 +26,7 @@ Tài khoản admin không tạo mặc định. Người vận hành chạy `npm 
 
 ## Giai đoạn 3 — tích hợp và nhiều kênh
 
-- Cổng thanh toán có webhook/signature/idempotency; OTP và email/SMS qua nhà cung cấp.
+- Cổng thanh toán hoặc sao kê ngân hàng có webhook/signature/idempotency để thay đối soát chuyển khoản thủ công; OTP và email/SMS qua nhà cung cấp.
 - Đơn vị vận chuyển, tracking thực, nhiều điểm bán, phân bổ kho, lô/hạn sử dụng.
 - Tích điểm qua sổ giao dịch, hỗ trợ khách hàng và thông báo nhiều kênh.
 - Livestream/video, đồng bộ Shopee/TikTok Shop và dịch thuật có cache.

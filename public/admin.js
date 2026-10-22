@@ -168,7 +168,7 @@ function orderTable(rows) {
     rows
       .map(
         (order) =>
-          `<tr><td><b>${escape(order.id)}</b><div class="small muted">${date(order.createdAt)}</div></td><td>${escape(order.customer?.name)}<div class="small muted">${escape(order.customer?.phone)}</div></td><td class="price-cell">${money(order.total)}</td><td>${badge(order.status)}</td><td><button class="secondary" data-admin-order="${escape(order.id)}" style="padding:6px 9px;font-size:10px">Xem / xử lý</button></td></tr>`,
+          `<tr><td><b>${escape(order.id)}</b><div class="small muted">${date(order.createdAt)}</div></td><td>${escape(order.customer?.name)}<div class="small muted">${escape(order.customer?.phone)}</div></td><td class="price-cell">${money(order.total)}<div class="small muted" style="font-weight:400">${escape(paymentLabel(order.payment || "cod"))}</div></td><td>${badge(order.status)}</td><td><button class="secondary" data-admin-order="${escape(order.id)}" style="padding:6px 9px;font-size:10px">Xem / xử lý</button></td></tr>`,
       )
       .join("") || noRows(5)
   );
@@ -309,15 +309,51 @@ function adjustInventory(variantId, warehouseId) {
     row,
   );
 }
+function paymentLabel(method) {
+  return (
+    {
+      cod: "Thanh toán khi nhận hàng (COD)",
+      bank_transfer: "Chuyển khoản ngân hàng / VietQR",
+    }[method] || "Phương thức chưa xác định"
+  );
+}
+function paymentBadge(status) {
+  const label =
+    {
+      pending: "Chờ xác nhận thanh toán",
+      paid: "Đã ghi nhận thu tiền",
+      cancelled: "Thanh toán đã hủy",
+      failed: "Thanh toán thất bại",
+      refunded: "Đã hoàn tiền",
+    }[status] || "Chưa ghi nhận thu tiền";
+  return `<span class="badge ${status === "paid" ? "active" : status === "cancelled" ? "cancelled" : "pending"}">${escape(label)}</span>`;
+}
 function orderDetail(order) {
   const c = order.customer || {};
   const next = transitions[order.status] || [];
-  return `<div class="detail-split"><div><h3>Người nhận</h3><p><b>${escape(c.name)}</b></p><p>${escape(c.phone)}</p><p>${escape(c.address)}</p><p>${escape(c.district)}, ${escape(c.province)}</p></div><div><h3>Thông tin đơn</h3><p>${escape(order.id)}</p><p>${date(order.createdAt)}</p><p>${badge(order.status)}</p><p>Thanh toán: ${escape(order.payment || "cod").toUpperCase()}</p><p>${order.paymentStatus === "paid" ? '<span class="badge active">Đã ghi nhận thu tiền</span>' : '<span class="badge pending">Chưa ghi nhận thu tiền</span>'}</p></div></div>${(order.items || []).map((item) => `<div class="order-preview"><img src="${escape(item.image)}" alt=""><span>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></span><strong class="small">${money(item.lineTotal)}</strong></div>`).join("")}<div class="total-row"><span>Tiền hàng</span><b>${money(order.subtotal)}</b></div><div class="total-row"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="total-row"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="total-row grand"><span>Tổng cộng</span><b>${money(order.total)}</b></div>${order.note ? `<p class="dialog-note">Ghi chú: ${escape(order.note)}</p>` : ""}<section class="dialog-section"><h3>Xử lý đơn hàng</h3>${next.length ? `<form id="order-status-form"><div class="field"><label for="new-status">Trạng thái tiếp theo</label><select id="new-status" name="status">${next.map((status) => `<option value="${status}">${statusLabel(status)}</option>`).join("")}</select></div><div class="field"><label for="status-reason">Ghi chú xử lý</label><textarea id="status-reason" name="reason" maxlength="500" placeholder="Thông tin cần ghi nhận trong lịch sử đơn (nếu có)"></textarea></div><div id="mutation-error" class="form-error" role="alert"></div><button class="primary">Cập nhật trạng thái</button><p class="support-text">Máy chủ kiểm tra trạng thái và tồn kho trước khi ghi nhận. Hủy đơn sẽ hoàn phần giữ hàng; xuất giao sẽ giảm tồn thực tế.</p></form>` : '<p class="support-text">Đơn đã kết thúc; không có trạng thái tiếp theo trong luồng hiện tại.</p>'}</section>${paymentMarkup(order)}`;
+  return `<div class="detail-split"><div><h3>Người nhận</h3><p><b>${escape(c.name)}</b></p><p>${escape(c.phone)}</p><p>${escape(c.address)}</p><p>${escape(c.district)}, ${escape(c.province)}</p></div><div><h3>Thông tin đơn</h3><p>${escape(order.id)}</p><p>${date(order.createdAt)}</p><p>${badge(order.status)}</p><p>Thanh toán: ${escape(paymentLabel(order.payment || "cod"))}</p><p>${paymentBadge(order.paymentStatus)}</p></div></div>${(order.items || []).map((item) => `<div class="order-preview"><img src="${escape(item.image)}" alt=""><span>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></span><strong class="small">${money(item.lineTotal)}</strong></div>`).join("")}<div class="total-row"><span>Tiền hàng</span><b>${money(order.subtotal)}</b></div><div class="total-row"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="total-row"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="total-row grand"><span>Tổng cộng</span><b>${money(order.total)}</b></div>${order.note ? `<p class="dialog-note">Ghi chú: ${escape(order.note)}</p>` : ""}<section class="dialog-section"><h3>Xử lý đơn hàng</h3>${next.length ? `<form id="order-status-form"><div class="field"><label for="new-status">Trạng thái tiếp theo</label><select id="new-status" name="status">${next.map((status) => `<option value="${status}">${statusLabel(status)}</option>`).join("")}</select></div><div class="field"><label for="status-reason">Ghi chú xử lý</label><textarea id="status-reason" name="reason" maxlength="500" placeholder="Thông tin cần ghi nhận trong lịch sử đơn (nếu có)"></textarea></div><div id="mutation-error" class="form-error" role="alert"></div><button class="primary">Cập nhật trạng thái</button><p class="support-text">Máy chủ kiểm tra trạng thái và tồn kho trước khi ghi nhận. Hủy đơn sẽ hoàn phần giữ hàng; xuất giao sẽ giảm tồn thực tế.</p></form>` : '<p class="support-text">Đơn đã kết thúc; không có trạng thái tiếp theo trong luồng hiện tại.</p>'}</section>${paymentMarkup(order)}`;
 }
 function paymentMarkup(order) {
-  if (order.status !== "delivered" || order.paymentStatus !== "pending")
+  if (order.payment === "bank_transfer") {
+    const transfer = order.transfer;
+    const details = transfer
+      ? `<dl class="profile-grid"><div><dt>Ngân hàng</dt><dd>${escape(transfer.bankName)}</dd></div><div><dt>Tài khoản nhận</dt><dd>${escape(transfer.accountNumber)}</dd></div><div><dt>Chủ tài khoản</dt><dd>${escape(transfer.accountName)}</dd></div><div><dt>Nội dung chuyển khoản</dt><dd><b>${escape(transfer.reference)}</b></dd></div><div><dt>Số tiền cần đối soát</dt><dd><b>${money(order.total)}</b></dd></div></dl>`
+      : "";
+    const active =
+      Object.hasOwn(transitions, order.status) && order.status !== "cancelled";
+    const confirm =
+      active && order.paymentStatus === "pending"
+        ? `<p class="support-text">Đối chiếu sao kê ngân hàng: nhận đủ ${money(order.total)} và đúng nội dung đơn hàng trước khi xác nhận. Khách gửi yêu cầu đặt hàng hoặc ảnh chuyển khoản không tự làm đơn thành đã thanh toán.</p><form id="bank-transfer-form"><div id="bank-transfer-error" class="form-error" role="alert"></div><button class="primary">Xác nhận đã nhận chuyển khoản</button></form>`
+        : `<p class="support-text">${order.paymentStatus === "paid" ? "Khoản chuyển này đã được xác nhận. Lịch sử ghi nhận được lưu trong nhật ký hệ thống." : "Đơn không có khoản chuyển đang chờ xác nhận."}</p>`;
+    return `<section class="dialog-section"><h3>Đối soát chuyển khoản ngân hàng</h3>${details}${confirm}</section>`;
+  }
+  if (
+    order.payment !== "cod" ||
+    order.status !== "delivered" ||
+    order.paymentStatus !== "pending"
+  )
     return "";
-  return `<section class="dialog-section"><h3>Thu tiền COD</h3><p class="support-text">Đơn đã giao không tự đồng nghĩa với đã thu tiền. Chỉ ghi nhận khi đã đối soát và xác nhận nhận đủ ${money(order.total)}.</p><form id="payment-form"><div id="mutation-error" class="form-error" role="alert"></div><button class="primary">Ghi nhận đã thu COD</button></form></section>`;
+  return `<section class="dialog-section"><h3>Thu tiền COD</h3><p class="support-text">Đơn đã giao không tự đồng nghĩa với đã thu tiền. Chỉ ghi nhận khi đã đối soát và xác nhận nhận đủ ${money(order.total)}.</p><form id="payment-form"><div id="payment-error" class="form-error" role="alert"></div><button class="primary">Ghi nhận đã thu COD</button></form></section>`;
 }
 function openOrder(number) {
   const order = orderRows.find((row) => row.id === number);
@@ -328,16 +364,17 @@ async function mutation(form) {
   if (mutationBusy || !form.reportValidity()) return;
   const data = Object.fromEntries(new FormData(form));
   const button = $("button", form);
-  $("#mutation-error").textContent = "";
+  const errorBox = $(".form-error", form);
+  if (errorBox) errorBox.textContent = "";
   if (
     form.id === "variant-form" &&
     Number(data.originalPrice) < Number(data.price)
   ) {
-    $("#mutation-error").textContent = "Giá gốc cần lớn hơn hoặc bằng giá bán.";
+    errorBox.textContent = "Giá gốc cần lớn hơn hoặc bằng giá bán.";
     return;
   }
   if (form.id === "inventory-form" && Number(data.quantityChange) === 0) {
-    $("#mutation-error").textContent = "Số lượng thay đổi phải khác 0.";
+    errorBox.textContent = "Số lượng thay đổi phải khác 0.";
     return;
   }
   mutationBusy = true;
@@ -375,11 +412,19 @@ async function mutation(form) {
         "/api/admin/orders/" + encodeURIComponent(dialogItem.id) + "/payment",
         { method: "POST", body: {} },
       );
+    if (dialogType === "order" && form.id === "bank-transfer-form")
+      await api(
+        "/api/admin/orders/" +
+          encodeURIComponent(dialogItem.id) +
+          "/bank-transfer",
+        { method: "POST", body: {} },
+      );
     $("#admin-dialog").close();
     notify("Đã lưu thay đổi.");
     await renderView(activeView, { focus: false });
   } catch (error) {
-    $("#mutation-error").textContent = error.message;
+    if (errorBox?.isConnected) errorBox.textContent = error.message;
+    else notify(error.message);
   } finally {
     mutationBusy = false;
     if (button.isConnected) button.disabled = false;

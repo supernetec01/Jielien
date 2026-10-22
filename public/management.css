@@ -1127,3 +1127,25 @@ p {
     max-width: 100%;
   }
 }
+#profile-form,
+#password-form {
+  max-width: 650px;
+}
+#profile-form > .primary,
+#password-form > .primary {
+  margin-top: 18px;
+}
+.address-actions {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+.address-actions button {
+  font-size: 11px;
+  padding: 6px 12px;
+}
+.field small {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #77818d;
+}
