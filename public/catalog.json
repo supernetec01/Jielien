@@ -1,0 +1,482 @@
+[
+  {
+    "id": 1,
+    "slug": "sua-little-grow-so-3-800g",
+    "name": "Sữa dinh dưỡng Little Grow số 3 800g",
+    "brand": "Little Grow",
+    "category": "Sữa cho bé",
+    "type": "milk",
+    "image": "/assets/milk-green.svg",
+    "price": 425000,
+    "oldPrice": 499000,
+    "stock": 42,
+    "age": "1–3 tuổi",
+    "weight": "800g",
+    "description": "Sữa dinh dưỡng Little Grow số 3 800g là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Hộp thiếc nắp kín, thuận tiện bảo quản",
+      "Quy cách tham khảo: hộp 800g",
+      "Tham khảo hướng dẫn dinh dưỡng phù hợp độ tuổi"
+    ]
+  },
+  {
+    "id": 2,
+    "slug": "bim-quan-baby-soft-l44",
+    "name": "Bỉm quần Baby Soft mềm mại size L 44 miếng",
+    "brand": "Baby Soft",
+    "category": "Bỉm & tã",
+    "type": "diaper",
+    "image": "/assets/diaper-pink.svg",
+    "price": 289000,
+    "oldPrice": 350000,
+    "stock": 64,
+    "age": "6–12 tháng",
+    "weight": "L · 44 miếng",
+    "description": "Bỉm quần Baby Soft mềm mại size L 44 miếng là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Thiết kế dạng quần, thao tác thay nhanh",
+      "Quy cách tham khảo: size L, 44 miếng",
+      "Kiểm tra bảng size theo cân nặng trước khi chọn"
+    ]
+  },
+  {
+    "id": 3,
+    "slug": "binh-sua-little-love-240ml",
+    "name": "Bình sữa cổ rộng Little Love 240ml",
+    "brand": "Little Love",
+    "category": "Đồ dùng cho bé",
+    "type": "bottle",
+    "image": "/assets/bottle.svg",
+    "price": 215000,
+    "oldPrice": 269000,
+    "stock": 35,
+    "age": "0–6 tháng",
+    "weight": "240ml",
+    "description": "Bình sữa cổ rộng Little Love 240ml là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Thiết kế cổ rộng, thuận tiện vệ sinh",
+      "Vạch chia dung tích dễ quan sát",
+      "Lựa chọn núm và lưu lượng phù hợp độ tuổi"
+    ]
+  },
+  {
+    "id": 4,
+    "slug": "bot-an-dam-happy-baby-gao-rau-cu",
+    "name": "Bột ăn dặm Happy Baby vị gạo và rau củ 200g",
+    "brand": "Happy Baby",
+    "category": "Ăn dặm",
+    "type": "food",
+    "image": "/assets/cereal.svg",
+    "price": 129000,
+    "oldPrice": 159000,
+    "stock": 56,
+    "age": "6–12 tháng",
+    "weight": "200g",
+    "description": "Bột ăn dặm Happy Baby vị gạo và rau củ 200g là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Quy cách tham khảo: hộp 200g",
+      "Hương vị gạo và rau củ minh họa",
+      "Tham khảo chuyên gia trước khi bắt đầu ăn dặm"
+    ]
+  },
+  {
+    "id": 5,
+    "slug": "tam-goi-pure-baby-400ml",
+    "name": "Sữa tắm gội Pure Baby dịu nhẹ 400ml",
+    "brand": "Pure Baby",
+    "category": "Chăm sóc bé",
+    "type": "care",
+    "image": "/assets/baby-care.svg",
+    "price": 169000,
+    "oldPrice": 210000,
+    "stock": 48,
+    "age": "0–6 tháng",
+    "weight": "400ml",
+    "description": "Sữa tắm gội Pure Baby dịu nhẹ 400ml là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Chai vòi nhấn, thuận tiện sử dụng",
+      "Dung tích tham khảo: 400ml",
+      "Kiểm tra thành phần và thử trên vùng da nhỏ"
+    ]
+  },
+  {
+    "id": 6,
+    "slug": "sua-little-grow-so-2-800g",
+    "name": "Sữa dinh dưỡng Little Grow số 2 800g",
+    "brand": "Little Grow",
+    "category": "Sữa cho bé",
+    "type": "milk",
+    "image": "/assets/milk-gold.svg",
+    "price": 399000,
+    "oldPrice": 465000,
+    "stock": 34,
+    "age": "6–12 tháng",
+    "weight": "800g",
+    "description": "Sữa dinh dưỡng Little Grow số 2 800g là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Bao bì hộp thiếc nắp kín",
+      "Quy cách tham khảo: hộp 800g",
+      "Lựa chọn dinh dưỡng theo tư vấn chuyên môn"
+    ]
+  },
+  {
+    "id": 7,
+    "slug": "bim-dan-baby-soft-nb60",
+    "name": "Bỉm dán Baby Soft sơ sinh size NB 60 miếng",
+    "brand": "Baby Soft",
+    "category": "Bỉm & tã",
+    "type": "diaper",
+    "image": "/assets/diaper-blue.svg",
+    "price": 245000,
+    "oldPrice": 299000,
+    "stock": 75,
+    "age": "0–6 tháng",
+    "weight": "NB · 60 miếng",
+    "description": "Bỉm dán Baby Soft sơ sinh size NB 60 miếng là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Thiết kế bỉm dán điều chỉnh hai bên",
+      "Quy cách tham khảo: size NB, 60 miếng",
+      "Chọn kích cỡ theo bảng cân nặng của nhà sản xuất"
+    ]
+  },
+  {
+    "id": 8,
+    "slug": "khau-giay-uot-baby-soft-80",
+    "name": "Khăn giấy ướt Baby Soft nắp bật 80 tờ",
+    "brand": "Baby Soft",
+    "category": "Chăm sóc bé",
+    "type": "care",
+    "image": "/assets/wet-wipes.svg",
+    "price": 65000,
+    "oldPrice": 79000,
+    "stock": 80,
+    "age": "0–6 tháng",
+    "weight": "80 tờ",
+    "description": "Khăn giấy ướt Baby Soft nắp bật 80 tờ là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Túi nắp bật giúp đóng mở thuận tiện",
+      "Quy cách tham khảo: 80 tờ mỗi gói",
+      "Đóng kín nắp sau mỗi lần sử dụng"
+    ]
+  },
+  {
+    "id": 9,
+    "slug": "trai-cay-nghien-happy-baby-120g",
+    "name": "Trái cây nghiền Happy Baby táo và lê 120g",
+    "brand": "Happy Baby",
+    "category": "Ăn dặm",
+    "type": "food",
+    "image": "/assets/food-jar.svg",
+    "price": 75000,
+    "oldPrice": 89000,
+    "stock": 52,
+    "age": "6–12 tháng",
+    "weight": "120g",
+    "description": "Trái cây nghiền Happy Baby táo và lê 120g là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Hũ nhỏ thuận tiện chia khẩu phần",
+      "Hương vị táo và lê minh họa",
+      "Tham khảo nhãn sản phẩm và nhu cầu của bé"
+    ]
+  },
+  {
+    "id": 10,
+    "slug": "gau-bong-tiny-friends-25cm",
+    "name": "Gấu bông Tiny Friends bạn nhỏ 25cm",
+    "brand": "Tiny Friends",
+    "category": "Đồ chơi",
+    "type": "toy",
+    "image": "/assets/toy.svg",
+    "price": 189000,
+    "oldPrice": 229000,
+    "stock": 26,
+    "age": "3 tuổi trở lên",
+    "weight": "25cm",
+    "description": "Gấu bông Tiny Friends bạn nhỏ 25cm là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Mô hình gấu bông thiết kế tối giản",
+      "Kích thước tham khảo: 25cm",
+      "Luôn giám sát trẻ khi chơi"
+    ]
+  },
+  {
+    "id": 11,
+    "slug": "kem-duong-mama-care-100ml",
+    "name": "Kem dưỡng ẩm Mama Care dành cho mẹ 100ml",
+    "brand": "Mama Care",
+    "category": "Dành cho mẹ",
+    "type": "mom",
+    "image": "/assets/mom.svg",
+    "price": 229000,
+    "oldPrice": 289000,
+    "stock": 23,
+    "age": "Dành cho mẹ",
+    "weight": "100ml",
+    "description": "Kem dưỡng ẩm Mama Care dành cho mẹ 100ml là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Bao bì tuýp nhỏ thuận tiện mang theo",
+      "Dung tích tham khảo: 100ml",
+      "Kiểm tra thành phần theo nhu cầu làn da"
+    ]
+  },
+  {
+    "id": 12,
+    "slug": "ti-ngam-little-love-0-6",
+    "name": "Ti ngậm Little Love hộp đơn 0–6 tháng",
+    "brand": "Little Love",
+    "category": "Đồ dùng cho bé",
+    "type": "bottle",
+    "image": "/assets/pacifier.svg",
+    "price": 99000,
+    "oldPrice": 129000,
+    "stock": 39,
+    "age": "0–6 tháng",
+    "weight": "1 chiếc",
+    "description": "Ti ngậm Little Love hộp đơn 0–6 tháng là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Thiết kế minh họa có vòng cầm",
+      "Hộp đơn tiện bảo quản",
+      "Đọc hướng dẫn vệ sinh và kiểm tra trước mỗi lần dùng"
+    ]
+  },
+  {
+    "id": 13,
+    "slug": "sua-little-grow-so-3-hop-doi",
+    "name": "Combo 2 hộp sữa Little Grow số 3 400g",
+    "brand": "Little Grow",
+    "category": "Sữa cho bé",
+    "type": "milk",
+    "image": "/assets/milk-green.svg",
+    "price": 449000,
+    "oldPrice": 529000,
+    "stock": 21,
+    "age": "1–3 tuổi",
+    "weight": "2 × 400g",
+    "description": "Combo 2 hộp sữa Little Grow số 3 400g là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Combo tham khảo gồm 2 hộp 400g",
+      "Hộp nhỏ thuận tiện sắp xếp",
+      "Thông tin dinh dưỡng cần được thay bằng dữ liệu thật"
+    ]
+  },
+  {
+    "id": 14,
+    "slug": "sua-little-grow-so-2-hop-nho",
+    "name": "Sữa dinh dưỡng Little Grow số 2 400g",
+    "brand": "Little Grow",
+    "category": "Sữa cho bé",
+    "type": "milk",
+    "image": "/assets/milk-gold.svg",
+    "price": 239000,
+    "oldPrice": 279000,
+    "stock": 38,
+    "age": "6–12 tháng",
+    "weight": "400g",
+    "description": "Sữa dinh dưỡng Little Grow số 2 400g là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Quy cách tham khảo: hộp 400g",
+      "Đậy kín sau khi sử dụng",
+      "Thực hiện theo hướng dẫn pha trên nhãn thật"
+    ]
+  },
+  {
+    "id": 15,
+    "slug": "bim-quan-baby-soft-xl38",
+    "name": "Bỉm quần Baby Soft size XL 38 miếng",
+    "brand": "Baby Soft",
+    "category": "Bỉm & tã",
+    "type": "diaper",
+    "image": "/assets/diaper-blue.svg",
+    "price": 295000,
+    "oldPrice": 359000,
+    "stock": 60,
+    "age": "1–3 tuổi",
+    "weight": "XL · 38 miếng",
+    "description": "Bỉm quần Baby Soft size XL 38 miếng là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Thiết kế dạng quần cho bé vận động",
+      "Quy cách tham khảo: size XL, 38 miếng",
+      "Kiểm tra bảng size trước khi mua"
+    ]
+  },
+  {
+    "id": 16,
+    "slug": "bim-dan-baby-soft-s56",
+    "name": "Bỉm dán Baby Soft size S 56 miếng",
+    "brand": "Baby Soft",
+    "category": "Bỉm & tã",
+    "type": "diaper",
+    "image": "/assets/diaper-pink.svg",
+    "price": 259000,
+    "oldPrice": 315000,
+    "stock": 68,
+    "age": "0–6 tháng",
+    "weight": "S · 56 miếng",
+    "description": "Bỉm dán Baby Soft size S 56 miếng là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Miếng dán hai bên thuận tiện chỉnh độ ôm",
+      "Quy cách tham khảo: size S, 56 miếng",
+      "Thay bỉm thường xuyên theo nhu cầu của bé"
+    ]
+  },
+  {
+    "id": 17,
+    "slug": "bot-an-dam-happy-baby-yen-mach",
+    "name": "Bột ăn dặm Happy Baby yến mạch 200g",
+    "brand": "Happy Baby",
+    "category": "Ăn dặm",
+    "type": "food",
+    "image": "/assets/cereal.svg",
+    "price": 139000,
+    "oldPrice": 169000,
+    "stock": 44,
+    "age": "6–12 tháng",
+    "weight": "200g",
+    "description": "Bột ăn dặm Happy Baby yến mạch 200g là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Hương vị yến mạch minh họa",
+      "Quy cách tham khảo: hộp 200g",
+      "Cho bé thử lượng nhỏ và theo dõi phản ứng"
+    ]
+  },
+  {
+    "id": 18,
+    "slug": "rau-cu-nghien-happy-baby-120g",
+    "name": "Rau củ nghiền Happy Baby bí đỏ 120g",
+    "brand": "Happy Baby",
+    "category": "Ăn dặm",
+    "type": "food",
+    "image": "/assets/food-jar.svg",
+    "price": 79000,
+    "oldPrice": 95000,
+    "stock": 46,
+    "age": "6–12 tháng",
+    "weight": "120g",
+    "description": "Rau củ nghiền Happy Baby bí đỏ 120g là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Hương vị bí đỏ minh họa",
+      "Hũ nhỏ thuận tiện cho bữa ăn",
+      "Đọc nhãn và hướng dẫn bảo quản trên sản phẩm thật"
+    ]
+  },
+  {
+    "id": 19,
+    "slug": "tam-goi-pure-baby-200ml",
+    "name": "Sữa tắm gội Pure Baby chai nhỏ 200ml",
+    "brand": "Pure Baby",
+    "category": "Chăm sóc bé",
+    "type": "care",
+    "image": "/assets/baby-care.svg",
+    "price": 109000,
+    "oldPrice": 139000,
+    "stock": 57,
+    "age": "0–6 tháng",
+    "weight": "200ml",
+    "description": "Sữa tắm gội Pure Baby chai nhỏ 200ml là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Dung tích nhỏ thuận tiện mang đi",
+      "Thiết kế chai nhấn minh họa",
+      "Kiểm tra thành phần theo làn da của trẻ"
+    ]
+  },
+  {
+    "id": 20,
+    "slug": "khau-giay-uot-baby-soft-combo-3",
+    "name": "Combo 3 gói khăn giấy ướt Baby Soft 80 tờ",
+    "brand": "Baby Soft",
+    "category": "Chăm sóc bé",
+    "type": "care",
+    "image": "/assets/wet-wipes.svg",
+    "price": 175000,
+    "oldPrice": 215000,
+    "stock": 32,
+    "age": "0–6 tháng",
+    "weight": "3 × 80 tờ",
+    "description": "Combo 3 gói khăn giấy ướt Baby Soft 80 tờ là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Combo tham khảo gồm 3 gói nắp bật",
+      "Mỗi gói 80 tờ",
+      "Bảo quản nơi thoáng mát, đóng nắp sau dùng"
+    ]
+  },
+  {
+    "id": 21,
+    "slug": "binh-sua-little-love-160ml",
+    "name": "Bình sữa Little Love cổ rộng 160ml",
+    "brand": "Little Love",
+    "category": "Đồ dùng cho bé",
+    "type": "bottle",
+    "image": "/assets/bottle.svg",
+    "price": 189000,
+    "oldPrice": 229000,
+    "stock": 28,
+    "age": "0–6 tháng",
+    "weight": "160ml",
+    "description": "Bình sữa Little Love cổ rộng 160ml là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Quy cách dung tích tham khảo: 160ml",
+      "Cổ rộng thuận tiện cọ rửa",
+      "Chọn phụ kiện theo hướng dẫn của nhà sản xuất"
+    ]
+  },
+  {
+    "id": 22,
+    "slug": "ti-ngam-little-love-6-18",
+    "name": "Ti ngậm Little Love hộp đôi 6–18 tháng",
+    "brand": "Little Love",
+    "category": "Đồ dùng cho bé",
+    "type": "bottle",
+    "image": "/assets/pacifier.svg",
+    "price": 169000,
+    "oldPrice": 209000,
+    "stock": 31,
+    "age": "6–12 tháng",
+    "weight": "2 chiếc",
+    "description": "Ti ngậm Little Love hộp đôi 6–18 tháng là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Combo tham khảo gồm 2 chiếc",
+      "Thiết kế minh họa có vòng cầm",
+      "Kiểm tra định kỳ và thay theo hướng dẫn"
+    ]
+  },
+  {
+    "id": 23,
+    "slug": "gau-bong-tiny-friends-35cm",
+    "name": "Gấu bông Tiny Friends ôm ấp 35cm",
+    "brand": "Tiny Friends",
+    "category": "Đồ chơi",
+    "type": "toy",
+    "image": "/assets/toy.svg",
+    "price": 269000,
+    "oldPrice": 329000,
+    "stock": 18,
+    "age": "3 tuổi trở lên",
+    "weight": "35cm",
+    "description": "Gấu bông Tiny Friends ôm ấp 35cm là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Kích thước tham khảo: 35cm",
+      "Tông màu trung tính dễ phối phòng bé",
+      "Đồ chơi dùng khi có người lớn giám sát"
+    ]
+  },
+  {
+    "id": 24,
+    "slug": "bo-cham-soc-mama-care",
+    "name": "Bộ chăm sóc Mama Care dành cho mẹ",
+    "brand": "Mama Care",
+    "category": "Dành cho mẹ",
+    "type": "mom",
+    "image": "/assets/mom.svg",
+    "price": 499000,
+    "oldPrice": 599000,
+    "stock": 16,
+    "age": "Dành cho mẹ",
+    "weight": "Bộ 3 món",
+    "description": "Bộ chăm sóc Mama Care dành cho mẹ là sản phẩm minh họa trong danh mục thử nghiệm Jielien. Hình ảnh, thương hiệu, giá và thông số chỉ dùng để kiểm tra trải nghiệm mua sắm; không đại diện cho hàng hóa đang được bán thực tế.",
+    "features": [
+      "Bộ sản phẩm chăm sóc minh họa",
+      "Thiết kế gọn gàng thuận tiện sử dụng",
+      "Cần thay nội dung, thành phần bằng thông tin sản phẩm thật"
+    ]
+  }
+]

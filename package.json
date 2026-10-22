@@ -1,1 +1,19 @@
-{"name":"jielien-baby-store","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"node server.mjs","start":"node server.mjs"},"engines":{"node":">=22"}}
+{
+  "name": "jielien-baby-store",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vietnamese mother and baby storefront with persistent COD orders",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs",
+    "test": "node --test tests/api.test.mjs",
+    "test:browser": "node tests/browser.test.mjs"
+  },
+  "engines": {
+    "node": ">=24.11.0"
+  },
+  "devDependencies": {
+    "playwright-core": "1.58.2"
+  }
+}

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" role="img" aria-label="Minh họa bao bì sản phẩm mẫu">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1"><stop stop-color="#f2eee5"/><stop offset=".45" stop-color="#fffdf7"/><stop offset="1" stop-color="#e7e0d5"/></linearGradient>
+    <linearGradient id="color" x1="0" x2="1"><stop stop-color="#d99e98"/><stop offset=".5" stop-color="#f4d6d1"/><stop offset="1" stop-color="#d99e98"/></linearGradient>
+    <linearGradient id="plastic" x1="0" x2="1"><stop stop-color="#f2e8da" stop-opacity=".8"/><stop offset=".5" stop-color="#fffdf5"/><stop offset="1" stop-color="#eadccc" stop-opacity=".9"/></linearGradient>
+    <filter id="shadow" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <ellipse cx="160" cy="323" rx="90" ry="10" fill="#645946" opacity=".12" filter="url(#shadow)"/>
+  <path d="M105 133Q103 105 122 100H198Q217 105 215 133V286Q215 311 190 315H130Q105 310 105 286Z" fill="url(#plastic)" stroke="#dfd2be" stroke-width="2"/>
+  <path d="M121 85L129 69H191L199 85Z" fill="#e7bdb4"/><rect x="111" y="85" width="98" height="27" rx="8" fill="#d99e98"/>
+  <path d="M143 69V51Q143 35 160 35Q177 35 177 51V69Z" fill="#f0d7bd"/>
+  <rect x="113" y="174" width="94" height="84" rx="13" fill="#f4d6d1"/>
+  <text x="160" y="202" text-anchor="middle" fill="#b47170" font-family="Georgia,serif" font-size="17">little love</text>
+  <path d="M147 222Q147 211 160 221Q173 211 173 222Q173 232 160 241Q147 232 147 222" fill="#d99e98"/>
+  <path d="M121 128V158M121 267V287" stroke="white" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+  <path d="M193 132H202M195 145H202M193 158H202" stroke="#c1af97"/>
+  <text x="160" y="285" text-anchor="middle" fill="#b09d86" font-family="Arial,sans-serif" font-size="10">240 ml</text>
+</svg>

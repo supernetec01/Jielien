@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-label="Ưu đãi minh họa">
+  <rect width="960" height="360" rx="20" fill="#e5f0d8"/>
+  <circle cx="800" cy="180" r="217" fill="#91aa6d" opacity=".15"/>
+  <circle cx="610" cy="305" r="118" fill="white" opacity=".35"/>
+  <circle cx="906" cy="55" r="45" fill="white" opacity=".4"/>
+  <text x="52" y="69" font-family="Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="2" fill="#91aa6d">YÊU THƯƠNG TỪ NHỮNG ĐIỀU NHỎ NHẤT</text>
+  <text x="52" y="134" font-family="Arial,sans-serif" font-size="37" font-weight="700" fill="#493b43">Dinh dưỡng mỗi ngày</text>
+  <text x="52" y="187" font-family="Arial,sans-serif" font-size="37" font-weight="700" fill="#91aa6d">Cùng con lớn khôn</text>
+  <text x="52" y="229" font-family="Arial,sans-serif" font-size="15" fill="#81727a">Little Grow · Bộ sưu tập minh họa</text>
+  <rect x="52" y="259" width="176" height="44" rx="22" fill="#91aa6d"/>
+  <text x="140" y="287" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="white">Khám phá ngay →</text>
+  <g transform="translate(604 6) scale(.95)">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1"><stop stop-color="#f2eee5"/><stop offset=".45" stop-color="#fffdf7"/><stop offset="1" stop-color="#e7e0d5"/></linearGradient>
+    <linearGradient id="color" x1="0" x2="1"><stop stop-color="#769d6e"/><stop offset=".5" stop-color="#bdcf9a"/><stop offset="1" stop-color="#769d6e"/></linearGradient>
+    <linearGradient id="plastic" x1="0" x2="1"><stop stop-color="#f2e8da" stop-opacity=".8"/><stop offset=".5" stop-color="#fffdf5"/><stop offset="1" stop-color="#eadccc" stop-opacity=".9"/></linearGradient>
+    <filter id="shadow" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <ellipse cx="160" cy="323" rx="90" ry="10" fill="#645946" opacity=".12" filter="url(#shadow)"/>
+  <path d="M78 76Q160 55 242 76V302Q160 326 78 302Z" fill="url(#paper)" stroke="#ddd7c9"/>
+  <ellipse cx="160" cy="76" rx="82" ry="16" fill="#769d6e"/>
+  <rect x="77" y="64" width="166" height="21" rx="5" fill="#769d6e"/>
+  <ellipse cx="160" cy="64" rx="83" ry="10" fill="#bdcf9a"/>
+  <ellipse cx="160" cy="65" rx="72" ry="5" fill="none" stroke="#769d6e" stroke-opacity=".4"/>
+  <text x="160" y="123" font-family="Georgia,serif" font-size="27" text-anchor="middle" fill="#769d6e">little grow</text>
+  <text x="160" y="142" font-family="Arial,sans-serif" font-size="8" letter-spacing="2" text-anchor="middle" fill="#9a8e77">GROWING WITH LOVE</text>
+  <path d="M79 184Q160 158 241 184V300Q160 321 79 300Z" fill="#769d6e"/>
+  <path d="M79 188Q160 162 241 188" fill="none" stroke="#bdcf9a" stroke-width="6"/>
+  <circle cx="160" cy="236" r="36" fill="#fffdf7" opacity=".95"/>
+  <text x="160" y="253" text-anchor="middle" font-family="Georgia,serif" font-size="50" fill="#769d6e">3</text>
+  <text x="160" y="291" font-family="Arial,sans-serif" font-size="10" letter-spacing="2" text-anchor="middle" fill="#fffdf4">800 g · SAMPLE</text>
+  <path d="M90 92V283" stroke="white" opacity=".35" stroke-width="7"/>
+</g>
+  <path d="M587 79L592 93L606 98L592 103L587 117L582 103L568 98L582 93Z" fill="#91aa6d" opacity=".6"/>
+</svg>

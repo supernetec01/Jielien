@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" role="img" aria-label="Minh họa bao bì sản phẩm mẫu">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1"><stop stop-color="#f2eee5"/><stop offset=".45" stop-color="#fffdf7"/><stop offset="1" stop-color="#e7e0d5"/></linearGradient>
+    <linearGradient id="color" x1="0" x2="1"><stop stop-color="#c09a4c"/><stop offset=".5" stop-color="#e9d89c"/><stop offset="1" stop-color="#c09a4c"/></linearGradient>
+    <linearGradient id="plastic" x1="0" x2="1"><stop stop-color="#f2e8da" stop-opacity=".8"/><stop offset=".5" stop-color="#fffdf5"/><stop offset="1" stop-color="#eadccc" stop-opacity=".9"/></linearGradient>
+    <filter id="shadow" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <ellipse cx="160" cy="323" rx="90" ry="10" fill="#645946" opacity=".12" filter="url(#shadow)"/>
+  <path d="M78 76Q160 55 242 76V302Q160 326 78 302Z" fill="url(#paper)" stroke="#ddd7c9"/>
+  <ellipse cx="160" cy="76" rx="82" ry="16" fill="#c09a4c"/>
+  <rect x="77" y="64" width="166" height="21" rx="5" fill="#c09a4c"/>
+  <ellipse cx="160" cy="64" rx="83" ry="10" fill="#e9d89c"/>
+  <ellipse cx="160" cy="65" rx="72" ry="5" fill="none" stroke="#c09a4c" stroke-opacity=".4"/>
+  <text x="160" y="123" font-family="Georgia,serif" font-size="27" text-anchor="middle" fill="#c09a4c">little grow</text>
+  <text x="160" y="142" font-family="Arial,sans-serif" font-size="8" letter-spacing="2" text-anchor="middle" fill="#9a8e77">GROWING WITH LOVE</text>
+  <path d="M79 184Q160 158 241 184V300Q160 321 79 300Z" fill="#c09a4c"/>
+  <path d="M79 188Q160 162 241 188" fill="none" stroke="#e9d89c" stroke-width="6"/>
+  <circle cx="160" cy="236" r="36" fill="#fffdf7" opacity=".95"/>
+  <text x="160" y="253" text-anchor="middle" font-family="Georgia,serif" font-size="50" fill="#c09a4c">2</text>
+  <text x="160" y="291" font-family="Arial,sans-serif" font-size="10" letter-spacing="2" text-anchor="middle" fill="#fffdf4">800 g · SAMPLE</text>
+  <path d="M90 92V283" stroke="white" opacity=".35" stroke-width="7"/>
+</svg>

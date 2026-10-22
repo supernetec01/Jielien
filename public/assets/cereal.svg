@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" role="img" aria-label="Minh họa bao bì sản phẩm mẫu">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1"><stop stop-color="#f2eee5"/><stop offset=".45" stop-color="#fffdf7"/><stop offset="1" stop-color="#e7e0d5"/></linearGradient>
+    <linearGradient id="color" x1="0" x2="1"><stop stop-color="#8eaa77"/><stop offset=".5" stop-color="#d2dec2"/><stop offset="1" stop-color="#8eaa77"/></linearGradient>
+    <linearGradient id="plastic" x1="0" x2="1"><stop stop-color="#f2e8da" stop-opacity=".8"/><stop offset=".5" stop-color="#fffdf5"/><stop offset="1" stop-color="#eadccc" stop-opacity=".9"/></linearGradient>
+    <filter id="shadow" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <ellipse cx="160" cy="323" rx="90" ry="10" fill="#645946" opacity=".12" filter="url(#shadow)"/>
+  <path d="M79 72L93 51H232L245 73V306H79Z" fill="#d2dec2"/><path d="M87 80H237V305H87Z" fill="#faf8ee"/>
+  <path d="M87 80H237V148Q160 168 87 148Z" fill="#8eaa77"/>
+  <text x="162" y="117" text-anchor="middle" fill="white" font-family="Georgia,serif" font-size="22">happy baby</text>
+  <text x="162" y="137" text-anchor="middle" fill="#f1f7e9" font-family="Arial,sans-serif" font-size="8" letter-spacing="1">LITTLE BOWLS OF JOY</text>
+  <circle cx="162" cy="211" r="46" fill="#f3e5c8"/>
+  <path d="M124 215Q163 196 200 215Q194 246 163 246Q130 246 124 215" fill="#e4be87"/>
+  <ellipse cx="162" cy="214" rx="38" ry="10" fill="#fffcf5"/>
+  <path d="M143 211Q161 199 181 211" fill="none" stroke="#d6ae70" stroke-width="5"/>
+  <path d="M176 189L190 174" stroke="#99ad7d" stroke-width="5" stroke-linecap="round"/>
+  <text x="162" y="274" text-anchor="middle" fill="#83996c" font-family="Arial,sans-serif" font-size="12">RICE &amp; VEGGIES</text>
+  <text x="162" y="293" text-anchor="middle" fill="#ac9f85" font-family="Arial,sans-serif" font-size="9">200 g · SAMPLE</text>
+</svg>

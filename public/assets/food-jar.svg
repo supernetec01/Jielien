@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" role="img" aria-label="Minh họa bao bì sản phẩm mẫu">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1"><stop stop-color="#f2eee5"/><stop offset=".45" stop-color="#fffdf7"/><stop offset="1" stop-color="#e7e0d5"/></linearGradient>
+    <linearGradient id="color" x1="0" x2="1"><stop stop-color="#9cba85"/><stop offset=".5" stop-color="#dce9cf"/><stop offset="1" stop-color="#9cba85"/></linearGradient>
+    <linearGradient id="plastic" x1="0" x2="1"><stop stop-color="#f2e8da" stop-opacity=".8"/><stop offset=".5" stop-color="#fffdf5"/><stop offset="1" stop-color="#eadccc" stop-opacity=".9"/></linearGradient>
+    <filter id="shadow" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <ellipse cx="160" cy="323" rx="90" ry="10" fill="#645946" opacity=".12" filter="url(#shadow)"/>
+  <rect x="100" y="105" width="120" height="197" rx="25" fill="#e7bd81" stroke="#d4b18a"/>
+  <path d="M109 120V282" stroke="#fff" opacity=".3" stroke-width="9" stroke-linecap="round"/>
+  <rect x="96" y="86" width="128" height="32" rx="7" fill="#9cba85"/>
+  <path d="M101 93H219" stroke="#c5d7b3" stroke-width="4"/>
+  <rect x="101" y="153" width="118" height="105" fill="#fbf6e6"/>
+  <text x="160" y="181" text-anchor="middle" fill="#8aa271" font-family="Georgia,serif" font-size="20">happy baby</text>
+  <circle cx="160" cy="219" r="22" fill="#e6a55a"/><path d="M160 197L164 186" stroke="#8aa271" stroke-width="4"/>
+  <path d="M167 191Q180 178 186 190Q176 198 167 191" fill="#a7bc86"/>
+  <text x="160" y="280" text-anchor="middle" fill="#9e7847" font-family="Arial,sans-serif" font-size="10">FRUIT PURÉE · 120 g</text>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" role="img" aria-label="Minh họa bao bì sản phẩm mẫu">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1"><stop stop-color="#f2eee5"/><stop offset=".45" stop-color="#fffdf7"/><stop offset="1" stop-color="#e7e0d5"/></linearGradient>
+    <linearGradient id="color" x1="0" x2="1"><stop stop-color="#d6b59c"/><stop offset=".5" stop-color="#f6f0e6"/><stop offset="1" stop-color="#d6b59c"/></linearGradient>
+    <linearGradient id="plastic" x1="0" x2="1"><stop stop-color="#f2e8da" stop-opacity=".8"/><stop offset=".5" stop-color="#fffdf5"/><stop offset="1" stop-color="#eadccc" stop-opacity=".9"/></linearGradient>
+    <filter id="shadow" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <ellipse cx="160" cy="323" rx="90" ry="10" fill="#645946" opacity=".12" filter="url(#shadow)"/>
+  <rect x="77" y="60" width="166" height="252" rx="18" fill="#f6f0e6" stroke="#e4d7c5"/>
+  <path d="M77 78Q77 60 95 60H225Q243 60 243 78V124H77Z" fill="#d6b59c"/>
+  <text x="160" y="97" text-anchor="middle" fill="white" font-family="Georgia,serif" font-size="23">little love</text>
+  <text x="160" y="116" text-anchor="middle" fill="#fff8f0" font-family="Arial,sans-serif" font-size="8" letter-spacing="1.5">TINY COMFORTS</text>
+  <rect x="91" y="139" width="138" height="137" rx="35" fill="#fffaf2" stroke="#e6dace"/>
+  <path d="M146 189Q160 161 174 189L177 212H143Z" fill="#e8cab0"/>
+  <path d="M115 218Q113 194 139 203Q160 213 181 203Q207 194 205 218Q201 251 160 249Q119 251 115 218" fill="#d8b5a1"/>
+  <ellipse cx="160" cy="223" rx="15" ry="14" fill="#f2d9c5"/>
+  <ellipse cx="160" cy="246" rx="19" ry="18" fill="none" stroke="#bc977c" stroke-width="8"/>
+  <text x="160" y="295" text-anchor="middle" fill="#b1947b" font-family="Arial,sans-serif" font-size="9">0–6 MONTHS · SAMPLE</text>
+</svg>

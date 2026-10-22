@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" role="img" aria-label="Minh họa bao bì sản phẩm mẫu">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1"><stop stop-color="#f2eee5"/><stop offset=".45" stop-color="#fffdf7"/><stop offset="1" stop-color="#e7e0d5"/></linearGradient>
+    <linearGradient id="color" x1="0" x2="1"><stop stop-color="#72a9b6"/><stop offset=".5" stop-color="#d8edf0"/><stop offset="1" stop-color="#72a9b6"/></linearGradient>
+    <linearGradient id="plastic" x1="0" x2="1"><stop stop-color="#f2e8da" stop-opacity=".8"/><stop offset=".5" stop-color="#fffdf5"/><stop offset="1" stop-color="#eadccc" stop-opacity=".9"/></linearGradient>
+    <filter id="shadow" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <ellipse cx="160" cy="323" rx="90" ry="10" fill="#645946" opacity=".12" filter="url(#shadow)"/>
+  <path d="M61 82L76 54H240L258 83V310H61Z" fill="#72a9b6" stroke="#72a9b6"/>
+  <path d="M61 83L77 62H239L258 83" fill="#d8edf0"/>
+  <path d="M68 87H250V301H68Z" fill="#fffcf5"/>
+  <path d="M68 87H250V153Q157 169 68 153Z" fill="#72a9b6"/>
+  <text x="159" y="127" text-anchor="middle" fill="white" font-family="Georgia,serif" font-size="28">baby soft</text>
+  <text x="159" y="145" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-size="8" letter-spacing="1.5">A LITTLE MORE COMFORT</text>
+  <circle cx="159" cy="218" r="44" fill="#e6ca9f"/>
+  <circle cx="126" cy="184" r="16" fill="#e6ca9f"/><circle cx="192" cy="184" r="16" fill="#e6ca9f"/>
+  <circle cx="144" cy="213" r="3" fill="#68503a"/><circle cx="174" cy="213" r="3" fill="#68503a"/>
+  <ellipse cx="159" cy="231" rx="18" ry="13" fill="#fcf1d8"/>
+  <ellipse cx="159" cy="227" rx="6" ry="4" fill="#68503a"/>
+  <path d="M92 273Q159 255 226 273V295H92Z" fill="#d8edf0"/>
+  <text x="159" y="288" text-anchor="middle" fill="#72a9b6" font-family="Arial,sans-serif" font-size="14" font-weight="bold">NB · 60</text>
+  <path d="M74 93V293" stroke="white" stroke-width="4" opacity=".5"/>
+  <path d="M249 88V301" stroke="#000" stroke-width="4" opacity=".04"/>
+</svg>

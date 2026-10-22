@@ -1,12 +1,170 @@
-<!doctype html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Jielien — Cửa hàng mẹ và bé. Chọn điều tốt nhất cho hành trình khôn lớn của con."><title>Jielien — Yêu thương từ những điều nhỏ nhất</title><link rel="stylesheet" href="/style.css"></head><body>
-<div class="announcement">Chào mẹ mới! Tặng <b>50.000đ</b> cho đơn hàng đầu tiên <span>•</span> Miễn phí giao hàng từ 499.000đ <a href="#products">Mua ngay ↗</a></div>
-<header><div class="header-inner"><a class="logo" href="/">jielien<span>✿</span><small>MẸ AN TÂM · BÉ KHÔN LỚN</small></a><form id="search-form" class="search"><input id="search" aria-label="Tìm sản phẩm" placeholder="Mẹ đang tìm gì cho bé yêu?"><button aria-label="Tìm kiếm">⌕</button></form><div class="header-contact">♡ <span>Mẹ cần tư vấn?<b>1900 1234</b></span></div><button id="cart-open" class="cart-button">♧ <span>Giỏ hàng</span><b id="cart-count">0</b></button></div><nav><div class="nav-inner"><a class="all-categories" href="#categories">☰ <b>Danh mục sản phẩm</b></a><a href="#products" data-filter="Sữa cho bé">Sữa cho bé</a><a href="#products" data-filter="Bỉm & tã">Bỉm & tã</a><a href="#products" data-filter="Ăn dặm">Ăn dặm</a><a href="#products" data-filter="Chăm sóc bé">Chăm sóc bé</a><a href="#journal">Góc của mẹ</a><a class="nav-deal" href="#products">✧ Ưu đãi hôm nay</a></div></nav></header>
-<main><div class="breadcrumb">Trang chủ <span>/</span> Thế giới của mẹ và bé</div><section class="hero"><div class="hero-copy"><div class="eyebrow">LỚN LÊN CÙNG YÊU THƯƠNG</div><h1>Điều nhỏ xinh.<br>Yêu thương <em>thật lớn.</em></h1><p>Cùng mẹ chăm chút từng khoảnh khắc,<br>để con khôn lớn, khỏe mạnh và hạnh phúc.</p><a class="primary" href="#products">Khám phá cho bé <span>↗</span></a><div class="hero-note"><span>✦</span> Chọn kỹ cho con · An tâm cho mẹ</div></div><div class="hero-art"><div class="circle"></div><div class="floating-note note-one">♡ Dịu dàng nâng niu</div><img src="/family.svg" alt="Minh họa gấu mẹ và gấu con bên những món đồ chăm sóc bé"><div class="floating-note note-two"><span>✿</span> Mỗi ngày một chút lớn khôn</div><span class="star star-one">✧</span><span class="star star-two">✳</span></div><div class="hero-pagination"><b></b><i></i><i></i></div></section>
-<section class="trust-strip"><div><span>♧</span><p><b>Giao nhanh tận nhà</b><small>Để mẹ có thêm thời gian bên con</small></p></div><div><span>✓</span><p><b>Cam kết chính hãng</b><small>Chọn lọc kỹ, nguồn gốc rõ ràng</small></p></div><div><span>♡</span><p><b>Tư vấn tận tâm</b><small>Luôn lắng nghe điều mẹ cần</small></p></div><div><span>↻</span><p><b>Đổi trả dễ dàng</b><small>Mua sắm an tâm hơn mỗi ngày</small></p></div></section>
-<section id="categories"><div class="section-title"><div><div class="eyebrow">MỌI ĐIỀU BÉ CẦN</div><h2>Mẹ tìm gì cho bé?</h2></div><a href="#products" id="view-all">Khám phá tất cả ↗</a></div><div id="category-list" class="categories"></div></section>
-<section id="products"><div class="section-title"><div><div class="eyebrow">GIÁ XINH, YÊU THƯƠNG ĐONG ĐẦY</div><h2>Ưu đãi mẹ không nên bỏ lỡ <span class="spark">✦</span></h2></div><span class="deal-badge">Ưu đãi mỗi ngày</span></div><div class="filter-row" id="filters"></div><div class="results-line" id="results-line" aria-live="polite"></div><div id="product-grid" class="product-grid"></div><div class="center"><button id="more-products" class="secondary">Xem thêm sản phẩm ↓</button></div></section>
-<section class="promo"><div><div class="eyebrow">CHÀO ĐÓN THIÊN THẦN NHỎ</div><h2>Chuẩn bị đủ đầy,<br>đón con yêu đến.</h2><p>Những món đồ đầu đời được chọn bằng cả yêu thương.</p><a class="primary" href="#products" data-filter="Chăm sóc bé">Chọn đồ cho bé ↗</a></div><div class="promo-art">☁<span>hello<br><b>little one.</b></span>✿</div></section>
-<section id="journal"><div class="section-title"><div><div class="eyebrow">ĐỒNG HÀNH CÙNG MẸ</div><h2>Một chút chia sẻ, thật nhiều yêu thương</h2></div></div><div class="journal-grid"><article><div class="journal-image peach">☀ <span>chậm một nhịp,<br>thương con nhiều hơn.</span></div><small>CHĂM SÓC BÉ · 5 PHÚT ĐỌC</small><h3>Những điều nhỏ giúp bé ngủ ngon mỗi ngày</h3><button class="read-story" data-story="sleep">Đọc cùng Jielien ↗</button></article><article><div class="journal-image green">♧ <span>bữa đầu đời,<br>vạn điều mới mẻ.</span></div><small>DINH DƯỠNG · 4 PHÚT ĐỌC</small><h3>Cùng mẹ chuẩn bị hành trình ăn dặm cho bé</h3><button class="read-story" data-story="food">Đọc cùng Jielien ↗</button></article><article><div class="journal-image lavender">♡ <span>mẹ cũng cần<br>được chăm chút.</span></div><small>GÓC CỦA MẸ · 3 PHÚT ĐỌC</small><h3>Dành một khoảng nhỏ mỗi ngày cho chính mẹ</h3><button class="read-story" data-story="mom">Đọc cùng Jielien ↗</button></article></div></section>
-<section class="newsletter"><div><h2>Một chiếc thư nhỏ gửi mẹ ♡</h2><p>Nhận chia sẻ hữu ích và những ưu đãi xinh từ Jielien.</p></div><form id="newsletter-form"><input type="email" required placeholder="Địa chỉ email của mẹ" aria-label="Email nhận tin"><button class="primary">Đăng ký ↗</button></form></section></main>
-<footer><div><a class="logo" href="/">jielien<span>✿</span></a><p>Yêu thương từ những điều nhỏ nhất.<br>Cùng mẹ, vì một tuổi thơ trọn vẹn.</p></div><div><h4>Về Jielien</h4><p>Cửa hàng mẫu dành cho mẹ và bé</p><a href="#journal">Góc chia sẻ</a></div><div><h4>Hỗ trợ mẹ</h4><p>Tư vấn: 1900 1234 (minh họa)</p><p>Email: hello@example.com</p></div><div><h4>An tâm mua sắm</h4><p>Chính hãng · Tận tâm · Chu đáo</p><p>Thanh toán an toàn</p><span class="payments">VISA　 Mastercard　 COD</span></div><div class="footer-bottom">© 2026 Jielien. Bản mẫu giao diện cửa hàng. <span>Chưa kết nối thanh toán và xử lý đơn hàng thực tế.</span></div></footer>
-<div id="toast" role="status"></div><div id="overlay" class="overlay" hidden></div><aside id="cart" class="cart-panel" aria-label="Giỏ hàng" hidden><div class="cart-heading"><h2>Giỏ hàng của mẹ</h2><button id="cart-close" aria-label="Đóng giỏ hàng">×</button></div><div id="cart-items"></div><div class="cart-total"><span>Tổng cộng</span><b id="cart-total"></b></div><p class="cart-disclaimer">Đây là giỏ hàng mẫu. Chưa thu tiền hoặc gửi đơn hàng.</p><button id="checkout" class="primary">Tiếp tục đặt hàng ↗</button></aside><dialog id="story-dialog"><button id="story-close" aria-label="Đóng bài viết">×</button><h2 id="story-title"></h2><p id="story-content"></p></dialog><script src="/app.js" type="module"></script></body></html>
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ed1164" />
+    <meta
+      name="description"
+      content="Jielien — thế giới mẹ và bé. Mua sắm sữa, bỉm tã, đồ dùng chăm sóc bé và đặt hàng COD."
+    />
+    <title>Jielien — Thế giới mẹ và bé</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Đi đến nội dung</a>
+    <div class="top-promo">
+      THÁNG YÊU THƯƠNG <strong>Giảm 50.000đ</strong> cho đơn từ 500.000đ
+      <span>• Mã: MEBE50</span><a href="/san-pham" data-link>Mua ngay →</a>
+    </div>
+    <header class="site-header">
+      <div class="header-main wrap">
+        <button
+          id="mobile-menu"
+          class="icon-button mobile-only"
+          aria-label="Mở danh mục"
+        >
+          ☰
+        </button>
+        <a href="/" data-link class="logo" aria-label="Jielien trang chủ"
+          >JIE<span>LIEN</span><small>THẾ GIỚI MẸ & BÉ</small></a
+        >
+        <form id="search-form" role="search" class="search-form">
+          <input
+            id="search"
+            type="search"
+            autocomplete="off"
+            placeholder="Mẹ tìm sữa, bỉm tã, đồ dùng cho bé…"
+            aria-label="Tìm sản phẩm"
+          /><button aria-label="Tìm kiếm">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <circle cx="10" cy="10" r="6.5" />
+              <path d="m15 15 6 6" />
+            </svg>
+          </button>
+          <div id="suggestions" hidden></div>
+        </form>
+        <a href="/tra-cuu-don-hang" data-link class="header-action"
+          ><span class="line-icon">▤</span
+          ><span>Tra cứu<br /><b>đơn hàng</b></span></a
+        >
+        <a href="/yeu-thich" data-link class="header-action wish-header"
+          ><span class="line-icon">♡</span
+          ><span>Sản phẩm<br /><b>yêu thích</b></span></a
+        >
+        <a href="/gio-hang" data-link class="cart-link"
+          ><span class="bag-icon">♧</span><span>Giỏ hàng</span
+          ><b id="cart-count">0</b></a
+        >
+      </div>
+      <nav class="nav-bar">
+        <div class="wrap nav-inner">
+          <button id="category-menu">
+            ☰ <b>Danh mục sản phẩm</b><span>⌄</span></button
+          ><a href="/san-pham?category=Sữa%20cho%20bé" data-link>Sữa cho bé</a
+          ><a href="/san-pham?category=Bỉm%20%26%20tã" data-link>Bỉm & tã</a
+          ><a href="/san-pham?category=Ăn%20dặm" data-link>Ăn dặm</a
+          ><a href="/san-pham?category=Chăm%20sóc%20bé" data-link>Chăm sóc bé</a
+          ><a href="/bai-viet/an-dam" data-link>Góc của mẹ</a
+          ><a href="/san-pham?sort=discount" data-link class="nav-hot"
+            >ϟ Ưu đãi hôm nay</a
+          >
+        </div>
+      </nav>
+    </header>
+    <div id="menu-backdrop" hidden></div>
+    <nav
+      id="category-dropdown"
+      class="category-dropdown"
+      aria-label="Danh mục sản phẩm"
+      hidden
+    ></nav>
+    <main id="main" class="wrap" tabindex="-1">
+      <div class="loading">Đang chuẩn bị thế giới nhỏ cho bé…</div>
+    </main>
+    <section class="benefits">
+      <div class="wrap">
+        <div>
+          <i>✓</i
+          ><span
+            ><b>Chọn lọc cho bé</b
+            ><small>Thông tin sản phẩm rõ ràng</small></span
+          >
+        </div>
+        <div>
+          <i>♧</i
+          ><span
+            ><b>Giao hàng tận nơi</b><small>Miễn phí từ 499.000đ</small></span
+          >
+        </div>
+        <div>
+          <i>↻</i
+          ><span
+            ><b>Chính sách minh bạch</b
+            ><small>Xem điều kiện đổi trả</small></span
+          >
+        </div>
+        <div>
+          <i>♡</i
+          ><span
+            ><b>Đồng hành cùng mẹ</b
+            ><small>Quan tâm từ điều nhỏ nhất</small></span
+          >
+        </div>
+      </div>
+    </section>
+    <footer>
+      <div class="wrap footer-grid">
+        <div>
+          <a class="logo" href="/" data-link>JIE<span>LIEN</span></a>
+          <p>
+            Yêu thương cho mẹ, trọn vẹn cho bé.<br />Website độc lập, dữ liệu và
+            hình sản phẩm minh họa.
+          </p>
+          <span class="demo-tag">BẢN PHÁT TRIỂN · ĐẶT HÀNG THỬ</span>
+        </div>
+        <div>
+          <h3>Hỗ trợ mua sắm</h3>
+          <a href="/tra-cuu-don-hang" data-link>Tra cứu đơn hàng</a
+          ><a href="/chinh-sach/giao-hang" data-link>Giao hàng & thanh toán</a
+          ><a href="/chinh-sach/doi-tra" data-link>Chính sách đổi trả</a>
+        </div>
+        <div>
+          <h3>Thông tin cửa hàng</h3>
+          <a href="/chinh-sach/gioi-thieu" data-link>Về Jielien</a
+          ><a href="/chinh-sach/bao-mat" data-link>Bảo vệ thông tin cá nhân</a
+          ><a href="/bai-viet/an-dam" data-link>Kiến thức mẹ & bé</a>
+        </div>
+        <div>
+          <h3>Phương thức thanh toán</h3>
+          <span class="cod-label">COD</span>
+          <p>
+            Thanh toán khi nhận hàng.<br />Đơn tạo ở môi trường thử nghiệm,<br />chưa
+            chuyển đơn cho đơn vị vận chuyển.
+          </p>
+        </div>
+      </div>
+      <div class="wrap footer-bottom">
+        © 2026 Jielien. Không phải website chính thức của AVAKids.<a
+          href="/chinh-sach/gioi-thieu"
+          data-link
+          >Thông tin về bản phát triển ↗</a
+        >
+      </div>
+    </footer>
+    <nav class="mobile-bottom" aria-label="Điều hướng điện thoại">
+      <a href="/" data-link>⌂<span>Trang chủ</span></a
+      ><a href="/san-pham" data-link>▦<span>Sản phẩm</span></a
+      ><a href="/yeu-thich" data-link>♡<span>Yêu thích</span></a
+      ><a href="/gio-hang" data-link>♧<span>Giỏ hàng</span></a
+      ><a href="/tra-cuu-don-hang" data-link>▤<span>Đơn hàng</span></a>
+    </nav>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

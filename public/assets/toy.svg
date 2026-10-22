@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" role="img" aria-label="Minh họa bao bì sản phẩm mẫu">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1"><stop stop-color="#f2eee5"/><stop offset=".45" stop-color="#fffdf7"/><stop offset="1" stop-color="#e7e0d5"/></linearGradient>
+    <linearGradient id="color" x1="0" x2="1"><stop stop-color="#bf9b7b"/><stop offset=".5" stop-color="#e9d6b8"/><stop offset="1" stop-color="#bf9b7b"/></linearGradient>
+    <linearGradient id="plastic" x1="0" x2="1"><stop stop-color="#f2e8da" stop-opacity=".8"/><stop offset=".5" stop-color="#fffdf5"/><stop offset="1" stop-color="#eadccc" stop-opacity=".9"/></linearGradient>
+    <filter id="shadow" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <ellipse cx="160" cy="323" rx="90" ry="10" fill="#645946" opacity=".12" filter="url(#shadow)"/>
+  <ellipse cx="159" cy="240" rx="65" ry="72" fill="#bb9675"/>
+  <ellipse cx="102" cy="231" rx="23" ry="45" transform="rotate(25 102 231)" fill="#ae8868"/>
+  <ellipse cx="216" cy="231" rx="23" ry="45" transform="rotate(-25 216 231)" fill="#ae8868"/>
+  <circle cx="109" cy="104" r="30" fill="#bf9b7b"/><circle cx="210" cy="104" r="30" fill="#bf9b7b"/>
+  <circle cx="109" cy="104" r="16" fill="#dfc4a6"/><circle cx="210" cy="104" r="16" fill="#dfc4a6"/>
+  <ellipse cx="159" cy="149" rx="75" ry="67" fill="#c6a383"/>
+  <ellipse cx="159" cy="175" rx="32" ry="24" fill="#e9d6b8"/>
+  <ellipse cx="159" cy="166" rx="10" ry="7" fill="#6f5340"/>
+  <circle cx="131" cy="145" r="4" fill="#4f3c32"/><circle cx="187" cy="145" r="4" fill="#4f3c32"/>
+  <path d="M159 172V181M159 181Q148 187 145 179M159 181Q170 187 173 179" fill="none" stroke="#6f5340" stroke-width="2.5"/>
+  <path d="M130 210L159 226L188 210V239L159 226L130 239Z" fill="#c4d0ad"/>
+  <ellipse cx="111" cy="299" rx="37" ry="23" fill="#ad8665"/><ellipse cx="207" cy="299" rx="37" ry="23" fill="#ad8665"/>
+  <ellipse cx="104" cy="298" rx="23" ry="15" fill="#dfc3a0"/><ellipse cx="214" cy="298" rx="23" ry="15" fill="#dfc3a0"/>
+</svg>

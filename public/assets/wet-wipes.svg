@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" role="img" aria-label="Minh họa bao bì sản phẩm mẫu">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1"><stop stop-color="#f2eee5"/><stop offset=".45" stop-color="#fffdf7"/><stop offset="1" stop-color="#e7e0d5"/></linearGradient>
+    <linearGradient id="color" x1="0" x2="1"><stop stop-color="#a8c4bf"/><stop offset=".5" stop-color="#e9f3e9"/><stop offset="1" stop-color="#a8c4bf"/></linearGradient>
+    <linearGradient id="plastic" x1="0" x2="1"><stop stop-color="#f2e8da" stop-opacity=".8"/><stop offset=".5" stop-color="#fffdf5"/><stop offset="1" stop-color="#eadccc" stop-opacity=".9"/></linearGradient>
+    <filter id="shadow" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <ellipse cx="160" cy="323" rx="90" ry="10" fill="#645946" opacity=".12" filter="url(#shadow)"/>
+  <path d="M48 143L65 111H254L273 142L260 278H58Z" fill="#a8c4bf"/>
+  <path d="M62 147H260L251 267H69Z" fill="#e9f3e9"/>
+  <rect x="112" y="118" width="98" height="48" rx="17" fill="#fffdf7" stroke="#c3d5cb" stroke-width="3"/>
+  <rect x="123" y="128" width="76" height="28" rx="10" fill="#d9e9dd"/>
+  <text x="163" y="202" text-anchor="middle" fill="#6b9890" font-family="Georgia,serif" font-size="27">baby soft</text>
+  <text x="163" y="226" text-anchor="middle" fill="#779e95" font-family="Arial,sans-serif" font-size="9" letter-spacing="1.8">LITTLE CLEAN MOMENTS</text>
+  <circle cx="163" cy="249" r="11" fill="#b3cdba"/>
+  <text x="163" y="253" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="8">80</text>
+  <path d="M67 119L74 139M251 118L248 140" stroke="white" stroke-opacity=".5" stroke-width="5"/>
+</svg>
