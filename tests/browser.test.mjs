@@ -1,23 +1,22 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { once } from "node:events";
 import { createApp } from "../server.mjs";
+import { createTestDatabase, closeServer } from "./support/database.mjs";
 
-// This test starts its own ephemeral server/database; ports 3000 and 3001 are untouched.
+// This test starts an ephemeral server and isolated PostgreSQL schema; ports 3000 and 3001 are untouched.
 const playwrightModule = process.env.PLAYWRIGHT_MODULE || "playwright-core";
 const { chromium } = await import(
   playwrightModule.startsWith("/")
     ? pathToFileURL(playwrightModule).href
     : playwrightModule
 );
-const temp = await mkdtemp(join(tmpdir(), "jielien-browser-"));
+const database = await createTestDatabase();
 const catalog = JSON.parse(
   await readFile(new URL("../public/catalog.json", import.meta.url), "utf8"),
 );
-const app = await createApp({ dataDir: temp });
+const app = await createApp({ pool: database.pool, legacyPath: null });
 app.listen(0, "127.0.0.1");
 await once(app, "listening");
 const base = `http://127.0.0.1:${app.address().port}`;
@@ -468,6 +467,6 @@ try {
   console.log(`Browser E2E complete: ${checks} checks passed.`);
 } finally {
   if (browser) await browser.close();
-  await new Promise((resolve) => app.close(resolve));
-  await rm(temp, { recursive: true, force: true });
+  await closeServer(app);
+  await database.cleanup();
 }

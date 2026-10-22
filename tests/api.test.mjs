@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { once } from "node:events";
 import { createApp } from "../server.mjs";
+import { createTestDatabase, closeServer } from "./support/database.mjs";
 
 const products = [
   {
@@ -47,9 +48,14 @@ async function fixture(t) {
   const dir = await mkdtemp(join(tmpdir(), "jielien-api-"));
   const catalogPath = join(dir, "catalog.json");
   await writeFile(catalogPath, JSON.stringify(products));
+  const database = await createTestDatabase();
   let server;
   const start = async () => {
-    server = await createApp({ dataDir: join(dir, "data"), catalogPath });
+    server = await createApp({
+      pool: database.pool,
+      catalogPath,
+      legacyPath: null,
+    });
     server.listen(0, "127.0.0.1");
     await once(server, "listening");
     return `http://127.0.0.1:${server.address().port}`;
@@ -73,13 +79,14 @@ async function fixture(t) {
     };
   };
   t.after(async () => {
-    if (server.listening) await new Promise((resolve) => server.close(resolve));
+    await closeServer(server);
+    await database.cleanup();
     await rm(dir, { recursive: true, force: true });
   });
   return {
     request,
     restart: async () => {
-      await new Promise((resolve) => server.close(resolve));
+      await closeServer(server);
       base = await start();
     },
     base: () => base,

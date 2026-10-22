@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ed1164" />
+    <title>Tài khoản của mẹ | Jielien</title>
+    <link rel="stylesheet" href="/management.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#account-main">Đến nội dung</a>
+    <header class="management-header">
+      <div class="management-wrap header-row">
+        <a class="management-logo" href="/"
+          >JIE<span>LIEN</span><small>THẾ GIỚI MẸ & BÉ</small></a
+        ><span class="header-caption">Tài khoản của mẹ</span
+        ><a class="header-back" href="/">← Tiếp tục mua sắm</a>
+      </div>
+    </header>
+    <main id="account-main" class="management-wrap account-main" tabindex="-1">
+      <div class="loading" role="status">Đang kiểm tra phiên đăng nhập…</div>
+    </main>
+    <footer class="management-footer">
+      <div class="management-wrap">
+        Jielien · Website phát triển, dữ liệu sản phẩm minh họa.
+        <a href="/chinh-sach/bao-mat">Thông tin cá nhân</a>
+      </div>
+    </footer>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <dialog
+      id="order-dialog"
+      class="detail-dialog"
+      aria-labelledby="order-dialog-title"
+    >
+      <div class="dialog-header">
+        <h2 id="order-dialog-title">Chi tiết đơn hàng</h2>
+        <button
+          type="button"
+          data-close-dialog
+          aria-label="Đóng chi tiết đơn hàng"
+        >
+          ×
+        </button>
+      </div>
+      <div id="order-dialog-content"></div>
+    </dialog>
+    <script src="/account.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ed1164" />
+    <title>Quản trị cửa hàng | Jielien</title>
+    <link rel="stylesheet" href="/management.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#admin-content">Đến nội dung</a>
+    <header class="management-header">
+      <div class="management-wrap header-row">
+        <a class="management-logo" href="/"
+          >JIE<span>LIEN</span><small>QUẢN TRỊ CỬA HÀNG</small></a
+        ><span class="header-caption">Không gian vận hành</span
+        ><a class="header-back" href="/">↗ Xem website</a
+        ><a class="header-back" href="/tai-khoan">Tài khoản</a>
+      </div>
+    </header>
+    <main id="admin-main" class="management-wrap admin-main">
+      <div class="loading" role="status">Đang kiểm tra quyền truy cập…</div>
+    </main>
+    <footer class="management-footer">
+      <div class="management-wrap">
+        Jielien · Thao tác quản trị được kiểm tra quyền tại máy chủ và ghi nhật
+        ký.
+      </div>
+    </footer>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <dialog
+      id="admin-dialog"
+      class="detail-dialog"
+      aria-labelledby="admin-dialog-title"
+    >
+      <div class="dialog-header">
+        <h2 id="admin-dialog-title">Chi tiết</h2>
+        <button type="button" data-close-dialog aria-label="Đóng cửa sổ">
+          ×
+        </button>
+      </div>
+      <div id="admin-dialog-content"></div>
+    </dialog>
+    <script src="/admin.js" type="module"></script>
+  </body>
+</html>

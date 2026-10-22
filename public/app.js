@@ -54,11 +54,21 @@ let checkoutKey = null;
 let submitting = false;
 let lastOrder = null;
 let pendingOrder = null;
+let identity = null;
+let csrfToken = "";
+let cartSync = Promise.resolve();
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
     ...options,
-    headers: { "Content-Type": "application/json", ...options.headers },
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      ...(csrfToken && options.method && options.method !== "GET"
+        ? { "X-CSRF-Token": csrfToken }
+        : {}),
+      ...options.headers,
+    },
   });
   let body;
   try {
@@ -283,9 +293,9 @@ function details(slug) {
   if (!p) return notFound();
   document.title = p.name + " | Jielien";
   const variants = products
-    .filter((item) => item.type === p.type && item.id !== p.id)
+    .filter((item) => item.productId === p.productId && item.id !== p.id)
     .slice(0, 3);
-  return `${breadcrumbs([[p.category, href({ category: p.category })], [p.name]])}<section class="panel detail-top"><div><div class="gallery-main"><span class="product-discount">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span><img id="detail-image" src="${escape(p.image)}" alt="${escape(p.name)} — hình sản phẩm minh họa"></div><div class="gallery-thumbs"><button aria-label="Ảnh sản phẩm chính"><img src="${escape(p.image)}" alt=""></button></div><p class="detail-label">Hình SVG minh họa. Thông tin và thương hiệu trong bản thử nghiệm.</p></div><div class="detail-info"><div class="product-brand">${escape(p.brand)}</div><h1>${escape(p.name)}</h1><div class="detail-meta"><span>Mã sản phẩm: JL${String(p.id).padStart(4, "0")}</span><span class="in-stock">${p.stock ? `✓ Còn ${p.stock} sản phẩm` : "Tạm hết hàng"}</span></div><div class="detail-pricing"><strong>${money(p.price)}</strong><del>${money(p.oldPrice)}</del><small>Giá minh họa, đã gồm thuế giả định trong dữ liệu mẫu.</small></div><ul class="features">${p.features.map((f) => `<li>${escape(f)}</li>`).join("")}</ul><div class="variant-label">Lựa chọn đang xem: <b>${escape(p.weight)}</b></div><div class="variants"><a class="active" href="${productLink(p)}" data-link>${escape(p.weight)}</a>${variants.map((v) => `<a href="${productLink(v)}" data-link>${escape(v.name.replace(v.brand, ""))}</a>`).join("")}</div><div class="variant-label">Số lượng</div>${quantityControl(p.id, 1, true)}<div class="buy-row"><button class="secondary" data-detail-add="${p.id}" ${!p.stock ? "disabled" : ""}>+ Thêm vào giỏ</button><button class="primary" data-buy="${p.id}" ${!p.stock ? "disabled" : ""}>Mua ngay →</button></div><div class="delivery-note">♧ Miễn phí giao hàng từ 499.000đ. Phí tiêu chuẩn 25.000đ.</div><div class="delivery-note">♢ Mã <b>MEBE50</b>: giảm 50.000đ cho đơn từ 500.000đ.</div></div></section>
+  return `${breadcrumbs([[p.category, href({ category: p.category })], [p.name]])}<section class="panel detail-top"><div><div class="gallery-main"><span class="product-discount">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span><img id="detail-image" src="${escape(p.image)}" alt="${escape(p.name)} — hình sản phẩm minh họa"></div><div class="gallery-thumbs"><button aria-label="Ảnh sản phẩm chính"><img src="${escape(p.image)}" alt=""></button></div><p class="detail-label">Hình SVG minh họa. Thông tin và thương hiệu trong bản thử nghiệm.</p></div><div class="detail-info"><div class="product-brand">${escape(p.brand)}</div><h1>${escape(p.name)}</h1><div class="detail-meta"><span>Mã SKU: ${escape(p.sku || String(p.id))}</span><span class="in-stock">${p.stock ? `✓ Còn ${p.stock} sản phẩm` : "Tạm hết hàng"}</span></div><div class="detail-pricing"><strong>${money(p.price)}</strong><del>${money(p.oldPrice)}</del><small>Giá minh họa, đã gồm thuế giả định trong dữ liệu mẫu.</small></div><ul class="features">${p.features.map((f) => `<li>${escape(f)}</li>`).join("")}</ul><div class="variant-label">Lựa chọn đang xem: <b>${escape(p.weight)}</b></div><div class="variants"><a class="active" href="${productLink(p)}" data-link>${escape(p.weight)}</a>${variants.map((v) => `<a href="${productLink(v)}" data-link>${escape(v.name.replace(v.brand, ""))}</a>`).join("")}</div><div class="variant-label">Số lượng</div>${quantityControl(p.id, 1, true)}<div class="buy-row"><button class="secondary" data-detail-add="${p.id}" ${!p.stock ? "disabled" : ""}>+ Thêm vào giỏ</button><button class="primary" data-buy="${p.id}" ${!p.stock ? "disabled" : ""}>Mua ngay →</button></div><div class="delivery-note">♧ Miễn phí giao hàng từ 499.000đ. Phí tiêu chuẩn 25.000đ.</div><div class="delivery-note">♢ Mã <b>MEBE50</b>: giảm 50.000đ cho đơn từ 500.000đ.</div></div></section>
   <section class="panel"><div class="tabs" role="tablist" aria-label="Thông tin sản phẩm"><button class="active" role="tab" id="tab-description" aria-selected="true" aria-controls="detail-tab-content" data-tab="description">Mô tả sản phẩm</button><button role="tab" id="tab-specs" aria-selected="false" aria-controls="detail-tab-content" data-tab="specs">Thông số</button><button role="tab" id="tab-notes" aria-selected="false" aria-controls="detail-tab-content" data-tab="notes">Lưu ý sử dụng</button></div><div class="tab-content" id="detail-tab-content" role="tabpanel" aria-labelledby="tab-description" data-product="${p.id}">${detailTab(p, "description")}</div></section>
   ${section(
     "Mẹ có thể quan tâm",
@@ -337,6 +347,14 @@ function updateCartCount() {
 function persistCart() {
   storage.set("jielien-cart-v2", cart);
   updateCartCount();
+  if (identity) {
+    const items = cartItems();
+    cartSync = cartSync
+      .then(() =>
+        api("/api/cart", { method: "PUT", body: JSON.stringify({ items }) }),
+      )
+      .catch((error) => toast("Chưa đồng bộ giỏ tài khoản: " + error.message));
+  }
 }
 function addToCart(id, quantity = 1) {
   if (!Number.isInteger(quantity) || quantity < 1) {
@@ -450,13 +468,18 @@ async function orderPage(id) {
       } catch {}
     }
   }
+  if (!order && identity) {
+    try {
+      ({ order } = await api("/api/orders/" + encodeURIComponent(id)));
+    } catch {}
+  }
   if (!order)
     return `${breadcrumbs([["Đơn hàng"]])}<section class="panel">${empty("Tra cứu thông tin đơn hàng", "Mẹ dùng mã đơn và số điện thoại đã đặt để xem thông tin.", "/tra-cuu-don-hang", "Tra cứu đơn hàng")}</section>`;
   document.title = `Đơn ${order.id} | Jielien`;
   return `${breadcrumbs([["Đơn hàng " + order.id]])}<div class="success-head"><span class="success-mark">✓</span><h1>Đã ghi nhận đơn hàng của mẹ!</h1><p>Cảm ơn mẹ đã ghé Jielien. Đơn được lưu tại máy chủ thử nghiệm.</p></div>${orderMarkup(order)}<div class="button-row"><a href="/san-pham" data-link class="primary">Tiếp tục mua sắm →</a><a href="/tra-cuu-don-hang" data-link class="secondary">Tra cứu đơn hàng</a></div>`;
 }
 function orderMarkup(order) {
-  return `<section class="panel order-card"><div class="order-number"><strong>Mã đơn: ${escape(order.id)}</strong><span class="status">Đã ghi nhận · COD</span></div><div class="order-details"><div><h3>Người nhận</h3><p><b>${escape(order.customer.name)}</b></p><p>${escape(order.customer.phone)}</p><p>${escape(order.customer.address)}</p><p>${escape(order.customer.district)}, ${escape(order.customer.province)}</p></div><div><h3>Thông tin đơn</h3><p>Ngày đặt: ${new Date(order.createdAt).toLocaleString("vi-VN")}</p><p>Thanh toán: khi nhận hàng (COD)</p><p>Trạng thái: đang chờ xử lý trong hệ thống thử</p>${order.note ? `<p>Ghi chú: ${escape(order.note)}</p>` : ""}</div></div>${order.items.map((item) => `<div class="checkout-mini"><img src="${escape(item.image)}" alt=""><div>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></div><strong>${money(item.lineTotal)}</strong></div>`).join("")}<div class="summary-line"><span>Tạm tính</span><b>${money(order.subtotal)}</b></div><div class="summary-line discount"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="summary-line"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="summary-line total"><span>Tổng thanh toán COD</span><strong>${money(order.total)}</strong></div><p class="notice">Mẹ lưu mã đơn để tra cứu cùng số điện thoại. Website thử nghiệm chưa kết nối đơn vị vận chuyển, email hoặc thu tiền.</p></section>`;
+  return `<section class="panel order-card"><div class="order-number"><strong>Mã đơn: ${escape(order.id)}</strong><span class="status">${escape({ pending: "Chờ xác nhận", confirmed: "Đã xác nhận", processing: "Đang chuẩn bị", shipped: "Đang giao", delivered: "Đã giao", cancelled: "Đã hủy" }[order.status] || order.status)} · COD</span></div><div class="order-details"><div><h3>Người nhận</h3><p><b>${escape(order.customer.name)}</b></p><p>${escape(order.customer.phone)}</p><p>${escape(order.customer.address)}</p><p>${escape(order.customer.district)}, ${escape(order.customer.province)}</p></div><div><h3>Thông tin đơn</h3><p>Ngày đặt: ${new Date(order.createdAt).toLocaleString("vi-VN")}</p><p>Thanh toán: khi nhận hàng (COD)</p><p>Thanh toán: ${order.paymentStatus === "paid" ? "Đã ghi nhận thu COD" : "Chưa ghi nhận thu tiền"}</p>${order.note ? `<p>Ghi chú: ${escape(order.note)}</p>` : ""}</div></div>${order.items.map((item) => `<div class="checkout-mini"><img src="${escape(item.image)}" alt=""><div>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></div><strong>${money(item.lineTotal)}</strong></div>`).join("")}<div class="summary-line"><span>Tạm tính</span><b>${money(order.subtotal)}</b></div><div class="summary-line discount"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="summary-line"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="summary-line total"><span>Tổng thanh toán COD</span><strong>${money(order.total)}</strong></div><p class="notice">Mẹ lưu mã đơn để tra cứu cùng số điện thoại. Website thử nghiệm chưa kết nối đơn vị vận chuyển, email hoặc thu tiền.</p></section>`;
 }
 function lookupPage() {
   document.title = "Tra cứu đơn hàng | Jielien";
@@ -465,11 +488,11 @@ function lookupPage() {
 const policies = {
   "gioi-thieu": [
     "Về Jielien",
-    "<p>Jielien là bản phát triển website thương mại điện tử dành cho mẹ và bé, xây dựng theo yêu cầu tham khảo mô hình AVAKids. Đây là website độc lập, không phải chi nhánh, đối tác hoặc kênh bán hàng chính thức của AVAKids.</p><h2>Những gì mẹ có thể trải nghiệm</h2><p>Tìm kiếm và lọc sản phẩm, xem thông tin chi tiết, lưu sản phẩm yêu thích, quản lý giỏ hàng, đặt đơn COD thử nghiệm và tra cứu đơn đã lưu.</p><h2>Dữ liệu minh họa</h2><p>Tên thương hiệu, sản phẩm, giá, ưu đãi và hình SVG là dữ liệu mẫu. Chưa có đăng ký tài khoản, thanh toán trực tuyến hoặc giao hàng thực tế. Không có đánh giá khách hàng hay số liệu bán hàng giả.</p>",
+    "<p>Jielien là bản phát triển website thương mại điện tử dành cho mẹ và bé, xây dựng theo yêu cầu tham khảo mô hình AVAKids. Đây là website độc lập, không phải chi nhánh, đối tác hoặc kênh bán hàng chính thức của AVAKids.</p><h2>Những gì mẹ có thể trải nghiệm</h2><p>Tìm kiếm và lọc sản phẩm, xem thông tin chi tiết, lưu sản phẩm yêu thích, quản lý giỏ hàng, đặt đơn COD thử nghiệm và tra cứu đơn đã lưu.</p><h2>Dữ liệu minh họa</h2><p>Tên thương hiệu, sản phẩm, giá, ưu đãi và hình SVG là dữ liệu mẫu. Có đăng ký tài khoản, lưu địa chỉ và lịch sử đơn; chưa có thanh toán trực tuyến hoặc giao hàng thực tế. Không có đánh giá khách hàng hay số liệu bán hàng giả.</p>",
   ],
   "giao-hang": [
     "Giao hàng & thanh toán",
-    "<h2>Phí giao hàng trong bản thử nghiệm</h2><p>Phí tiêu chuẩn: 25.000đ/đơn. Miễn phí khi tổng sản phẩm trước giảm giá từ 499.000đ. Mã FREESHIP miễn phí vận chuyển từ 299.000đ; mã MEBE50 giảm 50.000đ từ 500.000đ. Mỗi đơn dùng một mã.</p><h2>Đặt hàng COD</h2><p>Người nhận điền họ tên, số điện thoại và địa chỉ. Máy chủ xác thực giá, tồn kho, mã giảm giá và lưu đơn bằng SQLite. Việc gửi lại cùng một yêu cầu đặt hàng không tạo đơn trùng.</p><h2>Phạm vi vận hành</h2><p>Đây là môi trường thử nghiệm. Đơn chưa được chuyển tới kho hoặc đơn vị vận chuyển, không có yêu cầu thu tiền. Thời gian giao hàng chưa được cam kết. Đơn vị kinh doanh cần bổ sung quy trình vận hành trước khi mở bán.</p>",
+    "<h2>Phí giao hàng trong bản thử nghiệm</h2><p>Phí tiêu chuẩn: 25.000đ/đơn. Miễn phí khi tổng sản phẩm trước giảm giá từ 499.000đ. Mã FREESHIP miễn phí vận chuyển từ 299.000đ; mã MEBE50 giảm 50.000đ từ 500.000đ. Mỗi đơn dùng một mã.</p><h2>Đặt hàng COD</h2><p>Người nhận điền họ tên, số điện thoại và địa chỉ. Máy chủ xác thực giá, tồn kho, mã giảm giá và lưu đơn cùng chi tiết sản phẩm bằng PostgreSQL. Việc gửi lại cùng một yêu cầu đặt hàng không tạo đơn trùng.</p><h2>Phạm vi vận hành</h2><p>Đây là môi trường thử nghiệm. Đơn chưa được chuyển tới kho hoặc đơn vị vận chuyển, không có yêu cầu thu tiền. Thời gian giao hàng chưa được cam kết. Đơn vị kinh doanh cần bổ sung quy trình vận hành trước khi mở bán.</p>",
   ],
   "doi-tra": [
     "Chính sách đổi trả",
@@ -477,7 +500,7 @@ const policies = {
   ],
   "bao-mat": [
     "Thông tin cá nhân",
-    "<h2>Dữ liệu được lưu khi đặt hàng</h2><p>Họ tên, số điện thoại, email tùy chọn, địa chỉ và ghi chú được lưu cùng đơn ở cơ sở dữ liệu SQLite trên máy chủ. Không yêu cầu mật khẩu, số thẻ hay tài khoản ngân hàng.</p><h2>Dữ liệu trên trình duyệt</h2><p>Giỏ hàng và danh sách yêu thích được lưu trong localStorage để phục hồi sau khi tải lại. Thông tin người nhận không được lưu trong localStorage. Mã truy cập đơn được lưu trong sessionStorage của phiên trình duyệt. Mẹ có thể tra cứu bằng mã đơn và số điện thoại.</p><h2>Trong giai đoạn phát triển</h2><p>Nên dùng thông tin giả để kiểm thử. Máy chủ chưa cung cấp giao diện quản trị, xóa dữ liệu tự phục vụ hoặc dịch vụ chăm sóc khách hàng. Trước khi nhận dữ liệu thật cần có HTTPS, phân quyền quản trị, sao lưu và quy trình bảo vệ dữ liệu.</p>",
+    "<h2>Dữ liệu được lưu khi đặt hàng</h2><p>Họ tên, số điện thoại, email tùy chọn, địa chỉ và ghi chú được lưu cùng đơn ở cơ sở dữ liệu PostgreSQL trên máy chủ. Không yêu cầu mật khẩu, số thẻ hay tài khoản ngân hàng.</p><h2>Dữ liệu trên trình duyệt</h2><p>Giỏ hàng và danh sách yêu thích được lưu trong localStorage để phục hồi sau khi tải lại. Thông tin người nhận không được lưu trong localStorage. Mã truy cập đơn được lưu trong sessionStorage của phiên trình duyệt. Mẹ có thể tra cứu bằng mã đơn và số điện thoại.</p><h2>Trong giai đoạn phát triển</h2><p>Nên dùng thông tin giả để kiểm thử. Máy chủ cung cấp quản trị có phân quyền và nhật ký thao tác; chưa có xóa dữ liệu tự phục vụ hoặc dịch vụ chăm sóc khách hàng. Trước khi nhận dữ liệu thật cần có HTTPS, phân quyền quản trị, sao lưu và quy trình bảo vệ dữ liệu.</p>",
   ],
 };
 const articles = {
@@ -597,6 +620,7 @@ function restoreDraft(data) {
   }
 }
 function bindPage() {
+  if ($("#checkout-form") && identity) prefillCheckout();
   $$("[data-tab]").forEach((tab, i) => {
     tab.tabIndex = i === 0 ? 0 : -1;
   });
@@ -672,6 +696,46 @@ function bindPage() {
     }
   });
 }
+async function prefillCheckout() {
+  const form = $("#checkout-form");
+  if (!form || pendingOrder) return;
+  const set = (name, value, overwrite = false) => {
+    const input = form.elements.namedItem(name);
+    if (input && (overwrite || !input.value)) input.value = value || "";
+  };
+  set("name", identity.fullName);
+  set("phone", identity.phone);
+  set("email", identity.email);
+  try {
+    const { addresses } = await api("/api/account/addresses");
+    if (!form.isConnected || pendingOrder || !addresses.length) return;
+    const choose = (address, overwrite) => {
+      if (!address) return;
+      set("name", address.recipientName, overwrite);
+      set("phone", address.phone, overwrite);
+      set("address", address.addressDetail, overwrite);
+      set("province", address.province, overwrite);
+      set("district", address.district, overwrite);
+    };
+    choose(addresses.find((a) => a.isDefault) || addresses[0], false);
+    const box = document.createElement("div");
+    box.className = "field full";
+    box.style.marginBottom = "18px";
+    box.innerHTML = `<label for="saved-address">Chọn địa chỉ đã lưu</label><select id="saved-address"><option value="">Nhập địa chỉ khác</option>${addresses.map((a) => `<option value="${a.id}">${escape(a.recipientName + " — " + a.addressDetail + ", " + (a.province || ""))}</option>`).join("")}</select>`;
+    form.querySelector(".form-section").append(box);
+    $("#saved-address").value = String(
+      (addresses.find((a) => a.isDefault) || addresses[0]).id,
+    );
+    $("#saved-address").addEventListener("change", (event) =>
+      choose(
+        addresses.find((a) => a.id === Number(event.target.value)),
+        true,
+      ),
+    );
+  } catch {
+    /* Manual address entry remains available when the saved list cannot load. */
+  }
+}
 async function submitOrder(event) {
   event.preventDefault();
   if (submitting) return;
@@ -698,6 +762,7 @@ async function submitOrder(event) {
   $("#place-order").textContent = "Đang ghi nhận đơn…";
   $("#checkout-error").textContent = "";
   try {
+    await cartSync;
     const { order } = await api("/api/orders", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -753,7 +818,7 @@ document.addEventListener(
   (event) => {
     if ((submitting || pendingOrder) && !event.target.closest("#place-order")) {
       const action = event.target.closest(
-        "a[data-link],button[data-add],button[data-buy],button[data-detail-add],button[data-remove],button[data-quantity],#mobile-menu,#category-menu",
+        "a[href],button[data-add],button[data-buy],button[data-detail-add],button[data-remove],button[data-quantity],#mobile-menu,#category-menu",
       );
       if (action) {
         event.preventDefault();
@@ -1030,6 +1095,39 @@ async function init() {
   try {
     ({ products } = await api("/api/products"));
     hydrateCart();
+    try {
+      const session = await api("/api/auth/me");
+      identity = session.user;
+      csrfToken = session.csrfToken;
+      const owner = storage.get("jielien-cart-owner", null);
+      if (owner && owner !== identity.id) cart = {};
+      const remote = await api("/api/cart");
+      for (const item of remote.items) {
+        const p = products.find((p) => p.id === item.id);
+        if (p?.stock)
+          cart[item.id] = Math.min(
+            p.stock,
+            99,
+            Math.max(item.quantity, cart[item.id] || 0),
+          );
+      }
+      storage.set("jielien-cart-owner", identity.id);
+      persistCart();
+      const label = $("#account-label");
+      if (label) label.textContent = identity.fullName;
+    } catch (error) {
+      identity = null;
+      csrfToken = "";
+      if (storage.get("jielien-cart-owner", null)) {
+        cart = {};
+        storage.set("jielien-cart-v2", {});
+        storage.set("jielien-cart-owner", null);
+      }
+      if (error.status !== 401)
+        toast(
+          "Tạm thời chưa tải được giỏ tài khoản. Mẹ vẫn có thể mua không đăng nhập.",
+        );
+    }
     updateCartCount();
     $("#category-dropdown").innerHTML = categories
       .map(

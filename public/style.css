@@ -2389,3 +2389,47 @@ footer {
     transition: none !important;
   }
 }
+
+.header-main .account-link {
+  max-width: 140px;
+}
+.account-link b {
+  display: block;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 1100px) {
+  .header-main {
+    gap: 16px;
+  }
+  .header-main .wish-header {
+    display: none;
+  }
+}
+@media (max-width: 850px) {
+  .header-main .account-link {
+    display: flex;
+  }
+  .account-link .line-icon {
+    font-size: 23px;
+  }
+  .account-link > span:last-child {
+    font-size: 10px;
+  }
+}
+@media (max-width: 600px) {
+  .header-main .account-link {
+    order: 2;
+  }
+  .header-main .cart-link {
+    order: 3;
+  }
+  .account-link > span:last-child {
+    display: none;
+  }
+  .account-link .line-icon {
+    font-size: 24px;
+  }
+}

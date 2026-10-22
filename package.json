@@ -1,19 +1,30 @@
 {
   "name": "jielien-baby-store",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
-  "description": "Vietnamese mother and baby storefront with persistent COD orders",
+  "description": "PostgreSQL mother and baby commerce storefront with accounts, RBAC and fulfillment",
   "scripts": {
-    "dev": "node server.mjs",
-    "start": "node server.mjs",
-    "test": "node --test tests/api.test.mjs",
-    "test:browser": "node tests/browser.test.mjs"
+    "dev": "node --env-file-if-exists=.env server.mjs",
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs",
+    "test:browser": "node tests/browser.test.mjs",
+    "db:local": "bash scripts/dev-postgres.sh",
+    "db:migrate": "node --env-file-if-exists=.env scripts/database.mjs migrate",
+    "db:import": "node --env-file-if-exists=.env scripts/database.mjs import",
+    "db:status": "node --env-file-if-exists=.env scripts/database.mjs status",
+    "admin:create": "node --env-file-if-exists=.env scripts/create-admin.mjs",
+    "db:install": "bash scripts/install-postgres.sh",
+    "test:management": "node tests/management.browser.mjs"
   },
   "engines": {
     "node": ">=24.11.0"
   },
   "devDependencies": {
     "playwright-core": "1.58.2"
+  },
+  "dependencies": {
+    "bcryptjs": "3.0.2",
+    "pg": "8.16.3"
   }
 }

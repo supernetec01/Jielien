@@ -108,3 +108,26 @@ Các ảnh sau được chụp từ **Jielien cổng 3001**, không phải AVAKi
 - [Đặt hàng trên điện thoại](screenshots/checkout-mobile.png)
 
 Không có đơn được gửi khi tạo các ảnh trên. Kiểm tra cuối: API cổng 3001 trả HTTP 200; dịch vụ cổng 3000 vẫn trả HTTP 200. Đã lưu `install_script`/`start_skill` cho lần khởi động sau; việc lưu cấu hình chưa tạo triển khai web công khai.
+
+## Giai đoạn 1 — PostgreSQL, tài khoản và quản trị
+
+Phần này thay thế mô tả SQLite ở kết quả cũ bên trên; các kết quả cũ được giữ làm lịch sử. Nguồn thiết kế là đề xuất người dùng đã dán vào chat, không phải schema nội bộ AVAKids.
+
+- PostgreSQL 17.11 chạy thực: 34 bảng nghiệp vụ + schema_migrations; 41 FK, 53 CHECK, 19 UNIQUE trong migration đầu.
+- `npm test`: 19/19 test đạt, gồm 10 test API cũ đã chuyển PG, 3 migration và 6 nhóm auth/ownership/admin/kho/coupon/cart.
+- `npm run test:browser`: 14/14 nhóm storefront đạt trên PostgreSQL.
+- `npm run test:management`: 9/9 nhóm tài khoản/quản trị đạt: đăng ký HttpOnly; địa chỉ tiếng Việt; giỏ server/reload; checkout địa chỉ lưu; quyền sở hữu lịch sử; chặn customer vào quản trị; sửa giá nhưng giữ giá đơn cũ; chuỗi trạng thái/thu COD riêng; điều chỉnh kho/audit/logout/mobile.
+- Test dùng schema ngẫu nhiên, PostgreSQL data tạm và port ngẫu nhiên; không ghi vào dữ liệu live. Mật khẩu/tài khoản test không được tạo trên DB vận hành.
+- Import legacy test có đơn thật trong fixture: backup nhất quán, bảo toàn token/mã/fingerprint/giá/tồn khả dụng; chạy lại không nhân đôi; FK ngăn xóa SKU đã bán.
+- Khách đăng ký không tự được nâng quyền; mutation thiếu CSRF trả403; session hết hạn/thu hồi không dùng lại được; địa chỉ/đơn không được lộ cho tài khoản khác.
+- Coupon có usage_limit được thử bằng hai checkout đồng thời; đúng một đơn thành công và một redemption.
+
+Chưa kiểm/triển khai: tải lớn/benchmark production, khôi phục PG qua sự cố máy thật, provider OTP/payment/shipping bên ngoài, full WCAG, quy trình hoàn trả và CRUD toàn bộ nội dung. Đây không phải chứng nhận production hay xác nhận giống giao diện AVAKids.
+
+### Chuyển môi trường hiện tại sang PostgreSQL
+
+Đã dừng đúng tiến trình Jielien cổng 3001 sau khi các bộ kiểm thử đạt; giữ nguyên tiến trình cổng 3000. Import live đã tạo backup SQLite và đối chiếu đủ 24 dòng tồn kho. Tồn khả dụng PostgreSQL khớp 24/24; SQLite cũ có 0 đơn và PostgreSQL sau nhập có 0 đơn. Kiểm chứng bảo toàn đơn có dữ liệu được thực hiện trong migration test riêng, không tự nhận đã chuyển đơn khách thực tế.
+
+Sau khởi động mới, `/api/health` trả `{status:"ok",database:"postgresql"}`; `/tai-khoan` và `/quan-tri` trả HTTP200; dịch vụ cổng3000 vẫn HTTP200. Import chạy lại không reset kho. Chưa tạo admin trên database live (0 tài khoản admin); người vận hành tự khởi tạo bằng CLI, không có mật khẩu dùng chung.
+
+Ảnh tài khoản/quản trị được chụp từ schema thử nghiệm riêng, không tạo tài khoản admin ở dữ liệu live: [tài khoản](screenshots/account-desktop.png), [quản trị](screenshots/admin-desktop.png), [SKU](screenshots/admin-products.png), [quản trị mobile](screenshots/admin-mobile.png). CLI tạo admin đã được chạy kiểm chứng bằng biến môi trường test trong schema tạm, sau đó schema được xóa.
