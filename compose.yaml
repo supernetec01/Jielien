@@ -2,6 +2,7 @@ name: jielien-local
 
 services:
   db:
+    restart: unless-stopped
     image: postgres:17-bookworm
     environment:
       POSTGRES_DB: jielien
@@ -19,6 +20,7 @@ services:
   app:
     build:
       context: .
+    restart: unless-stopped
     init: true
     environment:
       DATABASE_URL: ${LOCAL_DATABASE_URL:?Run npm run local:init first}
@@ -30,7 +32,7 @@ services:
       BANK_ACCOUNT_NUMBER: ${BANK_ACCOUNT_NUMBER:-}
       BANK_ACCOUNT_NAME: ${BANK_ACCOUNT_NAME:-}
     ports:
-      - "127.0.0.1:${JIELIEN_PORT:-3001}:3001"
+      - "${JIELIEN_BIND_IP:-127.0.0.1}:${JIELIEN_PORT:-3001}:3001"
     volumes:
       - type: bind
         source: ${JIELIEN_DATA_DIR:-./data}
