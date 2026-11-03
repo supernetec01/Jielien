@@ -146,6 +146,7 @@ const variantSQL = `SELECT v.*,p.description,p.name AS product_name,b.name AS br
 function adaptProduct(p) {
   return {
     id: number(p.id),
+    rowVersion: number(p.row_version),
     productId: number(p.product_id),
     slug: p.slug,
     name: p.name,
@@ -975,13 +976,15 @@ export async function createStore({
           )
         ).rows[0];
         if (!old) fail(404, "variant_not_found", "Không tìm thấy SKU.");
+        if (changes.rowVersion !== undefined && changes.rowVersion !== old.row_version)
+          fail(409,"conflict","SKU đã được người khác sửa. Vui lòng tải lại bản mới.");
         const values = entries.map(([, value]) =>
           typeof value === "string" ? value.trim() : value,
         );
         await client.query(
           "UPDATE product_variants SET " +
             entries.map(([key], i) => `${allowed[key]}=$${i + 1}`).join(",") +
-            ",updated_at=NOW() WHERE id=$" +
+            ",row_version=row_version+1,updated_at=NOW() WHERE id=$" +
             (values.length + 1),
           [...values, id],
         );

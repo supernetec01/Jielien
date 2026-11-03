@@ -532,7 +532,8 @@ export async function createApp({
           if (req.method === "PATCH" && variantMatch) {
             requirePermission(session, "catalog.manage");
             const body = await readBody(req);
-            const changes = {};
+            if (!Number.isSafeInteger(body.rowVersion) || body.rowVersion<1) fail(400,"version_required","Cần tải lại SKU trước khi lưu.");
+            const changes = {rowVersion:body.rowVersion};
             for (const key of ["price", "originalPrice", "status"])
               if (Object.hasOwn(body, key)) changes[key] = body[key];
             return json(res, 200, {

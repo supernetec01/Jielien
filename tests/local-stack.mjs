@@ -1,5 +1,6 @@
 // Optional Docker integration test. Uses its own project, random host port,
 // temporary files, fake receiving account and disposable database volume.
+import {saveDump} from "../scripts/backup.mjs";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
@@ -84,6 +85,11 @@ try {
   console.log(
     "PASS: isolated Compose configuration keeps database internal and HTTP session cookies usable.",
   );
+  env.JIELIEN_BIND_IP='0.0.0.0';
+  const lan=JSON.parse(await docker(['config','--format','json'],true));
+  assert.equal(lan.services.app.ports[0].host_ip,'0.0.0.0');
+  assert.equal(lan.services.db.ports,undefined);
+  delete env.JIELIEN_BIND_IP;
   started = true;
   await docker(["up", "--build", "-d", "--wait", "--wait-timeout", "120"]);
   const url = async () =>
@@ -163,8 +169,18 @@ try {
   console.log(
     "PASS: database volume retains session, order, price and one stock reservation across full stack recreation.",
   );
+  const dump=join(temporary,'check.dump');
+  await saveDump('docker',[...compose,'exec','-T','db','pg_dump','-U','jielien','-d','jielien','-Fc'],dump);
+  const container=await docker(['ps','-q','db'],true);
+  await new Promise((ok,fail)=>{const p=spawn('docker',['cp',dump,container+':/tmp/check.dump'],{stdio:'inherit',env});p.on('error',fail);p.on('exit',c=>c===0?ok():fail(Error('copy failed')));});
+  await docker(['exec','-T','db','pg_restore','--list','/tmp/check.dump'],true);
+  await docker(['exec','-T','db','createdb','-U','jielien','jielien_drill']);
+  await docker(['exec','-T','db','pg_restore','--exit-on-error','--no-owner','-U','jielien','-d','jielien_drill','/tmp/check.dump']);
+  const restored=await docker(['exec','-T','db','psql','-U','jielien','-d','jielien_drill','-tAc','SELECT count(*) FROM orders'],true);
+  assert.equal(restored,'1');
+  console.log('PASS: binary custom backup restored into independent drill database with order retained.');
 } finally {
   if (started)
-    await docker(["down", "--volumes", "--remove-orphans"]).catch(() => {});
+    await docker(["down", "--remove-orphans"]).catch(() => {});
   await rm(temporary, { recursive: true, force: true });
 }

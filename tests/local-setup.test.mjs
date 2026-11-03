@@ -93,3 +93,15 @@ test("concurrent initialization preserves the one created configuration", async 
   await initializeLocal({ directory, env: {} });
   assert.equal(await readFile(results[0].path, "utf8"), before);
 });
+
+test('LAN bind and port validation preserves existing database configuration',async t=>{
+ const directory=await fixture(t);const {path}=await initializeLocal({directory,env:{}});
+ const original=await readFile(path,'utf8');
+ for(const [bind,port,valid] of [['0.0.0.0','3001',true],['127.0.0.1','3010',true],['bad','3001',false],['0.0.0.0','0',false],['0.0.0.0','65536',false],['0.0.0.0','3000',false]]){
+ const source=original.replace('JIELIEN_BIND_IP=127.0.0.1','JIELIEN_BIND_IP='+bind).replace('JIELIEN_PORT=3001','JIELIEN_PORT='+port);
+ await writeFile(path,source);
+ if(valid) assert.equal((await initializeLocal({directory,env:{}})).created,false);
+ else await assert.rejects(initializeLocal({directory,env:{}}));
+ assert.equal(await readFile(path,'utf8'),source);
+ }
+});

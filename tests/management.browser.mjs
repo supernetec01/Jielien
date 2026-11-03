@@ -136,6 +136,23 @@ try {
     ),
   );
   pass("admin edits SKU price through permission/CSRF-protected UI");
+  await admin.locator('[data-edit-variant="1"]').click();
+  await database.pool.query('UPDATE product_variants SET price=430001,row_version=row_version+1 WHERE id=1');
+  await admin.locator('#variant-price').fill('430002');
+  await admin.locator('#variant-form button').click();
+  await admin.waitForFunction(()=>!document.querySelector('#admin-dialog').open);
+  await admin.waitForFunction(()=>document.querySelector('#notice').textContent.includes('SKU đã'));
+  assert.equal((await database.pool.query('SELECT price FROM product_variants WHERE id=1')).rows[0].price,430001);
+  pass('stale SKU UI receives conflict and reloads current data');
+  await admin.locator('[data-section="users"]').click();
+  await admin.locator('#staff-search').fill('buyer@example.test');
+  await admin.locator('[data-staff]').click();
+  await admin.locator('input[name="roles"][value="viewer"]').check();
+  admin.once('dialog',dialog=>dialog.accept());
+  await admin.locator('#staff-form button').click();
+  await admin.waitForFunction(()=>!document.querySelector('#admin-dialog').open);
+  assert.ok((await database.pool.query("SELECT 1 FROM user_roles ur JOIN roles r ON r.id=ur.role_id JOIN users u ON u.id=ur.user_id WHERE u.email='buyer@example.test' AND r.name='viewer'")).rowCount);
+  pass('admin searches accounts and grants staff role through confirmed UI');
   await admin.locator('[data-section="orders"]').click();
   await admin.locator(`[data-admin-order="${orderNumber}"]`).click();
   assert.ok(

@@ -7,8 +7,9 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env server.mjs",
     "start": "node --env-file-if-exists=.env server.mjs",
-    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs",
+    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs",
     "test:browser": "node tests/browser.test.mjs",
+    "db:backup": "node scripts/backup.mjs",
     "db:local": "bash scripts/dev-postgres.sh",
     "db:migrate": "node --env-file-if-exists=.env scripts/database.mjs migrate",
     "db:import": "node --env-file-if-exists=.env scripts/database.mjs import",

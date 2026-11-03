@@ -398,6 +398,7 @@ async function mutation(form) {
       await api("/api/admin/variants/" + encodeURIComponent(dialogItem.id), {
         method: "PATCH",
         body: {
+          rowVersion: dialogItem.rowVersion,
           price: Number(data.price),
           originalPrice: Number(data.originalPrice),
           status: data.status,
@@ -437,6 +438,10 @@ async function mutation(form) {
     notify("Đã lưu thay đổi.");
     await renderView(activeView, { focus: false });
   } catch (error) {
+    if(error.status===409 && dialogType==='variant') {
+      $('#admin-dialog').close(); await renderView('products',{focus:false});
+      notify(error.message+' Danh sách đã được tải lại.'); return;
+    }
     if (errorBox?.isConnected) errorBox.textContent = error.message;
     else notify(error.message);
   } finally {

@@ -56,3 +56,28 @@ Admin vào **Tài khoản & Phân quyền**, tìm tài khoản đã đăng ký, 
 | customer | Mua hàng, tài khoản và đơn cá nhân |
 
 Nhiều role cộng dồn quyền. Không role mới nào có users.manage. Dashboard chứa thống kê doanh thu và khách hàng tổng hợp; không trả hồ sơ khách. Orders chứa thông tin giao hàng nên chỉ cấp cho người cần xử lý đơn.
+
+## Backup và kiểm chứng khôi phục
+
+Sau khi cập nhật helper (trước khi rebuild app/migration), chạy `npm run db:backup` trên host khi DB cũ còn đang chạy. Script gọi pg_dump -Fc trong db, stream binary qua Node, kiểm tra exit code/header/kích thước, chỉ rename file .partial khi thành công. Không dùng PowerShell 5.1 `>` để ghi dump. Backup chứa dữ liệu nhạy cảm: phân quyền thư mục host, mã hóa bản sao, không commit hoặc gửi log. Header hợp lệ chưa chứng minh khôi phục được: cần restore drill.
+
+Task Scheduler: tạo task chạy hàng ngày, Program `node.exe` (đường dẫn đầy đủ), Arguments `scripts/backup.mjs`, Start in thư mục repo trên host; chọn tài khoản có quyền Docker và ghi backup, Docker Desktop phải chạy. Theo dõi exit code, cảnh báo thất bại; sao chép file .dump đã hoàn tất sang NAS/ổ ngoài được kiểm soát quyền, kiểm tra checksum và retention theo chính sách công ty. Không tự xóa backup trong script.
+
+Restore drill chỉ vào database thử mới, không thay live. Ví dụ PowerShell, thay đường dẫn bằng backup cần kiểm tra; tên database phải mới, không dùng jielien. Nếu createdb báo đã tồn tại, dừng, chọn tên mới, không bỏ qua lỗi:
+
+```powershell
+$dbContainer = docker compose --env-file .env.local -f compose.yaml ps -q db
+docker cp .\data\backups\postgresql\TEN_BACKUP.dump "${dbContainer}:/tmp/jielien-drill.dump"
+docker compose --env-file .env.local -f compose.yaml exec -T db pg_restore --list /tmp/jielien-drill.dump
+# Chỉ tiếp tục nếu archive đọc được và database thử CHƯA tồn tại:
+docker compose --env-file .env.local -f compose.yaml exec -T db createdb -U jielien jielien_restore_drill_2026
+# Kiểm tra exit code createdb là 0 trước lệnh sau:
+docker compose --env-file .env.local -f compose.yaml exec -T db pg_restore --exit-on-error --no-owner -U jielien -d jielien_restore_drill_2026 /tmp/jielien-drill.dump
+docker compose --env-file .env.local -f compose.yaml exec -T db psql -U jielien -d jielien_restore_drill_2026 -c 'SELECT count(*) FROM schema_migrations; SELECT count(*) FROM orders; SELECT count(*) FROM users;'
+```
+
+Đối chiếu số lượng, migration và nghiệp vụ trên môi trường test riêng trước khi tin cậy backup. Không chạy app live trỏ sang DB drill; không dùng pg_restore --clean lên database vận hành. IT kiểm soát việc dọn bản sao chứa PII sau drill.
+
+## Chỉnh sửa đồng thời
+
+SKU có rowVersion. Giao diện gửi phiên bản đã đọc; nếu có người khác lưu trước, API trả 409, UI đóng form cũ và tải lại danh sách để người dùng xem bản mới trước khi sửa lại. Client API tự viết cũng phải gửi rowVersion từ GET products. Đơn hàng/tồn tiếp tục dùng transaction và row lock như trước. Refresh để cập nhật dữ liệu từ máy khác.
