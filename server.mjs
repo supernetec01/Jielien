@@ -496,42 +496,37 @@ export async function createApp({
           const user = requireUser(session);
           if (!["GET", "HEAD"].includes(req.method)) requireCsrf(req, session);
           if (req.method === "GET" && path === "/api/admin/dashboard") {
-            if (
-              !user.permissions.some((p) =>
-                [
-                  "catalog.manage",
-                  "orders.manage",
-                  "inventory.manage",
-                  "audit.read",
-                ].includes(p),
-              )
-            )
-              fail(
-                403,
-                "permission_denied",
-                "Bạn không có quyền truy cập quản trị.",
-              );
+            requirePermission(session, "dashboard.read");
             return json(res, 200, { stats: await store.dashboard() });
           }
           if (req.method === "GET" && path === "/api/admin/products") {
-            requirePermission(session, "catalog.manage");
+            requirePermission(session, "catalog.read");
             return json(res, 200, {
               products: await store.listProducts({ includeInactive: true }),
             });
           }
           if (req.method === "GET" && path === "/api/admin/orders") {
-            requirePermission(session, "orders.manage");
+            requirePermission(session, "orders.read");
             return json(res, 200, {
               orders: (await store.listOrders({ limit: 200 })).map(stripToken),
             });
           }
           if (req.method === "GET" && path === "/api/admin/inventory") {
-            requirePermission(session, "inventory.manage");
+            requirePermission(session, "inventory.read");
             return json(res, 200, { inventory: await store.inventoryList() });
           }
           if (req.method === "GET" && path === "/api/admin/audit") {
             requirePermission(session, "audit.read");
             return json(res, 200, { logs: await store.auditList(100) });
+          }
+          if (req.method === "GET" && path === "/api/admin/users") {
+            requirePermission(session,"users.manage");
+            return json(res,200,await auth.listUsers());
+          }
+          const staffMatch=path.match(/^\/api\/admin\/users\/(\d+)$/);
+          if (req.method === "PATCH" && staffMatch) {
+            requirePermission(session,"users.manage");
+            return json(res,200,await auth.manageUser(user.id,Number(staffMatch[1]),await readBody(req)));
           }
           const variantMatch = path.match(/^\/api\/admin\/variants\/(\d+)$/);
           if (req.method === "PATCH" && variantMatch) {

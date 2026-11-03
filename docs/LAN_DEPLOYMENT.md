@@ -40,3 +40,19 @@ LAN E2E và firewall thực tế cần IT xác nhận tại công ty.
 HTTP LAN chỉ dành thử nghiệm trên mạng tin cậy. Với dữ liệu thật/mật khẩu: triển khai HTTPS nội bộ hoặc VPN; checklist HTTPS gồm reverse proxy TLS, domain/DNS, NODE_ENV=production, COOKIE_SECURE=true, firewall hạn chế, rate limit, backup, monitoring và kiểm thử cookie/CSRF. Nhiệm vụ này không mở Internet.
 
 Rollback: dừng đúng app, checkout bản code tương thích và rebuild bằng local:start; giữ `.env.local`, data và volume. Không hạ schema bằng cách xóa DB; dùng forward fix cho migration đã áp dụng.
+
+## Vai trò nhân viên
+
+Admin vào **Tài khoản & Phân quyền**, tìm tài khoản đã đăng ký, chọn vai trò và xác nhận lưu. Không có mật khẩu admin mặc định; dùng `npm run local:admin` cho admin đầu tiên. Quyền thay đổi có hiệu lực request kế tiếp; vô hiệu hóa thu hồi mọi phiên. Không được tước quyền/khóa admin hoạt động cuối cùng.
+
+| Role | Quyền |
+|---|---|
+| admin | Tất cả, bao gồm quản lý tài khoản |
+| boss | Đọc dashboard, catalog, orders, inventory, audit |
+| sales | Đọc dashboard/catalog/orders; sửa đơn và đối soát thanh toán |
+| warehouse | Đọc orders/inventory; điều chỉnh tồn; không xác nhận thanh toán |
+| content | Đọc dashboard/catalog; sửa SKU |
+| viewer | Chỉ đọc catalog quản trị |
+| customer | Mua hàng, tài khoản và đơn cá nhân |
+
+Nhiều role cộng dồn quyền. Không role mới nào có users.manage. Dashboard chứa thống kê doanh thu và khách hàng tổng hợp; không trả hồ sơ khách. Orders chứa thông tin giao hàng nên chỉ cấp cho người cần xử lý đơn.

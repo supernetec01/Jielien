@@ -33,13 +33,14 @@ const transitions = {
   cancelled: [],
 };
 const sections = [
-  { id: "dashboard", label: "◫ Tổng quan", permission: null },
-  { id: "products", label: "▦ Sản phẩm & SKU", permission: "catalog.manage" },
-  { id: "orders", label: "▤ Đơn hàng", permission: "orders.manage" },
+  {id:"users",label:"Tài khoản & Phân quyền",permission:"users.manage"},
+  { id: "dashboard", label: "◫ Tổng quan", permission: "dashboard.read" },
+  { id: "products", label: "▦ Sản phẩm & SKU", permission: "catalog.read" },
+  { id: "orders", label: "▤ Đơn hàng", permission: "orders.read" },
   {
     id: "inventory",
     label: "⌂ Kho & tồn hàng",
-    permission: "inventory.manage",
+    permission: "inventory.read",
   },
   { id: "audit", label: "☷ Nhật ký thao tác", permission: "audit.read" },
 ];
@@ -53,6 +54,7 @@ let productRows = [];
 let orderRows = [];
 let inventoryRows = [];
 let auditRows = [];
+let staffRows = [], staffRoles = [];
 let dialogType = "";
 let dialogItem = null;
 let mutationBusy = false;
@@ -231,6 +233,9 @@ function filterInventory() {
 function auditMarkup() {
   return `<section class="panel">${header("Nhật ký thao tác", "Lịch sử thay đổi do máy chủ ghi nhận.", refreshButton())}<div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Thời gian</th><th scope="col">Thao tác / đối tượng</th><th scope="col">Người thực hiện</th><th scope="col">Thông tin</th></tr></thead><tbody>${auditRows.map((log) => `<tr><td style="white-space:nowrap">${date(log.createdAt)}</td><td><span class="log-action">${escape(log.action)}</span><span class="log-entity">${escape(log.entityType)} #${escape(log.entityId)}</span></td><td>${log.actorId == null ? "Hệ thống" : "Tài khoản #" + escape(log.actorId)}</td><td><button class="text-button" data-audit="${escape(log.id)}">Xem chi tiết</button></td></tr>`).join("") || noRows(4, "Chưa có thao tác được ghi nhận.")}</tbody></table></div></section>`;
 }
+function staffTable(rows) {
+ return `<div class="table-wrap"><table class="data-table"><thead><tr><th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr></thead><tbody>${rows.map(u=>`<tr><td>${escape(u.full_name)}<br>${escape(u.email)}<br>${escape(u.phone)}</td><td>${escape(u.roles.join(', '))}</td><td>${escape(u.status)}</td><td><button data-staff="${Number(u.id)}">Phân quyền</button></td></tr>`).join('')}</tbody></table></div>`;
+}
 async function renderView(view, { focus = true } = {}) {
   const selected = sections.find((section) => section.id === view);
   if (!selected || !has(selected.permission)) return;
@@ -248,6 +253,10 @@ async function renderView(view, { focus = true } = {}) {
     '<div class="panel loading">Đang tải dữ liệu cửa hàng…</div>';
   try {
     let html;
+    if (view === "users") {
+      const data=await api('/api/admin/users'); staffRows=data.users; staffRoles=data.roles;
+      html=`<section class="panel"><h1>Tài khoản & Phân quyền</h1><input id="staff-search" type="search" placeholder="Tìm tên / email / điện thoại"><div id="staff-list">${staffTable(staffRows)}</div></section>`;
+    }
     if (view === "dashboard") {
       const { stats = {} } = await api("/api/admin/dashboard");
       html = dashboardMarkup(stats);
@@ -270,6 +279,8 @@ async function renderView(view, { focus = true } = {}) {
     }
     if (version !== viewVersion) return;
     content.innerHTML = html;
+    if(!has('catalog.manage')) $$('[data-edit-variant]',content).forEach(e=>e.remove());
+    if(!has('inventory.manage')) $$('[data-adjust-variant]',content).forEach(e=>e.remove());
     if (focus) content.focus({ preventScroll: true });
   } catch (error) {
     if (version === viewVersion)
@@ -330,10 +341,11 @@ function paymentBadge(status) {
 }
 function orderDetail(order) {
   const c = order.customer || {};
-  const next = transitions[order.status] || [];
+  const next = has("orders.manage") ? transitions[order.status] || [] : [];
   return `<div class="detail-split"><div><h3>Người nhận</h3><p><b>${escape(c.name)}</b></p><p>${escape(c.phone)}</p><p>${escape(c.address)}</p><p>${escape(c.district)}, ${escape(c.province)}</p></div><div><h3>Thông tin đơn</h3><p>${escape(order.id)}</p><p>${date(order.createdAt)}</p><p>${badge(order.status)}</p><p>Thanh toán: ${escape(paymentLabel(order.payment || "cod"))}</p><p>${paymentBadge(order.paymentStatus)}</p></div></div>${(order.items || []).map((item) => `<div class="order-preview"><img src="${escape(item.image)}" alt=""><span>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></span><strong class="small">${money(item.lineTotal)}</strong></div>`).join("")}<div class="total-row"><span>Tiền hàng</span><b>${money(order.subtotal)}</b></div><div class="total-row"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="total-row"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="total-row grand"><span>Tổng cộng</span><b>${money(order.total)}</b></div>${order.note ? `<p class="dialog-note">Ghi chú: ${escape(order.note)}</p>` : ""}<section class="dialog-section"><h3>Xử lý đơn hàng</h3>${next.length ? `<form id="order-status-form"><div class="field"><label for="new-status">Trạng thái tiếp theo</label><select id="new-status" name="status">${next.map((status) => `<option value="${status}">${statusLabel(status)}</option>`).join("")}</select></div><div class="field"><label for="status-reason">Ghi chú xử lý</label><textarea id="status-reason" name="reason" maxlength="500" placeholder="Thông tin cần ghi nhận trong lịch sử đơn (nếu có)"></textarea></div><div id="mutation-error" class="form-error" role="alert"></div><button class="primary">Cập nhật trạng thái</button><p class="support-text">Máy chủ kiểm tra trạng thái và tồn kho trước khi ghi nhận. Hủy đơn sẽ hoàn phần giữ hàng; xuất giao sẽ giảm tồn thực tế.</p></form>` : '<p class="support-text">Đơn đã kết thúc; không có trạng thái tiếp theo trong luồng hiện tại.</p>'}</section>${paymentMarkup(order)}`;
 }
 function paymentMarkup(order) {
+  if(!has("orders.manage")) return "";
   if (order.payment === "bank_transfer") {
     const transfer = order.transfer;
     const details = transfer
@@ -362,6 +374,7 @@ function openOrder(number) {
 }
 async function mutation(form) {
   if (mutationBusy || !form.reportValidity()) return;
+  if(form.id==='staff-form' && !confirm('Xác nhận thay đổi quyền / trạng thái tài khoản?')) return;
   const data = Object.fromEntries(new FormData(form));
   const button = $("button", form);
   const errorBox = $(".form-error", form);
@@ -380,6 +393,7 @@ async function mutation(form) {
   mutationBusy = true;
   button.disabled = true;
   try {
+    if(dialogType==='staff') await api('/api/admin/users/'+dialogItem.id,{method:'PATCH',body:{roles:new FormData(form).getAll('roles'),status:data.status}});
     if (dialogType === "variant")
       await api("/api/admin/variants/" + encodeURIComponent(dialogItem.id), {
         method: "PATCH",
@@ -431,6 +445,11 @@ async function mutation(form) {
   }
 }
 root.addEventListener("click", (event) => {
+  const staff=event.target.closest('[data-staff]');
+  if(staff) {
+    const item=staffRows.find(u=>Number(u.id)===Number(staff.dataset.staff));
+    showDialog('Tài khoản & Phân quyền',`<form id="staff-form">${staffRoles.map(r=>`<label><input type="checkbox" name="roles" value="${escape(r)}" ${item.roles.includes(r)?'checked':''}>${escape(r)}</label><br>`).join('')}<select name="status"><option value="active" ${item.status==='active'?'selected':''}>Hoạt động</option><option value="inactive" ${item.status==='inactive'?'selected':''}>Vô hiệu hóa</option></select><div class="form-error" role="alert"></div><button>Lưu quyền</button></form>`,'staff',item); return;
+  }
   const section = event.target.closest("[data-section]");
   if (section) {
     renderView(section.dataset.section);
@@ -473,6 +492,7 @@ root.addEventListener("click", (event) => {
   }
 });
 root.addEventListener("input", (event) => {
+  if(event.target.id==='staff-search') $('#staff-list').innerHTML=staffTable(staffRows.filter(u=>[u.full_name,u.email,u.phone].join(' ').toLocaleLowerCase('vi').includes(event.target.value.toLocaleLowerCase('vi'))));
   if (event.target.id === "product-search") filterProducts();
   if (event.target.id === "order-search") filterOrders();
   if (event.target.id === "inventory-search") filterInventory();
@@ -512,7 +532,7 @@ async function init() {
       return;
     }
     shell();
-    await renderView("dashboard", { focus: false });
+    await renderView((has("dashboard.read")?"dashboard":sections.find(s=>has(s.permission)).id), { focus: false });
   } catch (error) {
     if (error.status === 401) {
       gate(
