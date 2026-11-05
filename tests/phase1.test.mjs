@@ -345,7 +345,7 @@ test("admin changes are permission/CSRF checked, pricing is database-backed, res
   );
   const edited = await request(
     "/api/admin/variants/1",
-    { price: 300000, originalPrice: 350000 },
+    { price: 300000, originalPrice: 350000, rowVersion: 1 },
     { session: admin, method: "PATCH" },
   );
   assert.equal(edited.status, 200);

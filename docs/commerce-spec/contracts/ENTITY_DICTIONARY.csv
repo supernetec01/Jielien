@@ -1,0 +1,64 @@
+﻿entity,status,domain,key_fields_and_constraints,implementation_note
+users,EXISTING,current,phone unique; email unique; password_hash; status; dates; roles via user_roles,Không sửa PK/legacy ID; migration additive nếu thay đổi.
+user_addresses,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+user_sessions,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+roles,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+permissions,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+user_roles,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+role_permissions,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+brands,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+categories,EXISTING,current,parent_id self FK; unique slug; SEO and category media NEW,Không sửa PK/legacy ID; migration additive nếu thay đổi.
+products,EXISTING,current,id BIGINT; brand_id FK; name; slug unique; description; status; version NEW; SEO fields NEW,Không sửa PK/legacy ID; migration additive nếu thay đổi.
+product_categories,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+product_variants,EXISTING,current,id BIGINT legacy SKU id; product_id FK; sku unique; barcode partial unique; price VND bigint; status; attributes; version NEW,Không sửa PK/legacy ID; migration additive nếu thay đổi.
+product_media,EXISTING,current,product_id FK; variant_id FK; asset_id FK NEW; alt and sort,Không sửa PK/legacy ID; migration additive nếu thay đổi.
+attributes,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+attribute_values,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+variant_attribute_values,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+product_specs,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+carts,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+cart_items,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+orders,EXISTING,current,id BIGINT; order_number external unique; user_id FK; snapshots in order_items; idempotency_key unique; payment & state,Không sửa PK/legacy ID; migration additive nếu thay đổi.
+order_items,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+order_status_history,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+payments,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+payment_events,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+bank_transfer_details,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+warehouses,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+inventory_balances,EXISTING,current,composite PK warehouse_id+variant_id; on_hand int>=0; reserved int>=0 <=on_hand,Không sửa PK/legacy ID; migration additive nếu thay đổi.
+inventory_movements,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+inventory_reservations,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+shipments,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+promotions,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+coupons,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+coupon_redemptions,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+audit_logs,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+legacy_imports,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+schema_migrations,EXISTING,current,"Đọc db/schema-contract.md để lấy cột, PK/FK/CHECK chính xác.",Không sửa PK/legacy ID; migration additive nếu thay đổi.
+media_assets,NEW,catalog,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+product_attribute_groups,NEW,catalog,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+product_related,NEW,catalog,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+seo_redirects,NEW,catalog,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+site_settings,NEW,catalog,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+page_banners,NEW,catalog,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+content_pages,NEW/P2-OPTIONAL,catalog,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+article_categories,NEW,cms,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+article_tags,NEW,cms,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+articles,NEW,cms,id BIGINT; title; slug unique; cover asset FK; category FK; author FK; status; revision; publish dates; version; SEO metadata,Thiết kế migration 003+ phù hợp độ ưu tiên.
+article_revisions,NEW,cms,"article_id FK; revision_no; sanitized content, snapshot; unique(article_id,revision_no)",Thiết kế migration 003+ phù hợp độ ưu tiên.
+article_tag_links,NEW,cms,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+article_product_links,NEW,cms,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+article_workflow_events,NEW,cms,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+article_publish_jobs,NEW,cms,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+article_internal_links,NEW/P2-OPTIONAL,cms,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+article_views_daily,NEW/P2-OPTIONAL,cms,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+inventory_documents,NEW,inventory,document_number unique; type/status; source/target warehouses; actor approvals; timestamps; version,Thiết kế migration 003+ phù hợp độ ưu tiên.
+inventory_document_items,NEW,inventory,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+stocktakes,NEW/P2-OPTIONAL,inventory,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+return_requests,NEW,returns,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+return_items,NEW,returns,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+refunds,NEW,returns,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+promotion_targets,NEW,promotion_staff,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+coupon_usage_by_customer,NEW/P2-OPTIONAL,promotion_staff,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+staff_invites,NEW,promotion_staff,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.
+activity_notifications,NEW/P2-OPTIONAL,promotion_staff,"Xem docs/04_DATA_MODEL.md phần 3 để có fields, keys, status, indices",Thiết kế migration 003+ phù hợp độ ưu tiên.

@@ -1,4 +1,12 @@
-# Jielien — cửa hàng mẹ và bé, PostgreSQL
+# Jielien International — Commerce & CMS PostgreSQL
+
+Bản nâng cấp đang được review trên nhánh `feature/jielien-commerce-cms`, chưa tự merge main hoặc triển khai public. Có catalog cha/SKU/media, tài khoản nhân viên do admin tạo, CMS duyệt/xuất bản và SEO HTML, CSV, phiếu kho/đổi trả, backup database + media.
+
+- [Chạy/nâng cấp Windows Docker Desktop, backup và rollback](docs/COMMERCE_WINDOWS.md)
+- [Chức năng thực tế, migration, phân quyền và phần còn lại](docs/COMMERCE_RELEASE.md)
+- [Bằng chứng kiểm thử và giới hạn](docs/validation/RESULTS.md)
+
+**Giữ nguyên `.env.local`, mật khẩu PostgreSQL và volume hiện có; backup/restore drill trước khi rebuild bản mới.** Không dùng dữ liệu thật để chạy test.
 
 Giai đoạn 1 theo thiết kế e-commerce người dùng cung cấp: **35 bảng nghiệp vụ + 1 bảng migration**, sản phẩm cha/SKU, kho/giữ tồn, đơn/chi tiết/thanh toán/giao hàng, tài khoản/phân quyền/nhật ký. Website độc lập, không liên kết với AVAKids; hàng hóa, thương hiệu và hình SVG vẫn là dữ liệu minh họa.
 
@@ -12,7 +20,7 @@ Giai đoạn 1 theo thiết kế e-commerce người dùng cung cấp: **35 bả
 
 Máy cá nhân và môi trường đám mây là hai bản chạy riêng. Push mã lên GitHub không cập nhật tiến trình `localhost` trên máy bạn. Bản mới dùng **cổng 3001**; giữ nguyên dịch vụ ở cổng **3000**.
 
-Cần Git, Node.js **18 trở lên** để chạy lệnh hỗ trợ, và Docker Desktop đang mở ở chế độ **Linux containers**. Node.js 24 và PostgreSQL 17 của ứng dụng chạy bên trong Docker; không cần cài PostgreSQL hoặc `npm ci` trên máy để dùng cách này.
+Cần Git, Node.js **24.11 trở lên** để chạy lệnh hỗ trợ, và Docker Desktop đang mở ở chế độ **Linux containers**. Node.js 24 và PostgreSQL 17 của ứng dụng chạy bên trong Docker; không cần cài PostgreSQL hoặc `npm ci` trên máy để dùng cách này.
 
 Mở PowerShell trong đúng thư mục repo đã clone, kiểm tra các thay đổi đang có rồi cập nhật:
 
@@ -141,3 +149,5 @@ lib/vietqr.mjs            local NAPAS/EMVCo payload, CRC and bank configuration
 /tests                    isolated PostgreSQL and browser verification
 /docs                     database, roadmap, acceptance evidence
 ```
+
+Triển khai LAN, phân quyền và backup: xem [LAN_DEPLOYMENT.md](docs/LAN_DEPLOYMENT.md).

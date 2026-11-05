@@ -3,20 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#ed1164" />
+    <meta name="theme-color" content="#0B1B34" />
     <meta
       name="description"
       content="Jielien — thế giới mẹ và bé. Mua sắm sữa, bỉm tã, đồ dùng chăm sóc bé và đặt hàng COD."
     />
     <title>Jielien — Thế giới mẹ và bé</title>
+    <link rel="icon" href="/assets/jielien-logo.jpg" />
+    <link rel="stylesheet" href="/brand.css" />
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <a class="skip-link" href="#main">Đi đến nội dung</a>
-    <div class="top-promo">
-      THÁNG YÊU THƯƠNG <strong>Giảm 50.000đ</strong> cho đơn từ 500.000đ
-      <span>• Mã: MEBE50</span><a href="/san-pham" data-link>Mua ngay →</a>
-    </div>
+    <div class="top-promo">Jielien International · Sản phẩm và tin tức từ công ty</div>
     <header class="site-header">
       <div class="header-main wrap">
         <button
@@ -27,7 +26,7 @@
           ☰
         </button>
         <a href="/" data-link class="logo" aria-label="Jielien trang chủ"
-          >JIE<span>LIEN</span><small>THẾ GIỚI MẸ & BÉ</small></a
+          ><img class="brand-logo" src="/assets/jielien-logo.jpg" alt="Jielien International" width="128" height="96"></a
         >
         <form id="search-form" role="search" class="search-form">
           <input
@@ -88,6 +87,7 @@
       aria-label="Danh mục sản phẩm"
       hidden
     ></nav>
+    <a class="brand-news-link wrap" href="/tin-tuc">Tin tức & Cẩm nang →</a>
     <main id="main" class="wrap" tabindex="-1">
       <div class="loading">Đang chuẩn bị thế giới nhỏ cho bé…</div>
     </main>
@@ -122,10 +122,11 @@
         </div>
       </div>
     </section>
-    <footer>
+    <footer class="site-footer">
+      <div id="company-contact" class="wrap"></div>
       <div class="wrap footer-grid">
         <div>
-          <a class="logo" href="/" data-link>JIE<span>LIEN</span></a>
+          <a class="logo" href="/" data-link><img class="brand-logo" src="/assets/jielien-logo.jpg" alt="Jielien International" width="128" height="96"></a>
           <p>
             Yêu thương cho mẹ, trọn vẹn cho bé.<br />Website độc lập, dữ liệu và
             hình sản phẩm minh họa.
@@ -141,7 +142,7 @@
         <div>
           <h3>Thông tin cửa hàng</h3>
           <a href="/tai-khoan">Tài khoản của mẹ</a
-          ><a href="/quan-tri">Quản trị cửa hàng</a>
+          ><a href="/quan-tri" id="staff-admin-link" hidden style="display:none">Quản trị cửa hàng</a>
           <a href="/chinh-sach/gioi-thieu" data-link>Về Jielien</a
           ><a href="/chinh-sach/bao-mat" data-link>Bảo vệ thông tin cá nhân</a
           ><a href="/bai-viet/an-dam" data-link>Kiến thức mẹ & bé</a>

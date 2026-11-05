@@ -7,6 +7,8 @@ import { createPool } from "./lib/database.mjs";
 import { createStore } from "./db/store.mjs";
 import { createAuth } from "./lib/auth.mjs";
 import { createCartService } from "./lib/cart.mjs";
+import {createCommerce} from "./lib/commerce-routes.mjs";
+import {createSeo,seoConfig} from "./lib/seo.mjs";
 import QRCode from "qrcode";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
@@ -240,6 +242,8 @@ export async function createApp({
   catalogPath = resolve(publicRoot, "catalog.json"),
   legacyPath = externalPool ? null : resolve(projectRoot, "data/store.sqlite"),
   bankConfig,
+  mediaDirectory,
+  seoConfiguration,
 } = {}) {
   const pool = externalPool || createPool();
   let store;
@@ -249,6 +253,10 @@ export async function createApp({
     if (!externalPool) await pool.end();
     throw error;
   }
+  const commerce=createCommerce(pool,{mediaDirectory,publicProducts:()=>store.listProducts()});
+  const indexing=seoConfig(seoConfiguration||process.env);
+  const seo=createSeo({pool,store,cms:commerce.cms,config:indexing});
+  const publisher=setInterval(()=>commerce.cms.runDue().catch(e=>console.error("CMS scheduler:",e.code||e.name)),30000); publisher.unref();
   const auth = createAuth(pool),
     carts = createCartService(pool),
     rates = new Map();
@@ -270,9 +278,11 @@ export async function createApp({
       for (const [k, v] of rates) if (v.until < now) rates.delete(k);
   }
   const server = http.createServer(async (req, res) => {
+    if(!indexing.index) res.setHeader("X-Robots-Tag","noindex, nofollow");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "same-origin");
     res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
     res.setHeader(
       "Permissions-Policy",
       "camera=(), microphone=(), geolocation=()",
@@ -293,10 +303,19 @@ export async function createApp({
         fail(403, "forbidden", "Không thể truy cập đường dẫn này.");
       const url = new URL(req.url, "http://localhost"),
         path = url.pathname;
+      if(path.startsWith('/media/') && ['GET','HEAD'].includes(req.method)) {
+        const token=cookieToken(req),session=token?await auth.authenticate(token):null;
+        const image=await commerce.media.serve(decoded.slice(7),session?.user);
+        res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'private, no-cache'});res.end(req.method==='HEAD'?undefined:image);return;
+      }
       if (path.startsWith("/api/")) {
         res.setHeader("Cache-Control", "no-store");
         const rawToken = cookieToken(req),
           session = rawToken ? await auth.authenticate(rawToken) : null;
+        if(path.startsWith('/api/admin/')) {
+          requireUser(session); if(!['GET','HEAD'].includes(req.method)) requireCsrf(req,session);
+        }
+        if(await commerce.api({req,res,path,url,user:session?.user,auth,readBody,json})) return;
         if (req.method === "GET" && path === "/api/health") {
           await pool.query("SELECT 1");
           return json(res, 200, { status: "ok", database: "postgresql" });
@@ -496,48 +515,44 @@ export async function createApp({
           const user = requireUser(session);
           if (!["GET", "HEAD"].includes(req.method)) requireCsrf(req, session);
           if (req.method === "GET" && path === "/api/admin/dashboard") {
-            if (
-              !user.permissions.some((p) =>
-                [
-                  "catalog.manage",
-                  "orders.manage",
-                  "inventory.manage",
-                  "audit.read",
-                ].includes(p),
-              )
-            )
-              fail(
-                403,
-                "permission_denied",
-                "Bạn không có quyền truy cập quản trị.",
-              );
+            requirePermission(session, "dashboard.read");
             return json(res, 200, { stats: await store.dashboard() });
           }
           if (req.method === "GET" && path === "/api/admin/products") {
-            requirePermission(session, "catalog.manage");
+            requirePermission(session, "catalog.read");
             return json(res, 200, {
               products: await store.listProducts({ includeInactive: true }),
             });
           }
           if (req.method === "GET" && path === "/api/admin/orders") {
-            requirePermission(session, "orders.manage");
+            requirePermission(session, "orders.read");
             return json(res, 200, {
               orders: (await store.listOrders({ limit: 200 })).map(stripToken),
             });
           }
           if (req.method === "GET" && path === "/api/admin/inventory") {
-            requirePermission(session, "inventory.manage");
+            requirePermission(session, "inventory.read");
             return json(res, 200, { inventory: await store.inventoryList() });
           }
           if (req.method === "GET" && path === "/api/admin/audit") {
             requirePermission(session, "audit.read");
             return json(res, 200, { logs: await store.auditList(100) });
           }
+          if (req.method === "GET" && path === "/api/admin/users") {
+            requirePermission(session,"users.manage");
+            return json(res,200,await auth.listUsers());
+          }
+          const staffMatch=path.match(/^\/api\/admin\/users\/(\d+)$/);
+          if (req.method === "PATCH" && staffMatch) {
+            requirePermission(session,"users.manage");
+            return json(res,200,await auth.manageUser(user.id,Number(staffMatch[1]),await readBody(req)));
+          }
           const variantMatch = path.match(/^\/api\/admin\/variants\/(\d+)$/);
           if (req.method === "PATCH" && variantMatch) {
             requirePermission(session, "catalog.manage");
             const body = await readBody(req);
-            const changes = {};
+            if (!Number.isSafeInteger(body.rowVersion) || body.rowVersion<1) fail(400,"version_required","Cần tải lại SKU trước khi lưu.");
+            const changes = {rowVersion:body.rowVersion};
             for (const key of ["price", "originalPrice", "status"])
               if (Object.hasOwn(body, key)) changes[key] = body[key];
             return json(res, 200, {
@@ -572,7 +587,7 @@ export async function createApp({
             /^\/api\/admin\/orders\/([A-Za-z0-9-]{1,80})\/bank-transfer$/,
           );
           if (req.method === "POST" && bankPaidMatch) {
-            requirePermission(session, "orders.manage");
+            requirePermission(session, "payments.reconcile");
             await readBody(req);
             return json(res, 200, {
               order: stripToken(
@@ -581,7 +596,7 @@ export async function createApp({
             });
           }
           if (req.method === "POST" && paidMatch) {
-            requirePermission(session, "orders.manage");
+            requirePermission(session, "payments.reconcile");
             await readBody(req);
             return json(res, 200, {
               order: stripToken(
@@ -606,6 +621,9 @@ export async function createApp({
       }
       if (req.method !== "GET" && req.method !== "HEAD")
         fail(405, "method_not_allowed", "Phương thức không được hỗ trợ.");
+      const rendered=await seo.render(decoded,url,()=>readFile(resolve(publicRoot,'index.html'),'utf8'));
+      if(rendered){res.writeHead(rendered.status||200,rendered.location?{Location:rendered.location}:{'Content-Type':rendered.type||'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:rendered.body);return;}
+      if(['/quan-tri','/tai-khoan','/gio-hang','/thanh-toan','/tra-cuu-don-hang'].includes(decoded))res.setHeader('X-Robots-Tag','noindex, nofollow');
       const special =
         decoded === "/tai-khoan"
           ? "/account.html"
@@ -658,6 +676,7 @@ export async function createApp({
       });
     }
   });
+  server.on("close",()=>clearInterval(publisher));
   if (!externalPool)
     server.on("close", () => {
       pool.end().catch(() => {});

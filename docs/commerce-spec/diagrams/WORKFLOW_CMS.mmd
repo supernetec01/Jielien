@@ -1,0 +1,13 @@
+flowchart TD
+  A[Writer creates draft] --> B[Autosave revision]
+  B --> C[Submit review]
+  C --> D{SEO Editor approves?}
+  D -->|No| E[Return to draft with comments]
+  E --> B
+  D -->|Yes| F[Approved]
+  F --> G{Publish now?}
+  G -->|Yes| H[Publish transaction]
+  G -->|No| I[Scheduled job]
+  I --> H
+  H --> J[Public HTML and metadata]
+  J --> K[Sitemap and related product links]

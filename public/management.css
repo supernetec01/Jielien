@@ -1,7 +1,7 @@
 :root {
-  --pink: #ed1164;
-  --pink-dark: #c40a4e;
-  --light: #fff0f5;
+  --accent: #0B1B34;
+  --accent-dark: #142943;
+  --light: #F2F7E6;
   --ink: #26313b;
   --muted: #77818d;
   --line: #e7eaf0;
@@ -47,7 +47,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #efadca;
+  outline: 3px solid #F2F7E6;
   outline-offset: 3px;
 }
 input,
@@ -63,7 +63,7 @@ textarea {
 }
 input[type="checkbox"] {
   width: auto;
-  accent-color: var(--pink);
+  accent-color: var(--accent);
 }
 textarea {
   min-height: 90px;
@@ -80,7 +80,7 @@ a.primary:hover {
   padding: 0 24px;
 }
 .management-header {
-  background: var(--pink);
+  background: var(--accent);
   color: white;
 }
 .header-row {
@@ -126,7 +126,7 @@ a.primary:hover {
   margin-top: 40px;
 }
 .management-footer a {
-  color: var(--pink);
+  color: var(--accent);
   margin-left: 18px;
 }
 .skip-link {
@@ -135,7 +135,7 @@ a.primary:hover {
   left: 10px;
   z-index: 100;
   background: white;
-  color: var(--pink);
+  color: var(--accent);
   padding: 10px 15px;
 }
 .skip-link:focus {
@@ -189,22 +189,22 @@ p {
   font-weight: 700;
 }
 .primary {
-  background: var(--pink);
+  background: var(--accent);
   color: white;
 }
 .secondary {
   background: white;
-  color: var(--pink);
-  border: 1px solid #eeb4c9;
+  color: var(--accent);
+  border: 1px solid #F2F7E6;
 }
 .danger {
-  color: #ae2944;
+  color: #0B1B34;
   background: #fff0f2;
-  border: 1px solid #f0c4ce;
+  border: 1px solid #F2F7E6;
 }
 .text-button {
   background: none;
-  color: var(--pink);
+  color: var(--accent);
   padding: 0;
   font-size: 12px;
 }
@@ -225,37 +225,37 @@ p {
   border: 1px solid var(--line);
 }
 .auth-intro {
-  background: #ffe8f0;
+  background: #F2F7E6;
   padding: 45px 35px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 .auth-intro .eyebrow {
-  color: #ad4c71;
+  color: #0B1B34;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 2px;
 }
 .auth-intro h1 {
-  color: #8f3657;
+  color: #0B1B34;
   font-size: 34px;
   margin: 16px 0;
   line-height: 1.2;
 }
 .auth-intro p {
-  color: #a26a80;
+  color: #0B1B34;
   font-size: 12px;
   line-height: 1.9;
 }
 .auth-heart {
   font-size: 100px;
-  color: #e9b2c6;
+  color: #F2F7E6;
   line-height: 1.3;
   margin: 15px 0;
 }
 .auth-intro .intro-list {
-  color: #a35c77;
+  color: #0B1B34;
   font-size: 11px;
   line-height: 2.3;
 }
@@ -277,8 +277,8 @@ p {
   font-size: 14px;
 }
 .tabs button.active {
-  color: var(--pink);
-  border-color: var(--pink);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 .field {
   display: flex;
@@ -291,7 +291,7 @@ p {
   font-weight: 600;
 }
 .field label .required {
-  color: var(--pink);
+  color: var(--accent);
 }
 .field small {
   color: var(--muted);
@@ -305,7 +305,7 @@ p {
   background: #fff0f2;
   border-radius: 6px;
   padding: 10px 12px;
-  color: #b52748;
+  color: #0B1B34;
   font-size: 12px;
   margin: 12px 0;
 }
@@ -330,7 +330,7 @@ p {
   line-height: 1.9;
 }
 .form-note a {
-  color: var(--pink);
+  color: var(--accent);
   text-decoration: underline;
 }
 .check-label {
@@ -378,7 +378,7 @@ p {
 }
 .side-nav button.active {
   background: var(--light);
-  color: var(--pink);
+  color: var(--accent);
   font-weight: 700;
 }
 .side-nav .section-caption {
@@ -428,9 +428,9 @@ p {
   margin-top: 25px;
   padding: 13px 16px;
   background: #fff7fa;
-  border-left: 3px solid #f4b2ca;
+  border-left: 3px solid #F2F7E6;
   font-size: 11px;
-  color: #a06b7e;
+  color: #0B1B34;
 }
 .roles {
   display: flex;
@@ -443,7 +443,7 @@ p {
   border-radius: 5px;
   padding: 3px 8px;
   font-size: 10px;
-  color: #8d6876;
+  color: #0B1B34;
   background: #f8edf2;
   white-space: nowrap;
 }
@@ -465,7 +465,7 @@ p {
 .badge.cancelled,
 .badge.inactive {
   background: #fff0f2;
-  color: #b9536a;
+  color: #0B1B34;
 }
 .empty {
   text-align: center;
@@ -474,7 +474,7 @@ p {
   font-size: 12px;
 }
 .empty-icon {
-  color: #e1a5be;
+  color: #F2F7E6;
   display: block;
   font-size: 50px;
   margin-bottom: 10px;
@@ -548,7 +548,7 @@ p {
   padding-top: 12px;
 }
 .order-card-footer strong {
-  color: var(--pink);
+  color: var(--accent);
   font-size: 16px;
 }
 .order-card-footer span {
@@ -601,7 +601,7 @@ p {
 }
 .access-panel .access-icon {
   font-size: 55px;
-  color: #d9a8bd;
+  color: #0B1B34;
 }
 .access-panel p {
   color: var(--muted);
@@ -663,11 +663,11 @@ p {
   margin-top: 6px;
 }
 .stat-card:first-child {
-  background: #fff0f5;
-  border-color: #ffd3e3;
+  background: #F2F7E6;
+  border-color: #F2F7E6;
 }
 .stat-card:first-child strong {
-  color: var(--pink);
+  color: var(--accent);
 }
 .table-controls {
   display: flex;
@@ -737,7 +737,7 @@ p {
 }
 .price-cell {
   font-weight: 700;
-  color: var(--pink);
+  color: var(--accent);
   white-space: nowrap;
 }
 .table-actions {
@@ -797,7 +797,7 @@ p {
 }
 .dialog-header button {
   background: none;
-  color: #8f7f87;
+  color: #0B1B34;
   font-size: 28px;
   line-height: 1;
   padding: 0;
@@ -835,14 +835,14 @@ p {
   font-size: 14px;
 }
 .total-row.grand b {
-  color: var(--pink);
+  color: var(--accent);
   font-size: 20px;
 }
 .dialog-note {
   background: #fff7fa;
   padding: 12px;
   border-radius: 7px;
-  color: #a06b7e;
+  color: #0B1B34;
   font-size: 11px;
   margin-top: 20px;
 }
@@ -1149,3 +1149,9 @@ p {
   line-height: 1.7;
   color: #77818d;
 }
+/* Company operations shell: same permissions and focus behavior as the existing UI. */
+.admin-sidebar .side-nav{background:var(--brand-navy);color:#fff;border:0}
+.admin-sidebar .side-nav button{color:#d9e2ef;min-height:44px}
+.admin-sidebar .side-nav button.active{background:var(--brand-green);color:var(--brand-navy);font-weight:700}
+.admin-sidebar .side-nav .section-caption,.admin-sidebar .admin-user{color:#d9e2ef}
+@media(min-width:801px){.admin-sidebar .side-nav{max-height:calc(100vh - 130px);overflow:auto}}

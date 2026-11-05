@@ -1,0 +1,1 @@
+ALTER TABLE product_variants ADD COLUMN weight_grams INTEGER CHECK(weight_grams>=0), ADD COLUMN length_mm INTEGER CHECK(length_mm>=0), ADD COLUMN width_mm INTEGER CHECK(width_mm>=0), ADD COLUMN height_mm INTEGER CHECK(height_mm>=0), ADD COLUMN low_stock_threshold INTEGER NOT NULL DEFAULT 5 CHECK(low_stock_threshold>=0);

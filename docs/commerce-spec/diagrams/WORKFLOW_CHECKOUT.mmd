@@ -1,0 +1,14 @@
+flowchart TD
+  A[Customer opens product] --> B[Choose variant ID & quantity]
+  B --> C[Add to cart]
+  C --> D[Server quote price and availability]
+  D --> E{Available and price accepted?}
+  E -->|No| F[Show changed price or stock; request confirmation]
+  F --> B
+  E -->|Yes| G[Submit order with idempotency key]
+  G --> H[Transaction locks stock and coupon]
+  H --> I{Enough available?}
+  I -->|No| J[Rollback; 409 error]
+  I -->|Yes| K[Reserve stock and snapshot items]
+  K --> L[Create payment and order; commit]
+  L --> M[Show order code and payment instructions]

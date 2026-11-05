@@ -7,8 +7,9 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env server.mjs",
     "start": "node --env-file-if-exists=.env server.mjs",
-    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs",
+    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs tests/commerce.test.mjs tests/commerce-upgrade.test.mjs tests/admin-visibility.test.mjs",
     "test:browser": "node tests/browser.test.mjs",
+    "db:backup": "node scripts/backup.mjs",
     "db:local": "bash scripts/dev-postgres.sh",
     "db:migrate": "node --env-file-if-exists=.env scripts/database.mjs migrate",
     "db:import": "node --env-file-if-exists=.env scripts/database.mjs import",
@@ -25,7 +26,10 @@
     "local:logs": "node scripts/local.mjs logs",
     "local:admin": "node scripts/local.mjs admin",
     "test:local": "node --test tests/local-setup.test.mjs",
-    "test:local:stack": "node tests/local-stack.mjs"
+    "test:local:stack": "node tests/local-stack.mjs",
+    "test:commerce": "node tests/commerce.browser.mjs",
+    "test:load": "node tests/commerce-load.mjs",
+    "test:admin-access": "node tests/admin-access.browser.mjs"
   },
   "engines": {
     "node": ">=24.11.0"
@@ -36,6 +40,7 @@
   "dependencies": {
     "bcryptjs": "3.0.2",
     "pg": "8.16.3",
-    "qrcode": "1.5.4"
+    "qrcode": "1.5.4",
+    "sharp": "0.34.5"
   }
 }

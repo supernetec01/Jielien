@@ -4,7 +4,7 @@ Website chạy trên máy bạn độc lập với website trong môi trường 
 
 ## Chuẩn bị
 
-Cài Git, Node.js **18 trở lên** cùng npm và Docker Desktop. Mở Docker Desktop, chọn **Linux containers**, đợi Docker Engine sẵn sàng. Ứng dụng dùng Node.js 24 và PostgreSQL 17 bên trong container; máy Windows không cần cài PostgreSQL, không cần chạy script Bash `db:local` dành cho cloud, và không cần cài dependency ứng dụng bằng `npm ci` khi dùng Docker.
+Cài Git, Node.js **24.11 trở lên** cùng npm và Docker Desktop. Mở Docker Desktop, chọn **Linux containers**, đợi Docker Engine sẵn sàng. Ứng dụng dùng Node.js 24 và PostgreSQL 17 bên trong container; máy Windows không cần cài PostgreSQL, không cần chạy script Bash `db:local` dành cho cloud, và không cần cài dependency ứng dụng bằng `npm ci` khi dùng Docker.
 
 PowerShell kiểm tra được các lệnh:
 
@@ -99,3 +99,5 @@ Xác định ứng dụng sở hữu PID trước khi quyết định xử lý. 
 Nếu app chưa khỏe, xem `npm run local:status` và `npm run local:logs`. Lỗi xác thực database sau khi sửa `.env.local` thường cần khôi phục đúng mật khẩu đã dùng khi tạo volume, không xóa volume. Nếu `/api/health` trả 404 hoặc trang chỉ báo demo chưa kết nối, kiểm tra lại địa chỉ cổng 3001 và thư mục repo/commit đang chạy.
 
 Hướng dẫn này mô tả quy trình chạy local; kết quả chạy trong cloud không chứng minh dịch vụ đã khởi động trên máy Windows của bạn.
+
+Triển khai LAN, phân quyền và backup: xem [LAN_DEPLOYMENT.md](LAN_DEPLOYMENT.md).

@@ -1,0 +1,160 @@
+openapi: 3.0.3
+info:
+  title: Jielien Commerce Expansion API (reference subset)
+  version: 0.1.0
+  description: >-
+    Proposed API subset, not claim of implementation. Existing /api/... must remain compatible.
+servers:
+  - url: http://localhost:3001
+    description: Local development only
+security:
+  - sessionCookie: []
+paths:
+  /api/health:
+    get:
+      summary: Existing health check
+      security: []
+      responses:
+        '200': {description: PostgreSQL connected}
+  /api/catalog/search:
+    get:
+      summary: Search published catalog
+      security: []
+      parameters:
+        - {name: q, in: query, schema: {type: string, maxLength: 120}}
+        - {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
+      responses:
+        '200':
+          description: Product page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: {type: array, items: {type: object}}
+                  page: {type: integer}
+                  total: {type: integer}
+  /api/news:
+    get:
+      summary: Published article listing
+      security: []
+      responses:
+        '200': {description: Published articles only}
+  /api/news/{slug}:
+    get:
+      summary: Published article detail (JSON companion to SSR HTML)
+      security: []
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Published article}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /api/admin/catalog/products:
+    get:
+      summary: List products (catalog.read)
+      responses:
+        '200': {description: Product page with variants}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+    post:
+      summary: Create draft product (catalog.create + CSRF)
+      parameters:
+        - $ref: '#/components/parameters/CSRFToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProductDraftInput'}
+      responses:
+        '201': {description: Created draft parent product}
+        '422': {description: Validation failed}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /api/admin/catalog/products/{id}:
+    patch:
+      summary: Update draft product by optimistic version
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: integer}}
+        - $ref: '#/components/parameters/CSRFToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                version: {type: integer, minimum: 1}
+                name: {type: string}
+                shortDescription: {type: string}
+      responses:
+        '200': {description: Updated product + next version}
+        '409': {description: version_conflict}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /api/admin/cms/articles:
+    post:
+      summary: Create article draft (content.write)
+      parameters:
+        - $ref: '#/components/parameters/CSRFToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ArticleInput'}
+      responses:
+        '201': {description: Article draft created}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /api/admin/cms/articles/{id}/publish:
+    post:
+      summary: Approve and publish reviewed revision (content.publish)
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: integer}}
+        - $ref: '#/components/parameters/CSRFToken'
+      responses:
+        '200': {description: Published article}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '409': {description: Not approved, conflict or invalid transition}
+  /api/admin/inventory/documents/{id}/post:
+    post:
+      summary: Post approved stock document once
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: integer}}
+        - $ref: '#/components/parameters/CSRFToken'
+      responses:
+        '200': {description: Inventory ledger committed once}
+        '409': {description: Invalid state or insufficient stock}
+        '403': {$ref: '#/components/responses/Forbidden'}
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: jielien_session
+  parameters:
+    CSRFToken:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      schema: {type: string}
+  schemas:
+    ProductDraftInput:
+      type: object
+      required: [name, primaryCategoryId]
+      properties:
+        name: {type: string, minLength: 2}
+        brandId: {type: integer}
+        primaryCategoryId: {type: integer}
+        shortDescription: {type: string}
+        status: {type: string, enum: [draft]}
+    ArticleInput:
+      type: object
+      required: [title, slug]
+      properties:
+        title: {type: string}
+        slug: {type: string}
+        excerpt: {type: string}
+        categoryId: {type: integer}
+        contentBlocks: {type: array, items: {type: object}}
+  responses:
+    Unauthorized: {description: Session absent or expired}
+    Forbidden: {description: Permission denied}
+    NotFound: {description: No published resource}

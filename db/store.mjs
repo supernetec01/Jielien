@@ -1,3 +1,4 @@
+import {renderBlocks} from "../lib/commerce-common.mjs";
 import { randomBytes, createHash } from "node:crypto";
 import { migrate } from "./migrate.mjs";
 import { seedCatalog } from "./seed.mjs";
@@ -137,15 +138,18 @@ async function audit(
     ],
   );
 }
-const variantSQL = `SELECT v.*,p.description,p.name AS product_name,b.name AS brand,
+const variantSQL = `SELECT v.*,p.description,p.content_blocks,p.name AS product_name,b.name AS brand,
  COALESCE((SELECT c.name FROM product_categories pc JOIN categories c ON c.id=pc.category_id WHERE pc.product_id=p.id AND c.status='active' ORDER BY c.sort_order,c.id LIMIT 1),'Sản phẩm') AS category,
  COALESCE((SELECT m.url FROM product_media m WHERE m.product_id=p.id AND (m.variant_id=v.id OR m.variant_id IS NULL) ORDER BY m.variant_id NULLS LAST,m.sort_order,m.id LIMIT 1),'') AS image,
+ COALESCE((SELECT json_agg(json_build_object('url',m.url,'alt',m.alt_text) ORDER BY m.sort_order,m.id) FROM product_media m WHERE m.product_id=p.id AND (m.variant_id=v.id OR m.variant_id IS NULL)),'[]') AS gallery,
  COALESCE((SELECT json_agg(s.spec_value ORDER BY s.sort_order,s.id) FROM product_specs s WHERE s.product_id=p.id AND s.spec_name='feature'),'[]') AS features,
  COALESCE((SELECT SUM(ib.on_hand-ib.reserved) FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id WHERE ib.variant_id=v.id AND w.type='normal' AND w.status='active'),0) AS available
  FROM product_variants v JOIN products p ON p.id=v.product_id LEFT JOIN brands b ON b.id=p.brand_id`;
 function adaptProduct(p) {
   return {
     id: number(p.id),
+    descriptionHtml: renderBlocks(p.content_blocks || []),
+    rowVersion: number(p.row_version),
     productId: number(p.product_id),
     slug: p.slug,
     name: p.name,
@@ -155,6 +159,7 @@ function adaptProduct(p) {
     brand: p.brand || "Jielien",
     category: p.category,
     type: p.type,
+    gallery:p.gallery||[],
     image: p.image,
     price: number(p.price),
     oldPrice: number(p.original_price ?? p.price),
@@ -225,7 +230,8 @@ async function calculate(client, items, couponValue, lockCoupon = false) {
     return {
       id,
       name: p.name,
-      image: p.image,
+      gallery:p.gallery||[],
+    image: p.image,
       price: p.price,
       quantity,
       lineTotal: p.price * quantity,
@@ -975,13 +981,15 @@ export async function createStore({
           )
         ).rows[0];
         if (!old) fail(404, "variant_not_found", "Không tìm thấy SKU.");
+        if (changes.rowVersion !== undefined && changes.rowVersion !== old.row_version)
+          fail(409,"conflict","SKU đã được người khác sửa. Vui lòng tải lại bản mới.");
         const values = entries.map(([, value]) =>
           typeof value === "string" ? value.trim() : value,
         );
         await client.query(
           "UPDATE product_variants SET " +
             entries.map(([key], i) => `${allowed[key]}=$${i + 1}`).join(",") +
-            ",updated_at=NOW() WHERE id=$" +
+            ",row_version=row_version+1,updated_at=NOW() WHERE id=$" +
             (values.length + 1),
           [...values, id],
         );
@@ -1022,12 +1030,13 @@ export async function createStore({
     },
     async inventoryList() {
       const result = await pool.query(
-        "SELECT ib.*,w.name AS warehouse_name,w.type AS warehouse_type,v.name,v.sku FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id JOIN product_variants v ON v.id=ib.variant_id ORDER BY ib.variant_id,ib.warehouse_id",
+        "SELECT ib.*,w.name AS warehouse_name,w.type AS warehouse_type,v.name,v.sku,v.low_stock_threshold FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id JOIN product_variants v ON v.id=ib.variant_id ORDER BY ib.variant_id,ib.warehouse_id",
       );
       return result.rows.map((row) => ({
         warehouseId: number(row.warehouse_id),
         warehouseName: row.warehouse_name,
         warehouseType: row.warehouse_type,
+        lowStockThreshold:row.low_stock_threshold,
         variantId: number(row.variant_id),
         sku: row.sku,
         name: row.name,

@@ -1,3 +1,4 @@
+import { canAccessAdmin } from "/admin-access.js";
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 const escape = (value) =>
@@ -16,6 +17,8 @@ const normalize = (value) =>
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D")
     .toLowerCase();
+let newsItems = [],
+  siteData = {};
 const categories = [
   ["Sữa cho bé", "milk-green"],
   ["Bỉm & tã", "diaper-pink"],
@@ -166,7 +169,7 @@ const heroes = [
     text: "Cùng mẹ chăm chút từng khoảnh khắc,<br>cho hành trình khôn lớn của con.",
     image: "/family.svg",
     link: "/san-pham",
-    background: "#fce4eb",
+    background: "#F2F7E6",
   },
   {
     eyebrow: "ÊM ÁI TỪ NHỮNG NGÀY ĐẦU",
@@ -186,11 +189,20 @@ const heroes = [
   },
 ];
 function heroMarkup() {
+  const banner = siteData.banners?.[0];
+  if (banner)
+    return `<div class="hero"><div class="hero-content"><h1>${escape(banner.title)}</h1><a href="${escape(banner.target_path)}" class="primary">Khám phá →</a></div><div class="hero-art"><img src="${escape(banner.url)}" alt="${escape(banner.alt_text)}"></div></div>`;
   const h = heroes[heroIndex];
   return `<div class="hero" style="background:${h.background}"><div class="hero-content"><div class="eyebrow">${h.eyebrow}</div><h1>${h.title}</h1><p>${h.text}</p><a href="${escape(h.link)}" data-link class="primary">Khám phá cho bé →</a><div class="hero-note">Chọn kỹ cho con · An tâm cho mẹ</div></div><div class="hero-art"><img src="${h.image}" alt="Minh họa sản phẩm và thế giới của bé"></div><div class="banner-controls" aria-label="Chọn banner">${heroes.map((_, i) => `<button class="${i === heroIndex ? "active" : ""}" data-hero="${i}" aria-label="Banner ${i + 1}" aria-pressed="${i === heroIndex}"></button>`).join("")}</div></div>`;
 }
+function couponMarkup() {
+  const coupons = siteData.coupons || [];
+  return coupons.length
+    ? `<div class="coupon-strip">${coupons.map((c) => `<div class="coupon"><b>${c.discount_type === "shipping" ? "MIỄN PHÍ SHIP" : c.discount_type === "percentage" ? "GIẢM " + c.discount_value + "%" : "GIẢM " + money(Math.min(c.discount_value, c.maximum_discount ?? c.discount_value))}</b><span>${c.minimum_order ? "Đơn từ " + money(c.minimum_order) : "Theo điều kiện máy chủ"}</span><button data-copy="${escape(c.code)}">${escape(c.code)} ▣</button></div>`).join("")}</div>`
+    : "";
+}
 function home() {
-  document.title = "Jielien — Thế giới mẹ và bé";
+  document.title = "Jielien International — Sản phẩm & Tin tức";
   const sale = [...products]
     .sort((a, b) => 1 - b.price / b.oldPrice - (1 - a.price / a.oldPrice))
     .slice(0, 5);
@@ -211,7 +223,7 @@ function home() {
       )
       .join("")}</div>
     <section class="panel"><div class="section-heading"><div><h2>Mẹ tìm gì cho bé?</h2><p>Đủ đầy những điều bé cần, từ những ngày đầu tiên.</p></div></div><div class="category-tiles">${categories.map(([name, img]) => `<a class="category-tile" href="${escape(href({ category: name }))}" data-link><span><img src="/assets/${img}.svg" alt=""></span>${name}</a>`).join("")}</div></section>
-    <section class="flash-sale"><div class="section-heading"><div><h2><span>ϟ</span> Ưu đãi mẹ & bé</h2><div class="sale-note">Giá xinh, yêu thương đong đầy · Sản phẩm minh họa</div></div><a href="/san-pham?sort=discount" data-link>Xem tất cả →</a></div><div class="coupon-strip"><div class="coupon"><b>GIẢM 50K</b><span>Đơn từ 500K</span><button data-copy="MEBE50">MEBE50 ▣</button></div><div class="coupon"><b>MIỄN PHÍ SHIP</b><span>Đơn từ 299K</span><button data-copy="FREESHIP">FREESHIP ▣</button></div></div>${productGrid(sale)}</section>
+    <section class="flash-sale"><div class="section-heading"><div><h2><span>ϟ</span> Ưu đãi mẹ & bé</h2><div class="sale-note">Giá xinh, yêu thương đong đầy · Sản phẩm minh họa</div></div><a href="/san-pham?sort=discount" data-link>Xem tất cả →</a></div>${couponMarkup()}${productGrid(sale)}</section>
     ${section("Sữa & dinh dưỡng cho bé", "Chọn sản phẩm phù hợp với độ tuổi và nhu cầu của con.", products.filter((p) => p.category === "Sữa cho bé" || p.category === "Ăn dặm").slice(0, 5), href({ category: "Sữa cho bé" }))}
     <section class="panel"><div class="section-heading"><h2>Thương hiệu trong bộ sưu tập</h2></div><div class="brand-row">${[
       ...new Set(products.map((p) => p.brand)),
@@ -223,37 +235,13 @@ function home() {
       )
       .join("")}</div></section>
     ${section("Nâng niu bé yêu mỗi ngày", "Từ giấc ngủ êm đến giờ chơi thật vui.", products.filter((p) => ["Chăm sóc bé", "Đồ dùng cho bé", "Đồ chơi"].includes(p.category)).slice(0, 5))}
-    <section class="panel"><div class="section-heading"><div><h2>Góc nhỏ của mẹ</h2><p>Đồng hành cùng mẹ trong từng chặng đường.</p></div></div><div class="journal-grid">${[
-      [
-        "ngu-ngon",
-        "☀",
-        "Một giấc ngủ êm,<br>một ngày thật vui.",
-        "CHĂM SÓC BÉ",
-        "Tạo thói quen ngủ nhẹ nhàng cho bé",
-      ],
-      [
-        "an-dam",
-        "♧",
-        "Bữa đầu đời,<br>vạn điều mới mẻ.",
-        "DINH DƯỠNG",
-        "Cùng mẹ chuẩn bị hành trình ăn dặm",
-      ],
-      [
-        "cham-soc-me",
-        "♡",
-        "Mẹ cũng cần<br>được chăm chút.",
-        "GÓC CỦA MẸ",
-        "Dành một khoảng nhỏ cho chính mẹ",
-      ],
-    ]
-      .map(
-        ([slug, icon, art, tag, title]) =>
-          `<article><a class="story-art" href="/bai-viet/${slug}" data-link>${icon}<b>${art}</b></a><small>${tag}</small><h3><a href="/bai-viet/${slug}" data-link>${title}</a></h3><a href="/bai-viet/${slug}" data-link>Đọc cùng Jielien →</a></article>`,
-      )
-      .join("")}</div></section>`;
+    <section class="panel"><div class="section-heading"><h2>Tin tức & Cẩm nang</h2><a href="/tin-tuc">Tất cả bài viết →</a></div><div class="news-grid">${newsItems.map((a) => `<article class="news-card"><a href="/tin-tuc/${escape(a.slug)}"><img src="${escape(a.coverUrl)}" alt="${escape(a.coverAlt)}"><h3>${escape(a.title)}</h3></a><p>${escape(a.excerpt)}</p></article>`).join("") || "<p>Chưa có bài viết được xuất bản.</p>"}</div></section>`;
 }
-function listing() {
-  const params = catalogParams();
+function listing(categoryName) {
+  const params = {
+    ...catalogParams(),
+    ...(categoryName ? { category: categoryName } : {}),
+  };
   const tokens = normalize(params.q || "")
     .split(/\s+/)
     .filter(Boolean);
@@ -319,10 +307,10 @@ function details(slug) {
   const p = products.find((p) => p.slug === slug);
   if (!p) return notFound();
   document.title = p.name + " | Jielien";
-  const variants = products
-    .filter((item) => item.productId === p.productId && item.id !== p.id)
-    .slice(0, 3);
-  return `${breadcrumbs([[p.category, href({ category: p.category })], [p.name]])}<section class="panel detail-top"><div><div class="gallery-main"><span class="product-discount">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span><img id="detail-image" src="${escape(p.image)}" alt="${escape(p.name)} — hình sản phẩm minh họa"></div><div class="gallery-thumbs"><button aria-label="Ảnh sản phẩm chính"><img src="${escape(p.image)}" alt=""></button></div><p class="detail-label">Hình SVG minh họa. Thông tin và thương hiệu trong bản thử nghiệm.</p></div><div class="detail-info"><div class="product-brand">${escape(p.brand)}</div><h1>${escape(p.name)}</h1><div class="detail-meta"><span>Mã SKU: ${escape(p.sku || String(p.id))}</span><span class="in-stock">${p.stock ? `✓ Còn ${p.stock} sản phẩm` : "Tạm hết hàng"}</span></div><div class="detail-pricing"><strong>${money(p.price)}</strong><del>${money(p.oldPrice)}</del><small>Giá minh họa, đã gồm thuế giả định trong dữ liệu mẫu.</small></div><ul class="features">${p.features.map((f) => `<li>${escape(f)}</li>`).join("")}</ul><div class="variant-label">Lựa chọn đang xem: <b>${escape(p.weight)}</b></div><div class="variants"><a class="active" href="${productLink(p)}" data-link>${escape(p.weight)}</a>${variants.map((v) => `<a href="${productLink(v)}" data-link>${escape(v.name.replace(v.brand, ""))}</a>`).join("")}</div><div class="variant-label">Số lượng</div>${quantityControl(p.id, 1, true)}<div class="buy-row"><button class="secondary" data-detail-add="${p.id}" ${!p.stock ? "disabled" : ""}>+ Thêm vào giỏ</button><button class="primary" data-buy="${p.id}" ${!p.stock ? "disabled" : ""}>Mua ngay →</button></div><div class="delivery-note">♧ Miễn phí giao hàng từ 499.000đ. Phí tiêu chuẩn 25.000đ.</div><div class="delivery-note">♢ Mã <b>MEBE50</b>: giảm 50.000đ cho đơn từ 500.000đ.</div></div></section>
+  const variants = products.filter(
+    (item) => item.productId === p.productId && item.id !== p.id,
+  );
+  return `${breadcrumbs([[p.category, href({ category: p.category })], [p.name]])}<section class="panel detail-top"><div><div class="gallery-main"><span class="product-discount">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span><img id="detail-image" src="${escape(p.image)}" alt="${escape(p.name)} — hình sản phẩm minh họa"></div><div class="gallery-thumbs">${(p.gallery?.length ? p.gallery : [{ url: p.image, alt: p.name }]).map((m, i) => `<button data-gallery="${escape(m.url)}" data-alt="${escape(m.alt || p.name)}" aria-label="Ảnh sản phẩm ${i + 1}"><img src="${escape(m.url)}" alt="${escape(m.alt || p.name)}"></button>`).join("")}</div><p class="detail-label">Kiểm tra quy cách và thông tin sản phẩm trước khi đặt hàng.</p></div><div class="detail-info"><div class="product-brand">${escape(p.brand)}</div><h1>${escape(p.name)}</h1><div class="detail-meta"><span>Mã SKU: ${escape(p.sku || String(p.id))}</span><span class="in-stock">${p.stock ? `✓ Còn ${p.stock} sản phẩm` : "Tạm hết hàng"}</span></div><div class="detail-pricing"><strong>${money(p.price)}</strong><del>${money(p.oldPrice)}</del><small>Giá theo phân loại SKU. Tổng thanh toán được máy chủ xác nhận.</small></div><ul class="features">${p.features.map((f) => `<li>${escape(f)}</li>`).join("")}</ul><div class="variant-label">Lựa chọn đang xem: <b>${escape(p.weight)}</b></div><div class="variants"><a class="active" href="${productLink(p)}" data-link>${escape(p.weight)}</a>${variants.map((v) => `<a href="${productLink(v)}" data-link>${escape(v.name.replace(v.brand, ""))}</a>`).join("")}</div><div class="variant-label">Số lượng</div>${quantityControl(p.id, 1, true)}<div class="buy-row"><button class="secondary" data-detail-add="${p.id}" ${!p.stock ? "disabled" : ""}>+ Thêm vào giỏ</button><button class="primary" data-buy="${p.id}" ${!p.stock ? "disabled" : ""}>Mua ngay →</button></div><div class="delivery-note">♧ Miễn phí giao hàng từ 499.000đ. Phí tiêu chuẩn 25.000đ.</div><div class="delivery-note">♢ Ưu đãi được máy chủ kiểm tra khi đặt hàng.</div></div></section>
   <section class="panel"><div class="tabs" role="tablist" aria-label="Thông tin sản phẩm"><button class="active" role="tab" id="tab-description" aria-selected="true" aria-controls="detail-tab-content" data-tab="description">Mô tả sản phẩm</button><button role="tab" id="tab-specs" aria-selected="false" aria-controls="detail-tab-content" data-tab="specs">Thông số</button><button role="tab" id="tab-notes" aria-selected="false" aria-controls="detail-tab-content" data-tab="notes">Lưu ý sử dụng</button></div><div class="tab-content" id="detail-tab-content" role="tabpanel" aria-labelledby="tab-description" data-product="${p.id}">${detailTab(p, "description")}</div></section>
   ${section(
     "Mẹ có thể quan tâm",
@@ -353,7 +341,7 @@ function detailTab(p, tab) {
       .join("")}</tbody></table>`;
   if (tab === "notes")
     return "<h3>Mẹ đọc kỹ trước khi sử dụng</h3><p>Thông tin trong website là dữ liệu minh họa, không thay thế nhãn sản phẩm hoặc tư vấn y tế. Khi dùng sản phẩm thật, mẹ cần kiểm tra nguồn gốc, hạn sử dụng, độ tuổi và hướng dẫn từ nhà sản xuất. Bảo quản theo điều kiện ghi trên bao bì và hỏi chuyên gia y tế khi cần.</p>";
-  return `<h3>${escape(p.name)}</h3><p>${escape(p.description)}</p><ul>${p.features.map((feature) => `<li>${escape(feature)}</li>`).join("")}</ul><p class="notice">Sản phẩm, thương hiệu và giá ở đây là dữ liệu thử nghiệm. Chưa có đánh giá người mua thực tế.</p>`;
+  return `<h3>${escape(p.name)}</h3><p>${escape(p.description)}</p>${p.descriptionHtml || ""}<ul>${p.features.map((feature) => `<li>${escape(feature)}</li>`).join("")}</ul><p class="notice">Sản phẩm, thương hiệu và giá ở đây là dữ liệu thử nghiệm. Chưa có đánh giá người mua thực tế.</p>`;
 }
 function quantityControl(id, quantity, detail = false) {
   const p = products.find((p) => p.id === id);
@@ -582,7 +570,13 @@ async function render({ scroll = true } = {}) {
     let html;
     if (path === "/") html = home();
     else if (path === "/san-pham" || path === "/danh-muc") html = listing();
-    else if (path.startsWith("/san-pham/"))
+    else if (path.startsWith("/danh-muc/")) {
+      const data = await api("/api/categories");
+      const c = data.categories.find((c) => c.slug === path.split("/")[2]);
+      if (c) {
+        html = listing(c.name);
+      } else html = notFound();
+    } else if (path.startsWith("/san-pham/"))
       html = details(path.slice("/san-pham/".length));
     else if (path === "/gio-hang") html = await cartPage(version);
     else if (path === "/thanh-toan") html = await checkoutPage(version);
@@ -818,6 +812,18 @@ async function submitOrder(event) {
     persistCart();
     try {
       ({ products } = await api("/api/products"));
+      try {
+        newsItems = (await api("/api/news")).items.slice(0, 3);
+        siteData = await api("/api/site");
+        const contact = $("#company-contact");
+        if (contact)
+          contact.textContent = (siteData.settings || [])
+            .map((s) => s.value_json)
+            .filter(Boolean)
+            .join(" · ");
+      } catch {
+        /* Catalog and checkout remain available when optional content cannot load. */
+      }
     } catch {}
     submitting = false;
     navigate("/don-hang/" + encodeURIComponent(order.id));
@@ -890,6 +896,12 @@ document.addEventListener("click", async (event) => {
   ) {
     event.preventDefault();
     navigate(link.href);
+    return;
+  }
+  const gallery = event.target.closest("[data-gallery]");
+  if (gallery) {
+    $("#detail-image").src = gallery.dataset.gallery;
+    $("#detail-image").alt = gallery.dataset.alt;
     return;
   }
   const add = event.target.closest("[data-add]");
@@ -1054,6 +1066,18 @@ document.addEventListener("click", async (event) => {
   if (event.target.closest("#refresh-cart")) {
     try {
       ({ products } = await api("/api/products"));
+      try {
+        newsItems = (await api("/api/news")).items.slice(0, 3);
+        siteData = await api("/api/site");
+        const contact = $("#company-contact");
+        if (contact)
+          contact.textContent = (siteData.settings || [])
+            .map((s) => s.value_json)
+            .filter(Boolean)
+            .join(" · ");
+      } catch {
+        /* Catalog and checkout remain available when optional content cannot load. */
+      }
       for (const [id, q] of Object.entries(cart)) {
         const p = products.find((p) => p.id === Number(id));
         if (!p?.stock) delete cart[id];
@@ -1197,6 +1221,18 @@ function hydrateCart() {
 async function init() {
   try {
     ({ products } = await api("/api/products"));
+    try {
+      newsItems = (await api("/api/news")).items.slice(0, 3);
+      siteData = await api("/api/site");
+      const contact = $("#company-contact");
+      if (contact)
+        contact.textContent = (siteData.settings || [])
+          .map((s) => s.value_json)
+          .filter(Boolean)
+          .join(" · ");
+    } catch {
+      /* Catalog and checkout remain available when optional content cannot load. */
+    }
     hydrateCart();
     try {
       const session = await api("/api/auth/me");
@@ -1211,6 +1247,12 @@ async function init() {
         storage.set("jielien-cart-v2", {});
         storage.set("jielien-cart-owner", null);
       }
+    }
+    const adminLink = document.getElementById("staff-admin-link");
+    if (adminLink) {
+      const allowAdmin = canAccessAdmin(identity);
+      adminLink.hidden = !allowAdmin;
+      adminLink.style.display = allowAdmin ? "" : "none";
     }
     if (identity) {
       const owner = storage.get("jielien-cart-owner", null);

@@ -1,3 +1,4 @@
+import { isIPv4 } from "node:net";
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -55,6 +56,11 @@ function validateLocal(source) {
     throw new Error(
       ".env.local thiếu hoặc sai cấu hình database Docker. File được giữ nguyên; khôi phục đúng cấu hình cũ nếu volume đã có dữ liệu.",
     );
+  const bind = values.JIELIEN_BIND_IP || "127.0.0.1";
+  const port = values.JIELIEN_PORT || "3001";
+  if (!isIPv4(bind)) throw new Error("JIELIEN_BIND_IP phải là địa chỉ IPv4 hợp lệ.");
+  if (!/^\d+$/.test(port) || Number(port)<1 || Number(port)>65535 || Number(port)===3000)
+    throw new Error("JIELIEN_PORT phải từ 1 đến 65535 và không dùng cổng 3000.");
   return values;
 }
 export async function initializeLocal({
@@ -89,6 +95,8 @@ export async function initializeLocal({
   const content = [
     "# Local Docker configuration. Keep this file private and retain it with the database volume.",
     "# Do not change the database password after the volume has been initialized.",
+    "JIELIEN_BIND_IP=127.0.0.1",
+    "JIELIEN_PORT=3001",
     `POSTGRES_PASSWORD=${password}`,
     `LOCAL_DATABASE_URL=postgresql://jielien:${password}@db:5432/jielien`,
     "",
@@ -175,7 +183,7 @@ async function main() {
   );
   if (action === "start")
     console.log(
-      "Website local: http://localhost:3001 — Tài khoản: http://localhost:3001/tai-khoan",
+      `Website: http://localhost:${local.JIELIEN_PORT || 3001}. LAN: dùng ipconfig lấy IPv4 máy chủ, mở http://<IPv4>:${local.JIELIEN_PORT || 3001} khi đã bật JIELIEN_BIND_IP=0.0.0.0 và firewall Private/LocalSubnet.`,
     );
   if (action === "stop")
     console.log(
