@@ -4,7 +4,7 @@ Ngày 2026-11-05, nhánh feature/jielien-commerce-cms; Linux cloud, Node.js 24.2
 
 | Lệnh / kiểm tra | Kết quả |
 |---|---|
-| npm test | 45 pass, 0 fail / skipped / cancelled |
+| npm test | 46 pass, 0 fail / skipped / cancelled |
 | npm run test:local | 6 pass; mật khẩu/file cũ được giữ, validate IP/port |
 | npm run test:browser | 14 kiểm tra storefront pass |
 | npm run test:management | 11 kiểm tra quản trị pass |

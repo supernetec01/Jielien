@@ -1135,3 +1135,31 @@ test("catalog and news pagination remain bounded for non-finite/fractional input
   );
   assert.equal((await request("/api/news?page=1.25")).status, 200);
 });
+
+test("storefront promotions are sourced from active unexpired coupons, not hardcoded advertisements", async (t) => {
+  const { request } = await fixture(t);
+  let site = (await request("/api/site", undefined, "GET", null)).data;
+  assert.ok(site.coupons.some((c) => c.code === "MEBE50"));
+  const coupon = (await request("/api/admin/coupons")).data.items.find(
+    (c) => c.code === "MEBE50",
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/admin/coupons/" + coupon.id,
+        {
+          code: coupon.code,
+          name: coupon.name,
+          discountType: coupon.discount_type,
+          discountValue: coupon.discount_value,
+          minimumOrder: coupon.minimum_order,
+          status: "inactive",
+        },
+        "PATCH",
+      )
+    ).status,
+    201,
+  );
+  site = (await request("/api/site", undefined, "GET", null)).data;
+  assert.ok(!site.coupons.some((c) => c.code === "MEBE50"));
+});
