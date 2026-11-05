@@ -1,3 +1,4 @@
+import {renderBlocks} from "../lib/commerce-common.mjs";
 import { randomBytes, createHash } from "node:crypto";
 import { migrate } from "./migrate.mjs";
 import { seedCatalog } from "./seed.mjs";
@@ -137,7 +138,7 @@ async function audit(
     ],
   );
 }
-const variantSQL = `SELECT v.*,p.description,p.name AS product_name,b.name AS brand,
+const variantSQL = `SELECT v.*,p.description,p.content_blocks,p.name AS product_name,b.name AS brand,
  COALESCE((SELECT c.name FROM product_categories pc JOIN categories c ON c.id=pc.category_id WHERE pc.product_id=p.id AND c.status='active' ORDER BY c.sort_order,c.id LIMIT 1),'Sản phẩm') AS category,
  COALESCE((SELECT m.url FROM product_media m WHERE m.product_id=p.id AND (m.variant_id=v.id OR m.variant_id IS NULL) ORDER BY m.variant_id NULLS LAST,m.sort_order,m.id LIMIT 1),'') AS image,
  COALESCE((SELECT json_agg(s.spec_value ORDER BY s.sort_order,s.id) FROM product_specs s WHERE s.product_id=p.id AND s.spec_name='feature'),'[]') AS features,
@@ -146,6 +147,7 @@ const variantSQL = `SELECT v.*,p.description,p.name AS product_name,b.name AS br
 function adaptProduct(p) {
   return {
     id: number(p.id),
+    descriptionHtml: renderBlocks(p.content_blocks || []),
     rowVersion: number(p.row_version),
     productId: number(p.product_id),
     slug: p.slug,

@@ -353,7 +353,7 @@ function detailTab(p, tab) {
       .join("")}</tbody></table>`;
   if (tab === "notes")
     return "<h3>Mẹ đọc kỹ trước khi sử dụng</h3><p>Thông tin trong website là dữ liệu minh họa, không thay thế nhãn sản phẩm hoặc tư vấn y tế. Khi dùng sản phẩm thật, mẹ cần kiểm tra nguồn gốc, hạn sử dụng, độ tuổi và hướng dẫn từ nhà sản xuất. Bảo quản theo điều kiện ghi trên bao bì và hỏi chuyên gia y tế khi cần.</p>";
-  return `<h3>${escape(p.name)}</h3><p>${escape(p.description)}</p><ul>${p.features.map((feature) => `<li>${escape(feature)}</li>`).join("")}</ul><p class="notice">Sản phẩm, thương hiệu và giá ở đây là dữ liệu thử nghiệm. Chưa có đánh giá người mua thực tế.</p>`;
+  return `<h3>${escape(p.name)}</h3><p>${escape(p.description)}</p>${p.descriptionHtml||""}<ul>${p.features.map((feature) => `<li>${escape(feature)}</li>`).join("")}</ul><p class="notice">Sản phẩm, thương hiệu và giá ở đây là dữ liệu thử nghiệm. Chưa có đánh giá người mua thực tế.</p>`;
 }
 function quantityControl(id, quantity, detail = false) {
   const p = products.find((p) => p.id === id);
