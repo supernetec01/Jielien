@@ -1,7 +1,7 @@
 :root {
-  --pink: #ed1164;
-  --pink-dark: #c40a4e;
-  --light: #fff0f5;
+  --accent: #0B1B34;
+  --accent-dark: #142943;
+  --light: #F2F7E6;
   --ink: #26313b;
   --muted: #77818d;
   --line: #e7eaf0;
@@ -63,7 +63,7 @@ textarea {
 }
 input[type="checkbox"] {
   width: auto;
-  accent-color: var(--pink);
+  accent-color: var(--accent);
 }
 textarea {
   min-height: 90px;
@@ -80,7 +80,7 @@ a.primary:hover {
   padding: 0 24px;
 }
 .management-header {
-  background: var(--pink);
+  background: var(--accent);
   color: white;
 }
 .header-row {
@@ -126,7 +126,7 @@ a.primary:hover {
   margin-top: 40px;
 }
 .management-footer a {
-  color: var(--pink);
+  color: var(--accent);
   margin-left: 18px;
 }
 .skip-link {
@@ -135,7 +135,7 @@ a.primary:hover {
   left: 10px;
   z-index: 100;
   background: white;
-  color: var(--pink);
+  color: var(--accent);
   padding: 10px 15px;
 }
 .skip-link:focus {
@@ -189,12 +189,12 @@ p {
   font-weight: 700;
 }
 .primary {
-  background: var(--pink);
+  background: var(--accent);
   color: white;
 }
 .secondary {
   background: white;
-  color: var(--pink);
+  color: var(--accent);
   border: 1px solid #eeb4c9;
 }
 .danger {
@@ -204,7 +204,7 @@ p {
 }
 .text-button {
   background: none;
-  color: var(--pink);
+  color: var(--accent);
   padding: 0;
   font-size: 12px;
 }
@@ -277,8 +277,8 @@ p {
   font-size: 14px;
 }
 .tabs button.active {
-  color: var(--pink);
-  border-color: var(--pink);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 .field {
   display: flex;
@@ -291,7 +291,7 @@ p {
   font-weight: 600;
 }
 .field label .required {
-  color: var(--pink);
+  color: var(--accent);
 }
 .field small {
   color: var(--muted);
@@ -330,7 +330,7 @@ p {
   line-height: 1.9;
 }
 .form-note a {
-  color: var(--pink);
+  color: var(--accent);
   text-decoration: underline;
 }
 .check-label {
@@ -378,7 +378,7 @@ p {
 }
 .side-nav button.active {
   background: var(--light);
-  color: var(--pink);
+  color: var(--accent);
   font-weight: 700;
 }
 .side-nav .section-caption {
@@ -548,7 +548,7 @@ p {
   padding-top: 12px;
 }
 .order-card-footer strong {
-  color: var(--pink);
+  color: var(--accent);
   font-size: 16px;
 }
 .order-card-footer span {
@@ -663,11 +663,11 @@ p {
   margin-top: 6px;
 }
 .stat-card:first-child {
-  background: #fff0f5;
+  background: #F2F7E6;
   border-color: #ffd3e3;
 }
 .stat-card:first-child strong {
-  color: var(--pink);
+  color: var(--accent);
 }
 .table-controls {
   display: flex;
@@ -737,7 +737,7 @@ p {
 }
 .price-cell {
   font-weight: 700;
-  color: var(--pink);
+  color: var(--accent);
   white-space: nowrap;
 }
 .table-actions {
@@ -835,7 +835,7 @@ p {
   font-size: 14px;
 }
 .total-row.grand b {
-  color: var(--pink);
+  color: var(--accent);
   font-size: 20px;
 }
 .dialog-note {
