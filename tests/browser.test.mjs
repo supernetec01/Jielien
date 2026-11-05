@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { once } from "node:events";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
 
 // This test starts an ephemeral server and isolated PostgreSQL schema; ports 3000 and 3001 are untouched.
@@ -14,7 +14,7 @@ const { chromium } = await import(
 );
 const database = await createTestDatabase();
 const catalog = JSON.parse(
-  await readFile(new URL("../public/catalog.json", import.meta.url), "utf8"),
+  await readFile(new URL("../db/fixtures/catalog.json", import.meta.url), "utf8"),
 );
 const app = await createApp({ pool: database.pool, legacyPath: null });
 app.listen(0, "127.0.0.1");
@@ -55,6 +55,7 @@ try {
       const main = document.querySelector("#main");
       return (
         main &&
+        main.dataset.hydrated === "true" &&
         !main.hasAttribute("aria-busy") &&
         !main.querySelector(".loading")
       );
@@ -76,10 +77,12 @@ try {
   await go("/");
   await page.locator(".hero").waitFor({ state: "visible" });
   assert.ok(await page.locator(".hero").isVisible());
-  await page.locator('[data-hero="1"]').click();
-  assert.ok(
-    (await page.locator(".hero h1").textContent()).includes("Bé thoải mái"),
+  assert.equal(
+    await page.locator("[data-hero]").count(),
+    0,
+    "No fake slideshow without configured banners",
   );
+  await page.locator("#dynamic-nav a").first().waitFor();
   await page.locator("#category-menu").click();
   assert.equal(
     await page.locator("#category-menu").getAttribute("aria-expanded"),
@@ -87,7 +90,7 @@ try {
   );
   await page.keyboard.press("Escape");
   assert.equal(await page.locator("#category-dropdown").isVisible(), false);
-  passed("homepage, banner switching and keyboard-close category menu");
+  passed("homepage, dynamic categories and keyboard-close category menu");
 
   await page.locator("#search").fill("sua dinh duong");
   assert.ok(await page.locator("#suggestions").isVisible());
@@ -178,7 +181,7 @@ try {
   await page.locator('[data-tab="notes"]').click();
   assert.ok(
     (await page.locator("#detail-tab-content").textContent()).includes(
-      "Mẹ đọc kỹ",
+      "Bạn đọc kỹ",
     ),
   );
   await page.locator("#detail-quantity").fill("");
@@ -304,7 +307,7 @@ try {
   });
   await page.locator("#place-order").click();
   await committed;
-  await page.locator(".header-main .logo").click();
+  await page.locator(".head .brand").click();
   assert.equal(
     new URL(page.url()).pathname,
     "/thanh-toan",

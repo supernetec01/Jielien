@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import sharp from "sharp";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createAuth } from "../lib/auth.mjs";
 import { createCms } from "../lib/cms.mjs";
 import { createTestDatabase, closeServer } from "./support/database.mjs";

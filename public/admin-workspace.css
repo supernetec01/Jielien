@@ -1153,3 +1153,4 @@
     align-self: center;
   }
 }
+.banner-preview-frame{width:100%;max-width:620px;margin:0 auto 16px;transition:width .15s}.banner-preview-frame.mobile{max-width:300px}.banner-preview-frame .banner-live-preview{position:relative;isolation:isolate;min-height:280px;padding:24px;overflow:hidden;background:#0b1b34}.banner-preview-frame.mobile .banner-live-preview{min-height:360px}.banner-live-preview>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}.banner-live-preview:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#0b1b34db,#0b1b3444);z-index:-1}.banner-live-preview>div{position:relative;z-index:1}.banner-live-preview p{font-size:13px}.banner-preview-frame .banner-live-preview h2{font-size:27px}.banner-library [hidden]{display:none!important}

@@ -44,17 +44,20 @@ test("Staff roles without Admin screen access do not get an entry", () => {
   );
 });
 
-test("The storefront hides its Admin link before authentication", async () => {
+test("Public storefront never includes an Admin entry, even for staff", async () => {
   const html = await readFile(
     new URL("../public/index.html", import.meta.url),
     "utf8",
   );
-  assert.match(html, /id="staff-admin-link"\s+hidden\s+style="display:\s*none"/);
+  assert.doesNotMatch(
+    html,
+    /href=["']\/quan-tri|staff-admin-link|JIELIEN DESIGN CONCEPT/,
+  );
   const app = await readFile(
     new URL("../public/app.js", import.meta.url),
     "utf8",
   );
-  assert.match(app, /canAccessAdmin\(identity\)/);
+  assert.doesNotMatch(app, /canAccessAdmin\(identity\)/);
 });
 
 test("Malformed roles or permissions fail closed", () => {

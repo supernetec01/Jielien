@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright-core";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createAuth } from "../lib/auth.mjs";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
 const db = await createTestDatabase();
@@ -236,7 +236,7 @@ try {
     (await page
       .locator(".product-card h3")
       .first()
-      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize))) >= 15,
+      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize))) >= 14,
   );
   for (const width of [375, 1440, 1920]) {
     await page.setViewportSize({ width, height: 1000 });

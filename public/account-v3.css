@@ -1,0 +1,84 @@
+:root {
+  --accent: #0b1b34;
+  --brand-green: #8ab72a;
+  --brand-navy: #0b1b34;
+  --bg: #f7f8f7;
+  --line: #e6eae8;
+  --light: #f1f7e5;
+}
+body {
+  font:
+    15px/1.6 system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  color: #14243b;
+}
+.management-header {
+  background: white;
+  color: #14243b;
+  border-bottom: 1px solid var(--line);
+}
+.header-caption {
+  color: #718093;
+  font-size: 13px;
+}
+.management-logo .brand-logo {
+  width: 125px;
+  height: 85px;
+}
+.header-back {
+  color: #486c22;
+  padding: 10px 15px;
+  background: #f1f7e5;
+  border-radius: 9px;
+}
+.panel,
+.auth-panel {
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.auth-tabs button.active {
+  background: #f1f7e5;
+  color: #43671d;
+}
+input,
+select,
+textarea {
+  font-size: 15px;
+  border-radius: 9px;
+  min-height: 44px;
+}
+.primary {
+  background: #8ab72a !important;
+  color: #0b1b34 !important;
+}
+.account-main h1 {
+  font-size: 28px;
+}
+.management-footer {
+  background: #0b1b34;
+  color: #d8e0e9;
+}
+.management-footer a {
+  color: #d8ef9c;
+}
+@media (max-width: 600px) {
+  .header-row {
+    gap: 12px;
+  }
+  .header-caption {
+    display: none;
+  }
+  .management-logo .brand-logo {
+    width: 90px;
+    height: 65px;
+  }
+  .header-back {
+    font-size: 12px;
+  }
+  .account-main h1 {
+    font-size: 25px;
+  }
+}

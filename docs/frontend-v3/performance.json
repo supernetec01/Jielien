@@ -1,0 +1,8 @@
+{
+  "environment": "Linux cloud Chromium, local HTTP, fixture database; not field Core Web Vitals",
+  "cls": 0.0022285985122492283,
+  "lcpMs": 80,
+  "navigationMs": 75,
+  "images": 25,
+  "brokenImages": 0
+}

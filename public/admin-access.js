@@ -2,6 +2,7 @@
 // effective permissions allow at least one Admin screen. UI checks are not authorization:
 // the /api/admin/* routes still enforce permissions on the server.
 const adminScreenPermissions = new Set([
+  "banners.read",
   "seo.manage",
   "catalog.read",
   "media.read",
