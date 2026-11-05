@@ -282,16 +282,12 @@ test("V3 Banner Studio honors staff permission, authentication and CSRF independ
       .status,
     403,
   );
-  await f.db.pool.query("INSERT INTO roles(name) VALUES('banner_operator')");
-  await f.db.pool.query(
-    "INSERT INTO role_permissions(role_id,permission_id) SELECT r.id,p.id FROM roles r CROSS JOIN permissions p WHERE r.name='banner_operator' AND p.code IN ('settings.read','settings.write','media.read')",
-  );
   await f.auth.createStaff(f.admin.id, {
     fullName: "Nhân viên banner",
     username: "banner.staff",
     phone: "0912345679",
     password: f.password,
-    roles: ["banner_operator"],
+    roles: ["banner_manager"],
   });
   const staff = await f.auth.login({
     identifier: "banner.staff",
@@ -303,6 +299,17 @@ test("V3 Banner Studio honors staff permission, authentication and CSRF independ
   );
   assert.equal(
     (await f.request("/api/admin/users", undefined, "GET", staff)).status,
+    403,
+  );
+  assert.equal(
+    (
+      await f.request(
+        "/api/admin/settings/site",
+        { key: "companyName", value: "Forbidden" },
+        "PATCH",
+        staff,
+      )
+    ).status,
     403,
   );
   const html = await (
@@ -347,7 +354,7 @@ test("V3 additive migration preserves legacy banner IDs, asset, version and date
     const files = (await readdir(new URL("../db/migrations/", import.meta.url)))
       .filter((n) => n.endsWith(".sql"))
       .sort();
-    for (const file of files.filter((n) => !n.startsWith("013_")))
+    for (const file of files.filter((n) => Number(n.slice(0, 3)) < 13))
       await db.pool.query(
         await readFile(
           new URL("../db/migrations/" + file, import.meta.url),

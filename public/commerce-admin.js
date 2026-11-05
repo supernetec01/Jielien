@@ -159,7 +159,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       bannerRows = (await api("/api/admin/banners")).items;
       previewMode = "desktop";
       return `${heading("Banner & Poster Studio", "Quản lý chiến dịch theo vị trí, thiết bị và thời gian hiển thị.")}<section class="panel"><div class="banner-editor-layout">${
-        has("settings.write")
+        has("banners.write") || has("settings.write")
           ? `<form id="banner-form" class="editor-form"><input type="hidden" name="bannerId"><input type="hidden" name="version"><label>Vị trí hiển thị<select name="slot">${Object.entries(
               bannerSlots,
             )
@@ -182,7 +182,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         .map(([key, label]) => option(key, label))
         .join(
           "",
-        )}</select></label></div><div class="banner-library">${bannerRows.map((b) => `<article data-banner-slot="${e(b.slot)}"><img src="${e(b.url)}" alt="${e(b.alt || b.alt_text)}"><div><b>${e(b.title)}</b><p>${e(bannerSlots[b.slot])} · Thứ tự ${b.sort_order}</p><p>${e(states[b.status])} · ${e(b.target_path)}</p></div>${has("settings.write") ? button("Chỉnh sửa", "banner-edit:" + b.id) : ""}</article>`).join("") || "<p>Chưa có banner. Tạo chiến dịch đầu tiên bằng biểu mẫu phía trên.</p>"}</div>${result}</section>`;
+        )}</select></label></div><div class="banner-library">${bannerRows.map((b) => `<article data-banner-slot="${e(b.slot)}"><img src="${e(b.url)}" alt="${e(b.alt || b.alt_text)}"><div><b>${e(b.title)}</b><p>${e(bannerSlots[b.slot])} · Thứ tự ${b.sort_order}</p><p>${e(states[b.status])} · ${e(b.target_path)}</p></div>${has("banners.write") || has("settings.write") ? button("Chỉnh sửa", "banner-edit:" + b.id) : ""}</article>`).join("") || "<p>Chưa có banner. Tạo chiến dịch đầu tiên bằng biểu mẫu phía trên.</p>"}</div>${result}</section>`;
     }
     if (view === "coupons-editor") {
       const { items } = await api("/api/admin/coupons");

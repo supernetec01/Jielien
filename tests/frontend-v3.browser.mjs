@@ -303,6 +303,56 @@ try {
   pass(
     "Studio edits slot/mobile/sort and persists to public poster; staff never gets public Admin links",
   );
+  await page.goto(f.base + "/quan-tri");
+  await page.locator('[data-section="users"]').click();
+  await page.locator("#new-staff").click();
+  const staffForm = page.locator("#create-staff-form");
+  await staffForm.locator('[name="fullName"]').fill("Banner staff UI");
+  await staffForm.locator('[name="username"]').fill("v3.banner");
+  await staffForm.locator('[name="phone"]').fill("0912345671");
+  await staffForm.locator('[name="password"]').fill(f.password);
+  await staffForm.locator('[name="role"]').selectOption("banner_manager");
+  assert.ok(
+    (
+      await staffForm.locator('[name="role"] option:checked').textContent()
+    ).includes("Quản lý banner"),
+  );
+  await staffForm.locator("button.primary").click();
+  await page.waitForFunction(
+    () => !document.querySelector("#admin-dialog").open,
+  );
+  const staffSession = await f.auth.login({
+    identifier: "v3.banner",
+    password: f.password,
+  });
+  const staffContext = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+  });
+  await staffContext.addCookies([
+    {
+      url: f.base,
+      name: "jielien_session",
+      value: staffSession.token,
+      httpOnly: true,
+      sameSite: "Lax",
+    },
+  ]);
+  const staffPage = await staffContext.newPage();
+  await staffPage.goto(f.base + "/tai-khoan");
+  await staffPage.locator("#profile-form").waitFor();
+  await staffPage.locator('a[href="/quan-tri"]').click();
+  await staffPage.waitForURL("**/quan-tri");
+  await staffPage.locator('[data-section="banners-editor"]').click();
+  await staffPage.locator("#banner-form").waitFor();
+  assert.equal(
+    await staffPage.locator('[data-section="settings-editor"]').count(),
+    0,
+  );
+  assert.equal(await staffPage.locator('[data-section="users"]').count(), 0);
+  await staffContext.close();
+  pass(
+    "Admin-assigned banner_manager role can use Studio through account without settings/users access",
+  );
   // Missing mobile image must fall back to desktop without changing the schedule.
   const banner = (await f.request("/api/admin/banners")).data.items.find(
     (b) => b.id === f.banners[0].id,

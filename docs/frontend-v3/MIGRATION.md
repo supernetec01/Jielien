@@ -1,4 +1,4 @@
-# Migration 013 và kế hoạch chuyển phiên bản
+# Migration 013–014 và kế hoạch chuyển phiên bản
 
 `013_frontend_v3.sql` chỉ ADD COLUMN/INDEX. Không sửa các migration 001–012, không drop/reset bảng, đổi mật khẩu, thay ID hoặc snapshot đơn hàng.
 
@@ -27,7 +27,11 @@ App startup chạy runner checksum/transaction hiện có. Cần quyền DDL nh�
 
 - API lỗi nội dung tùy chọn: catalog/giỏ vẫn dùng được; poster/campaign/trust có thể ẩn, hero dùng lời chào thương hiệu. Không giả thành công hoặc dùng giá/stock tĩnh.
 - Slot không có mobile dùng ảnh desktop và lấy nét; thiếu ảnh sản phẩm dùng placeholder có nhãn. Banner draft, tương lai, hết hạn không được API public trả về.
-- Không checkout bản code thiếu migration 013 rồi chạy runner: runner sẽ từ chối downgrade không đủ migration. Ưu tiên forward fix hoặc build rollback có giữ migration 013 và adapter catalog phân trang.
+- Không checkout bản code thiếu migration 013–014 rồi chạy runner: runner sẽ từ chối downgrade không đủ migration. Ưu tiên forward fix hoặc build rollback có giữ migration 013–014 và adapter catalog phân trang.
 - Không tự DROP COLUMN, khôi phục database live hoặc ghi đè media để rollback UI. Restore live cần kế hoạch downtime/quyền phê duyệt riêng. Chỉ thử restore vào database độc lập trong quy trình kiểm chứng này.
 
 Không thực thi migration trên máy công ty hoặc triển khai production trong tác vụ cloud; các migration chạy trong test schema/isolated Docker stack. Bản PostgreSQL cloud trước tác vụ được sao lưu ngoài Git, không thay thế backup tại công ty.
+
+## Migration 014 — vai trò banner
+
+`014_banner_operator.sql` thêm hai permission `banners.read/write` và role `banner_manager` (Quản lý banner và ảnh chiến dịch). Role chỉ có hai quyền banner cùng `media.read/upload`; không có settings/users/catalog mutation. Admin có thể gán role này khi tạo/sửa nhân viên, không phải sửa database thủ công. Admin hiện có được thêm quyền banner; callers có settings.read/write cũ vẫn tương thích. Không sửa migration 013 hoặc quyền/tài khoản đã có.

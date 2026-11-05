@@ -11,6 +11,8 @@ const escape = (value) =>
         char
       ],
   );
+const roleLabel = (role) =>
+  role === "banner_manager" ? "Quản lý banner và ảnh chiến dịch" : role;
 const money = (value) => Number(value || 0).toLocaleString("vi-VN") + "đ";
 const date = (value) =>
   value && !Number.isNaN(new Date(value).valueOf())
@@ -70,8 +72,8 @@ const sections = [
   },
   {
     id: "banners-editor",
-    label: "Banner trang chủ",
-    permission: "settings.read",
+    label: "Banner & Poster Studio",
+    permission: "banners.read",
   },
   { id: "import-editor", label: "CSV sản phẩm", permission: "catalog.read" },
   {
@@ -144,6 +146,10 @@ function notify(message) {
   }, 3500);
 }
 function has(permission) {
+  if (permission === "banners.read")
+    return (user?.permissions || []).some(
+      (p) => p === "banners.read" || p === "settings.read",
+    );
   return !permission || (user?.permissions || []).includes(permission);
 }
 function statusLabel(status) {
@@ -609,7 +615,10 @@ root.addEventListener("click", (event) => {
       "Tạo tài khoản nhân viên",
       `<form id="create-staff-form" class="editor-form"><label>Họ tên<input name="fullName" required minlength="2"></label><label>Tên đăng nhập<input name="username" required minlength="3" autocomplete="off"></label><label>Điện thoại Việt Nam<input name="phone" required></label><label>Email (tùy chọn)<input name="email" type="email"></label><label>Mật khẩu riêng (ít nhất 10 ký tự)<input name="password" type="password" required minlength="10" autocomplete="new-password"></label><label>Vai trò<select name="role">${staffRoles
         .filter((r) => !["customer", "admin"].includes(r))
-        .map((r) => `<option value="${escape(r)}">${escape(r)}</option>`)
+        .map(
+          (r) =>
+            `<option value="${escape(r)}">${escape(roleLabel(r))}</option>`,
+        )
         .join(
           "",
         )}</select></label><div class="form-error" role="alert"></div><button class="primary">Tạo nhân viên</button></form>`,
@@ -625,7 +634,7 @@ root.addEventListener("click", (event) => {
     );
     showDialog(
       "Tài khoản & Phân quyền",
-      `<form id="staff-form">${staffRoles.map((r) => `<label><input type="checkbox" name="roles" value="${escape(r)}" ${item.roles.includes(r) ? "checked" : ""}>${escape(r)}</label><br>`).join("")}<select name="status"><option value="active" ${item.status === "active" ? "selected" : ""}>Hoạt động</option><option value="inactive" ${item.status === "inactive" ? "selected" : ""}>Vô hiệu hóa</option></select><div class="form-error" role="alert"></div><button>Lưu quyền</button></form>`,
+      `<form id="staff-form">${staffRoles.map((r) => `<label><input type="checkbox" name="roles" value="${escape(r)}" ${item.roles.includes(r) ? "checked" : ""}>${escape(roleLabel(r))}</label><br>`).join("")}<select name="status"><option value="active" ${item.status === "active" ? "selected" : ""}>Hoạt động</option><option value="inactive" ${item.status === "inactive" ? "selected" : ""}>Vô hiệu hóa</option></select><div class="form-error" role="alert"></div><button>Lưu quyền</button></form>`,
       "staff",
       item,
     );

@@ -8,7 +8,7 @@ Base `main`: `2b4e299`. Nhánh `feat/frontend-v3`. Tác vụ này không merge h
 |---|---|---|
 | F1 | Baseline, ảnh cũ, bản gốc/checksum, backup cloud ngoài Git | [F1_BASELINE.md](F1_BASELINE.md), `baseline/` |
 | F2 | Header/nav/footer V3, token navy/green, SVG local, layout 1360px, menu responsive; không có Admin trong chrome công khai | `public/index.html`, `storefront.css`, `ui-icons.js`, `shell-v3.js` |
-| F3 | Hero 65% + poster stack, trust từ settings đã cấu hình, danh mục DB, banner ngang; slot trống được ẩn, hero có lời chào thương hiệu khi chưa cấu hình | `v3-storefront.js`, `operations.mjs`, migration 013 |
+| F3 | Hero 65% + poster stack, trust từ settings đã cấu hình, danh mục DB, banner ngang; slot trống được ẩn, hero có lời chào thương hiệu khi chưa cấu hình | `v3-storefront.js`, `operations.mjs`, migration 013–014 |
 | F4 | SQL search/filter/sort/page, danh mục slug/ID/tên và cây con; gallery/SKU/stock; ảnh thiếu có fallback | `public-catalog.mjs`, renderer dùng chung; `frontend-v3.test.mjs` |
 | F5 | Trang tin tức/bài viết SSR dùng cùng chrome V3, published revision, metadata/Article/Breadcrumb/canonical/sitemap/301 và URL thật | `lib/seo.mjs`, `shell-v3.js`; không hash routing |
 | F6 | Giỏ/account/checkout theo theme V3; cache chỉ SKU cần thiết, giữ giỏ sau reload/merge tài khoản; COD/VietQR/quote/CSRF/idempotency giữ nguyên | `app.js`, `account-v3.css`; các suite browser cũ và V3 |
@@ -56,7 +56,7 @@ npm run local:start
 npm run local:status
 ```
 
-Máy mới chưa có stack thì chạy `local:start`, không gọi backup trước lần khởi tạo. App áp dụng migration 013 trên schema cũ. Mở `http://localhost:3001`, dùng Ctrl+F5 sau build. Giữ mật khẩu PostgreSQL và volume. Khi Git báo dubious ownership chỉ thêm safe.directory cho thư mục tin cậy, theo `COMMERCE_WINDOWS.md`.
+Máy mới chưa có stack thì chạy `local:start`, không gọi backup trước lần khởi tạo. App áp dụng migration 013–014 trên schema cũ. Mở `http://localhost:3001`, dùng Ctrl+F5 sau build. Giữ mật khẩu PostgreSQL và volume. Khi Git báo dubious ownership chỉ thêm safe.directory cho thư mục tin cậy, theo `COMMERCE_WINDOWS.md`.
 
 ```powershell
 npm run local:admin
@@ -69,3 +69,5 @@ Giữ Admin cũ; chỉ chạy lệnh trên nếu chưa có. Nhập username/emai
 5. Kiểm tra home, catalog, detail, giỏ, COD/VietQR, tin tức, tài khoản và hai máy LAN. LAN vẫn dùng `.env.local` với `JIELIEN_BIND_IP=0.0.0.0`, cổng 3001 và firewall Private/LocalSubnet theo [DEMO_QUICKSTART.md](../DEMO_QUICKSTART.md). Không mở cổng PostgreSQL.
 
 Ảnh/logo trong suốt phải là tài sản thương hiệu được công ty xác nhận; bản này giữ logo gốc, không tự vẽ hoặc xóa nền để tạo biến thể chưa duyệt. Danh sách banner được làm mới khi tải trang; thay đổi lịch/trạng thái không đẩy realtime đến các tab đã mở.
+
+Để giao việc chiến dịch: Admin → Tài khoản & Phân quyền → tạo/sửa nhân viên → role `banner_manager` (Quản lý banner và ảnh chiến dịch). Nhân viên đăng nhập tài khoản riêng, vào Admin từ trang tài khoản, dùng Thư viện ảnh và Banner Studio; không được sửa cấu hình công ty hoặc quản lý tài khoản.

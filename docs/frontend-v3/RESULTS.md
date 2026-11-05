@@ -13,7 +13,7 @@ Bản source ở `feat/frontend-v3`, base `2b4e299`. Kết quả dưới đây l
 | `npm run test:commerce` | 13 kiểm tra catalog/SKU/media/staff/CMS/banner/company settings đạt |
 | `npm run test:admin-access` | 6 trường hợp guest/customer/staff không quyền/viewer/admin/logout đạt |
 | `npm run test:usability` | 9 nhóm thao tác Admin/responsive đạt |
-| `npm run test:frontend-v3` | 11 nhóm V3 đạt; tổng các suite browser là 80 nhóm kiểm tra |
+| `npm run test:frontend-v3` | 12 nhóm V3 đạt; tổng các suite browser là 81 nhóm kiểm tra |
 | `npm run test:local:stack` | 5 nhóm Docker/PG17: cấu hình, checkout/VietQR, media, giữ dữ liệu sau recreate, backup/restore drill đạt |
 | `npm run test:load` | 120 requests, concurrency 8, không lỗi; p95 97ms trong lab này |
 | `git diff --check` | Không lỗi whitespace |
@@ -26,7 +26,7 @@ Bản source ở `feat/frontend-v3`, base `2b4e299`. Kết quả dưới đây l
 4. Mobile media chỉ public khi banner còn hiệu lực; SVG upload bị chặn; ảnh không gắn nội dung public bị 404.
 5. Guest/customer/CSRF sai bị 401/403; nhân viên chỉ có quyền banner sửa được banner và không đọc được tài khoản khác. `/quan-tri`/`admin.html` trả 401/403 theo phiên.
 6. Product/Article JSON-LD, canonical, Breadcrumb, HTML nội dung, sitemap, URL 301/404 thật, không hash routing, không lối Admin trong public shell kể cả khi đăng nhập staff.
-7. Migration 013 giữ ID, asset, title, status, version và lịch của banner cũ; migration/upgrade suite giữ snapshot account/order/stock cũ.
+7. Migration 013–014 giữ ID, asset, title, status, version và lịch của banner cũ; migration/upgrade suite giữ snapshot account/order/stock cũ.
 
 ## Browser V3
 
