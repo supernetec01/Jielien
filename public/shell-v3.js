@@ -45,3 +45,24 @@ try {
     .filter(Number.isInteger)
     .reduce((n, q) => n + q, 0);
 } catch {}
+// Only the current account's display name/count are shown; roles and Admin entries stay in /tai-khoan.
+try {
+  const response = await fetch("/api/auth/me", { credentials: "same-origin" });
+  if (response.ok) {
+    const { user } = await response.json();
+    if (user?.fullName)
+      document.getElementById("account-label").textContent = user.fullName;
+    const cartResponse = await fetch("/api/cart", {
+      credentials: "same-origin",
+    });
+    if (cartResponse.ok) {
+      const { items } = await cartResponse.json();
+      document.getElementById("cart-count").textContent = (items || []).reduce(
+        (sum, item) => sum + item.quantity,
+        0,
+      );
+    }
+  }
+} catch {
+  /* SSR articles remain readable if the session service is unavailable. */
+}

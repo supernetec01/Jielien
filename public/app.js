@@ -5,9 +5,7 @@ import {
   renderDetail,
   renderHero,
   renderCard,
-  bannerPicture,
   hydratePublicShell,
-  categoryLink,
 } from "/v3-storefront.js";
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
@@ -20,13 +18,6 @@ const escape = (value) =>
       ],
   );
 const money = (value) => Number(value).toLocaleString("vi-VN") + "đ";
-const normalize = (value) =>
-  String(value)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .toLowerCase();
 let newsItems = [],
   siteData = {};
 let categories = [],
@@ -177,9 +168,6 @@ async function loadSavedProducts(ids) {
 }
 function productGrid(list) {
   return `<div class="product-grid products-grid">${list.map(card).join("")}</div>`;
-}
-function section(title, subtitle, list, url = "/san-pham") {
-  return `<section class="panel"><div class="section-heading"><div><h2>${escape(title)}</h2>${subtitle ? `<p>${escape(subtitle)}</p>` : ""}</div><a href="${escape(url)}" data-link>Xem tất cả →</a></div>${productGrid(list)}</section>`;
 }
 function heroMarkup() {
   return renderHero(
