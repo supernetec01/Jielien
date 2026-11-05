@@ -1149,3 +1149,9 @@ p {
   line-height: 1.7;
   color: #77818d;
 }
+/* Company operations shell: same permissions and focus behavior as the existing UI. */
+.admin-sidebar .side-nav{background:var(--brand-navy);color:#fff;border:0}
+.admin-sidebar .side-nav button{color:#d9e2ef;min-height:44px}
+.admin-sidebar .side-nav button.active{background:var(--brand-green);color:var(--brand-navy);font-weight:700}
+.admin-sidebar .side-nav .section-caption,.admin-sidebar .admin-user{color:#d9e2ef}
+@media(min-width:801px){.admin-sidebar .side-nav{max-height:calc(100vh - 130px);overflow:auto}}

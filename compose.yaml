@@ -27,6 +27,8 @@ services:
       PORT: "3001"
       NODE_ENV: development
       COOKIE_SECURE: "false"
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      SEO_INDEXING_ENABLED: ${SEO_INDEXING_ENABLED:-false}
       BANK_BIN: ${BANK_BIN:-}
       BANK_NAME: ${BANK_NAME:-}
       BANK_ACCOUNT_NUMBER: ${BANK_ACCOUNT_NUMBER:-}

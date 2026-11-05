@@ -243,6 +243,7 @@ export async function createApp({
   legacyPath = externalPool ? null : resolve(projectRoot, "data/store.sqlite"),
   bankConfig,
   mediaDirectory,
+  seoConfiguration,
 } = {}) {
   const pool = externalPool || createPool();
   let store;
@@ -253,7 +254,7 @@ export async function createApp({
     throw error;
   }
   const commerce=createCommerce(pool,{mediaDirectory,publicProducts:()=>store.listProducts()});
-  const indexing=seoConfig();
+  const indexing=seoConfig(seoConfiguration||process.env);
   const seo=createSeo({pool,store,cms:commerce.cms,config:indexing});
   const publisher=setInterval(()=>commerce.cms.runDue().catch(e=>console.error("CMS scheduler:",e.code||e.name)),30000); publisher.unref();
   const auth = createAuth(pool),

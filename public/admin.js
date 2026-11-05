@@ -35,6 +35,11 @@ const transitions = {
 };
 const sections = [
   {
+    id: "redirects-editor",
+    label: "Chuyển hướng SEO",
+    permission: "seo.manage",
+  },
+  {
     id: "catalog-editor",
     label: "Sản phẩm cha & SKU",
     permission: "catalog.read",
@@ -254,7 +259,7 @@ function inventoryTable(rows) {
     rows
       .map(
         (row) =>
-          `<tr><td><div class="table-product"><div><b>${escape(row.name)}</b><small>${escape(row.sku)}</small></div></div></td><td>${escape(row.warehouseName)}<div class="small muted">${row.warehouseType === "damaged" ? "Kho hư hỏng" : "Kho thông thường"}</div></td><td class="inventory-numbers">${Number(row.onHand)}</td><td>${Number(row.reserved)}</td><td class="inventory-numbers ${Number(row.available) <= 5 ? "stock-low" : ""}">${row.warehouseType === "damaged" ? "Không bán" : Number(row.available)}</td><td><button class="secondary" data-adjust-variant="${Number(row.variantId)}" data-warehouse="${Number(row.warehouseId)}" style="font-size:10px;padding:6px 9px">Điều chỉnh</button></td></tr>`,
+          `<tr><td><div class="table-product"><div><b>${escape(row.name)}</b><small>${escape(row.sku)}</small></div></div></td><td>${escape(row.warehouseName)}<div class="small muted">${row.warehouseType === "damaged" ? "Kho hư hỏng" : "Kho thông thường"}</div></td><td class="inventory-numbers">${Number(row.onHand)}</td><td>${Number(row.reserved)}</td><td class="inventory-numbers ${Number(row.available) <= (row.lowStockThreshold ?? 5) ? "stock-low" : ""}">${row.warehouseType === "damaged" ? "Không bán" : Number(row.available)}</td><td><button class="secondary" data-adjust-variant="${Number(row.variantId)}" data-warehouse="${Number(row.warehouseId)}" style="font-size:10px;padding:6px 9px">Điều chỉnh</button></td></tr>`,
       )
       .join("") || noRows(6)
   );

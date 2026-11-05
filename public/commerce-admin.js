@@ -11,6 +11,9 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     returnRows = [],
     reportQuery = "",
     auditQuery = "";
+  let cmsQuery = "";
+  let articleDirty = 0,
+    savingArticle = false;
   const field = (label, name, value = "", type = "text", extra = "") =>
     `<label>${label}<input name="${name}" type="${type}" value="${e(value)}" ${extra}></label>`;
   const area = (label, name, value = "") =>
@@ -45,8 +48,8 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       return `<section class="panel"><h1>Danh mục, thương hiệu & thuộc tính</h1>${["categories", "brands", "attributes"].map((kind) => `<h2>${{ categories: "Danh mục", brands: "Thương hiệu", attributes: "Thuộc tính" }[kind]}</h2><p>${tax[kind].map((x) => `#${x.id} ${e(x.name)} ${x.values ? x.values.map((v) => `[${v.id}: ${e(v.value)}]`).join(" ") : ""} ${has("catalog.edit") ? `<button type="button" data-tax-edit="${kind}:${x.id}">Sửa</button>` : ""}`).join(" · ")}</p>${has("catalog.edit") ? taxonomyForm(kind) : ""}`).join("")}${result}</section>`;
     }
     if (view === "cms-editor") {
-      const { items } = await api("/api/admin/cms/articles");
-      return `<section class="panel">${toolbar("Tin tức & SEO", has("content.write") ? button("Viết bài mới", "new-article") : "")}<p>Bản nháp không công khai. Chỉnh sửa bài đã xuất bản cần duyệt lại trước khi thay phiên bản public.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Bài viết</th><th>Trạng thái</th><th></th></tr></thead><tbody>${items.map((a) => `<tr><td>${e(a.title)}</td><td>${e(a.status)}</td><td><button data-article-id="${a.id}">Mở biên tập</button></td></tr>`).join("")}</tbody></table></div>${has("content.manage") ? `<h2>Chuyên mục / Tag bài viết</h2>${cmsTaxForm("categories")}${cmsTaxForm("tags")}` : ""}${result}</section>`;
+      const { items } = await api("/api/admin/cms/articles" + cmsQuery);
+      return `<section class="panel">${toolbar("Tin tức & SEO", has("content.write") ? button("Viết bài mới", "new-article") : "")}<form id="cms-filter" class="editor-toolbar">${field("Tìm tiêu đề", "q", new URLSearchParams(cmsQuery).get("q") || "")}<label>Trạng thái<select name="status"><option value="">Tất cả</option>${["draft", "in_review", "approved", "scheduled", "published", "archived"].map((v) => option(v, v, new URLSearchParams(cmsQuery).get("status") === v)).join("")}</select></label><button>Lọc</button></form><p>Bản nháp không công khai. Chỉnh sửa bài đã xuất bản cần duyệt lại trước khi thay phiên bản public.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Bài viết</th><th>Trạng thái</th><th></th></tr></thead><tbody>${items.map((a) => `<tr><td>${e(a.title)}</td><td>${e(a.status)}</td><td><button data-article-id="${a.id}">Mở biên tập</button></td></tr>`).join("")}</tbody></table></div>${has("content.manage") ? `<h2>Chuyên mục / Tag bài viết</h2>${cmsTaxForm("categories")}${cmsTaxForm("tags")}` : ""}${result}</section>`;
     }
     if (view === "documents-editor") {
       const data = await api("/api/admin/inventory/documents");
@@ -63,6 +66,10 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         approved: "complete",
       };
       return `<section class="panel"><h1>Đổi trả hàng</h1><p>Chỉ áp dụng đơn đã giao. Kiểm định thực tế trước khi duyệt: niêm phong → kho thường, đã mở/hư → kho hư. Không tự hoàn tiền.</p><form id="return-form" class="editor-form">${field("Mã đơn JL", "orderNumber", "", "text", "required")}${field("SKU ID trong đơn", "variantId", "", "number", 'required min="1"')}${field("Số lượng", "quantity", 1, "number", 'required min="1"')}${field("Lý do", "reason", "", "text", 'required minlength="3"')}<label>Tình trạng<select name="condition">${["sealed", "opened", "damaged"].map((v) => option(v, { sealed: "Niêm phong", opened: "Đã mở", damaged: "Hư hỏng" }[v])).join("")}</select></label><button class="primary">Tạo yêu cầu</button></form><table class="data-table"><thead><tr><th>Yêu cầu</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>${returnRows.map((r) => `<tr><td>#${r.id} ${e(r.order_number)}<br>${e(r.reason)}<br>${r.items.map((i) => `SKU ${i.variant_id}: ${i.quantity} (${e(i.condition)})`).join(", ")}</td><td>${e(r.status)}</td><td>${next[r.status] && (!["approve", "complete"].includes(next[r.status]) || has("inventory.approve")) ? button({ authorize: "Chấp nhận", receive: "Đã nhận hàng", inspect: "Đã kiểm định", approve: "Phê duyệt", complete: "Nhập kho hoàn" }[next[r.status]], "return:" + r.id + ":" + next[r.status]) : ""}</td></tr>`).join("")}</tbody></table>${result}</section>`;
+    }
+    if (view === "redirects-editor") {
+      const { items } = await api("/api/admin/seo/redirects");
+      return `<section class="panel"><h1>Chuyển hướng SEO</h1><p>Chỉ đường dẫn nội bộ. Không chuyển hướng đè trang đang hoạt động.</p><form id="redirect-form" class="editor-form">${field("Đường dẫn cũ", "oldPath", "", "text", "required")}${field("Đường dẫn đích đang public", "newPath", "", "text", "required")}<button class="primary">Lưu 301</button></form><p>${items.map((r) => e(r.old_path) + " → " + e(r.new_path)).join("<br>")}</p>${result}</section>`;
     }
     if (view === "operations-editor") {
       const data = await api("/api/admin/operations/status");
@@ -123,7 +130,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       : null;
     const p = product || {};
     $("#admin-content").innerHTML =
-      `<section class="panel">${toolbar(product ? "Sửa sản phẩm #" + p.id : "Thêm sản phẩm", button("← Danh sách", "catalog-list"))}<form id="product-form" data-version="${p.version || 0}" class="editor-form"><h2>Thông tin & SEO</h2>${field("Tên sản phẩm", "name", p.name || "", "text", "required")}${field("Slug", "slug", p.slug || "", "text", "required")}${select("Thương hiệu", "brandId", tax.brands, p.brand_id)}<label>Danh mục<select name="categoryId" required>${tax.categories.map((c) => option(c.id, c.name, (p.categoryIds || []).includes(c.id))).join("")}</select></label>${area("Tóm tắt", "shortDescription", p.short_description || "")}${area("Mô tả", "description", p.description || "")}${blockEditor(p.content_blocks || [])}${field("SEO title", "seoTitle", p.seo_title || "")}${field("SEO description", "seoDescription", p.seo_description || "")}<label>Trạng thái<select name="status">${["draft", "active", "inactive"].map((v) => option(v, { draft: "Nháp", active: "Xuất bản", inactive: "Ngừng bán" }[v], (p.status || "draft") === v)).join("")}</select></label>${has("catalog.edit") || (!p.id && has("catalog.create")) ? '<button class="primary">Lưu sản phẩm</button>' : ""}</form>${p.id ? `<h2>Phân loại SKU</h2><fieldset id="sku-matrix"><legend>Sinh tổ hợp thuộc tính</legend>${tax.attributes.map((group) => `<fieldset data-attribute-group="${group.id}"><legend>${e(group.name)}</legend>${group.values.map((v) => `<label><input type="checkbox" value="${v.id}" data-value-label="${e(v.value)}">${e(v.value)}</label>`).join("")}</fieldset>`).join("")}${button("Sinh SKU từ tổ hợp đã chọn", "generate-matrix")}<p>Giới hạn 100 tổ hợp; kiểm tra mã và giá trước khi lưu. Không xóa SKU cũ.</p></fieldset><p>Mỗi dòng SKU có giá và tồn riêng. Tồn chỉ thay đổi qua nghiệp vụ kho.</p><form id="sku-form" class="editor-form"><div id="sku-lines">${p.variants.map(skuLine).join("") || skuLine()}</div>${button("Thêm SKU", "add-sku")}<button class="primary">Lưu SKU</button></form><h2>Ảnh & Gallery</h2>${uploadForm()}<form id="product-media-form" class="editor-form"><p>Chọn ảnh theo thứ tự trong thư viện; ảnh đầu tiên làm cover. Ảnh cũ được giữ đến khi lưu gallery.</p>${galleryMarkup(p)}<button class="primary">Lưu gallery</button></form>` : ""}${result}</section>`;
+      `<section class="panel">${toolbar(product ? "Sửa sản phẩm #" + p.id : "Thêm sản phẩm", button("← Danh sách", "catalog-list") + (product ? button("Xem trước nháp", "preview-product") : ""))}<form id="product-form" data-version="${p.version || 0}" class="editor-form"><h2>Thông tin & SEO</h2>${field("Tên sản phẩm", "name", p.name || "", "text", "required")}${field("Slug", "slug", p.slug || "", "text", "required")}${select("Thương hiệu", "brandId", tax.brands, p.brand_id)}<label>Danh mục<select name="categoryId" required>${tax.categories.map((c) => option(c.id, c.name, (p.categoryIds || []).includes(c.id))).join("")}</select></label>${area("Tóm tắt", "shortDescription", p.short_description || "")}${area("Mô tả", "description", p.description || "")}${blockEditor(p.content_blocks || [])}${field("SEO title", "seoTitle", p.seo_title || "")}${field("SEO description", "seoDescription", p.seo_description || "")}<label>Trạng thái<select name="status">${["draft", "active", "inactive"].map((v) => option(v, { draft: "Nháp", active: "Xuất bản", inactive: "Ngừng bán" }[v], (p.status || "draft") === v)).join("")}</select></label>${has("catalog.edit") || (!p.id && has("catalog.create")) ? '<button class="primary">Lưu sản phẩm</button>' : ""}</form>${p.id ? `<h2>Phân loại SKU</h2><fieldset id="sku-matrix"><legend>Sinh tổ hợp thuộc tính</legend>${tax.attributes.map((group) => `<fieldset data-attribute-group="${group.id}"><legend>${e(group.name)}</legend>${group.values.map((v) => `<label><input type="checkbox" value="${v.id}" data-value-label="${e(v.value)}">${e(v.value)}</label>`).join("")}</fieldset>`).join("")}${button("Sinh SKU từ tổ hợp đã chọn", "generate-matrix")}<p>Giới hạn 100 tổ hợp; kiểm tra mã và giá trước khi lưu. Không xóa SKU cũ.</p></fieldset><p>Mỗi dòng SKU có giá và tồn riêng. Tồn chỉ thay đổi qua nghiệp vụ kho.</p><form id="sku-form" class="editor-form"><div id="sku-lines">${p.variants.map(skuLine).join("") || skuLine()}</div>${button("Thêm SKU", "add-sku")}<button class="primary">Lưu SKU</button></form><h2>Ảnh & Gallery</h2>${uploadForm()}<form id="product-media-form" class="editor-form"><p>Chọn ảnh theo thứ tự trong thư viện; ảnh đầu tiên làm cover. Ảnh cũ được giữ đến khi lưu gallery.</p>${galleryMarkup(p)}<button class="primary">Lưu gallery</button></form>` : ""}${result}</section>`;
     if (!has("catalog.edit")) {
       root
         .querySelectorAll(
@@ -158,7 +165,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     return `<div class="gallery-choice"><label><input type="checkbox" name="${kind}" value="${id}" ${checked ? "checked" : ""}>${e(alt)}<img width="70" height="70" src="${e(url)}" alt="${e(alt)}"></label><label>Ảnh dùng cho<select class="media-variant"><option value="">Toàn sản phẩm</option>${product.variants.map((v) => option(v.id, v.name, Number(variantId) === v.id)).join("")}</select></label>${button("Lên", "gallery-up")}${button("Xuống", "gallery-down")}</div>`;
   }
   function skuLine(v = {}) {
-    return `<fieldset class="sku-line" data-sku-id="${v.id || ""}" data-version="${v.row_version || ""}"><legend>SKU ${v.id || "mới"}</legend><div class="field-row">${field("Tên SKU", "name", v.name || "", "text", "required")}${field("SKU duy nhất", "sku", v.sku || "", "text", "required")}${field("Slug SKU", "slug", v.slug || "")}${field("Barcode", "barcode", v.barcode || "")}${field("Giá bán VND", "price", v.price || 0, "number", 'min="0" required')}${field("Giá gốc VND", "originalPrice", v.original_price ?? v.price ?? 0, "number", 'min="0" required')}${field("Quy cách", "weight", v.weight || "")}${field("Độ tuổi", "age", v.age || "")}</div><label>Giá trị thuộc tính (IDs, cách nhau dấu phẩy)<input name="attributes" value="${e(v.combination_key?.replaceAll("-", ",") || "")}" placeholder="Xem IDs trong mục Danh mục & Thuộc tính"></label><label>Trạng thái<select name="status">${["active", "inactive", "draft"].map((x) => option(x, x, (v.status || "active") === x)).join("")}</select></label></fieldset>`;
+    return `<fieldset class="sku-line" data-sku-id="${v.id || ""}" data-version="${v.row_version || ""}"><legend>SKU ${v.id || "mới"}</legend><div class="field-row">${field("Tên SKU", "name", v.name || "", "text", "required")}${field("SKU duy nhất", "sku", v.sku || "", "text", "required")}${field("Slug SKU", "slug", v.slug || "")}${field("Barcode", "barcode", v.barcode || "")}${field("Giá bán VND", "price", v.price || 0, "number", 'min="0" required')}${field("Giá gốc VND", "originalPrice", v.original_price ?? v.price ?? 0, "number", 'min="0" required')}${field("Quy cách", "weight", v.weight || "")}${field("Độ tuổi", "age", v.age || "")}${field("Khối lượng (gram)", "weightGrams", v.weight_grams ?? "", "number", 'min="0"')}${field("Dài (mm)", "lengthMm", v.length_mm ?? "", "number", 'min="0"')}${field("Rộng (mm)", "widthMm", v.width_mm ?? "", "number", 'min="0"')}${field("Cao (mm)", "heightMm", v.height_mm ?? "", "number", 'min="0"')}${field("Ngưỡng cảnh báo tồn", "lowStockThreshold", v.low_stock_threshold ?? 5, "number", 'min="0"')}</div><label>Giá trị thuộc tính (IDs, cách nhau dấu phẩy)<input name="attributes" value="${e(v.combination_key?.replaceAll("-", ",") || "")}" placeholder="Xem IDs trong mục Danh mục & Thuộc tính"></label><label>Trạng thái<select name="status">${["active", "inactive", "draft"].map((x) => option(x, x, (v.status || "active") === x)).join("")}</select></label></fieldset>`;
   }
   function blockEditor(values) {
     return `<fieldset><legend>Nội dung bài / mô tả</legend><p class="editor-note">Thêm đoạn, tiêu đề, danh sách hoặc ảnh đã upload. Mọi nội dung được server xác minh và escape.</p><div id="content-blocks">${values.map(blockLine).join("")}</div>${button("Thêm đoạn nội dung", "add-block")}</fieldset>`;
@@ -186,6 +193,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       .filter((b) => b.type === "image" || b.type === "list" || b.text.trim());
   }
   async function articleEditor(articleId) {
+    articleDirty = 0;
     article = articleId
       ? (await api("/api/admin/cms/articles/" + articleId)).article
       : null;
@@ -193,7 +201,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     const categories = (await api("/api/admin/cms/categories")).items;
     assets = has("media.read") ? (await api("/api/admin/media")).items : [];
     $("#admin-content").innerHTML =
-      `<section class="panel">${toolbar(article ? "Bài #" + article.id + " · " + article.status : "Viết bài mới", button("← Danh sách", "cms-list"))}<form id="article-form" class="editor-form">${field("Tiêu đề", "title", a.title || "", "text", "required")}${field("Slug", "slug", a.slug || "", "text", "required")}${area("Tóm tắt", "excerpt", a.excerpt || "")}${select("Chuyên mục", "categoryId", categories, a.categoryId)}<label>Ảnh bìa<select name="coverUrl"><option value="">Chọn ảnh đã upload</option>${assets.map((m) => option(m.url, "#" + m.id + " " + m.alt_text, a.coverUrl === m.url)).join("")}</select></label>${field("Mô tả ảnh bìa", "coverAlt", a.coverAlt || "")}${blockEditor(a.contentBlocks || [])}${field("SEO title", "seoTitle", a.seoTitle || "")}${area("SEO description", "seoDescription", a.seoDescription || "")}${field("Tag IDs (cách nhau dấu phẩy)", "tagIds", (a.tagIds || []).join(","))}${field("Product cha IDs liên quan (cách nhau dấu phẩy)", "relatedProductIds", (a.relatedProductIds || []).join(","))}${has("content.write") ? '<button class="primary">Lưu nháp</button>' : ""}</form>${article ? `<div class="editor-toolbar">${has("content.write") && article.status === "draft" ? button("Gửi duyệt", "article:submit") : ""}${has("content.approve") && article.status === "in_review" ? button("Phê duyệt", "article:approve") : ""}${has("content.publish") && article.status === "approved" ? button("Xuất bản ngay", "article:publish") : ""}${has("content.publish") ? button("Lưu trữ", "article:archive") : ""}${button("Xem trước", "article:preview")}${button("Lịch sử phiên bản", "article:revisions")}</div>${has("content.publish") && article.status === "approved" ? `<form id="schedule-form" class="editor-form"><label>Lịch xuất bản (giờ trên máy bạn)<input name="when" type="datetime-local" required></label><button>Đặt lịch</button></form>` : ""}<div id="article-preview" class="article-body"></div>` : ""}${result}</section>`;
+      `<section class="panel">${toolbar(article ? "Bài #" + article.id + " · " + article.status : "Viết bài mới", button("← Danh sách", "cms-list"))}<form id="article-form" class="editor-form"><label><input id="article-autosave" type="checkbox" checked> Tự lưu nháp mỗi 15 giây (sau lần lưu đầu)</label><small id="autosave-state" role="status"></small>${field("Tiêu đề", "title", a.title || "", "text", "required")}${field("Slug", "slug", a.slug || "", "text", "required")}${area("Tóm tắt", "excerpt", a.excerpt || "")}${select("Chuyên mục", "categoryId", categories, a.categoryId)}<label>Ảnh bìa<select name="coverUrl"><option value="">Chọn ảnh đã upload</option>${assets.map((m) => option(m.url, "#" + m.id + " " + m.alt_text, a.coverUrl === m.url)).join("")}</select></label>${field("Mô tả ảnh bìa", "coverAlt", a.coverAlt || "")}${blockEditor(a.contentBlocks || [])}${field("SEO title", "seoTitle", a.seoTitle || "")}${area("SEO description", "seoDescription", a.seoDescription || "")}${field("Tag IDs (cách nhau dấu phẩy)", "tagIds", (a.tagIds || []).join(","))}${field("Product cha IDs liên quan (cách nhau dấu phẩy)", "relatedProductIds", (a.relatedProductIds || []).join(","))}${has("content.write") ? '<button class="primary">Lưu nháp</button>' : ""}</form>${article ? `<div class="editor-toolbar">${has("content.write") && article.status === "draft" ? button("Gửi duyệt", "article:submit") : ""}${has("content.approve") && article.status === "in_review" ? button("Phê duyệt", "article:approve") + button("Trả lại nháp", "article:reject") : ""}${has("content.publish") && article.status === "approved" ? button("Xuất bản ngay", "article:publish") : ""}${has("content.publish") ? button("Lưu trữ", "article:archive") : ""}${button("Xem trước", "article:preview")}${button("Lịch sử phiên bản", "article:revisions")}</div>${has("content.publish") && article.status === "approved" ? `<form id="schedule-form" class="editor-form"><label>Lịch xuất bản (giờ trên máy bạn)<input name="when" type="datetime-local" required></label><button>Đặt lịch</button></form>` : ""}<div id="article-preview" class="article-body"></div>` : ""}${result}</section>`;
   }
   async function refresh(view) {
     $("#admin-content").innerHTML = await render(view);
@@ -260,6 +268,21 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         $("#import-result").textContent =
           "Import hoàn tất. Xem sản phẩm trong catalog.";
       }
+      if (action === "preview-product") {
+        const { html } = await api(
+          "/api/admin/catalog/products/" + product.id + "/preview",
+        );
+        let preview = $("#product-preview");
+        if (!preview) {
+          $("#admin-content").insertAdjacentHTML(
+            "beforeend",
+            '<section id="product-preview" class="panel" tabindex="-1"></section>',
+          );
+          preview = $("#product-preview");
+        }
+        preview.innerHTML = html;
+        preview.focus();
+      }
       if (action === "new-product") await productEditor();
       if (action === "catalog-list") await refresh("catalog-editor");
       if (action?.startsWith("catalog-page:"))
@@ -283,6 +306,17 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
           );
           if (matrix.length > 100) throw Error("Tối đa 100 tổ hợp.");
         }
+        root
+          .querySelectorAll(
+            '.sku-line:not([data-sku-id]),.sku-line[data-sku-id=""]',
+          )
+          .forEach((line) => {
+            if (
+              !line.querySelector('[name="name"]').value &&
+              !line.querySelector('[name="sku"]').value
+            )
+              line.remove();
+          });
         const existing = new Set(
           [...root.querySelectorAll('.sku-line [name="attributes"]')].map((i) =>
             i.value
@@ -337,8 +371,34 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         $("#sku-lines").insertAdjacentHTML("beforeend", skuLine());
       if (action === "new-article") await articleEditor();
       if (action === "cms-list") await refresh("cms-editor");
+      if (action?.startsWith("article:restore:")) {
+        if (
+          savingArticle ||
+          !confirm(
+            "Khôi phục phiên bản này thành nháp mới? Bản public giữ nguyên đến khi duyệt lại.",
+          )
+        )
+          return;
+        await api("/api/admin/cms/articles/" + article.id + "/restore", {
+          method: "POST",
+          body: {
+            version: article.version,
+            revisionId: Number(action.split(":")[2]),
+          },
+        });
+        await articleEditor(article.id);
+        return;
+      }
       if (action?.startsWith("article:")) {
+        if (savingArticle) {
+          notify("Đang lưu nháp, vui lòng chờ.");
+          return;
+        }
         const verb = action.split(":")[1];
+        if (articleDirty && !["preview", "revisions"].includes(verb)) {
+          notify("Lưu nháp trước khi chuyển trạng thái bài viết.");
+          return;
+        }
         if (
           ["publish", "archive", "approve"].includes(verb) &&
           !confirm("Xác nhận " + verb + " bài viết?")
@@ -351,7 +411,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
           $("#article-preview").innerHTML = data.items
             .map(
               (r) =>
-                `<h3>Phiên bản ${r.version}</h3><p>${e(r.snapshot.title)}</p><pre>${e(JSON.stringify(r.snapshot.contentBlocks, null, 2))}</pre>`,
+                `<h3>Phiên bản ${r.version}</h3>${has("content.write") ? button("Khôi phục thành nháp", "article:restore:" + r.id) : ""}<p>${e(r.snapshot.title)}</p><pre>${e(JSON.stringify(r.snapshot.contentBlocks, null, 2))}</pre>`,
             )
             .join("");
         } else if (verb === "preview") {
@@ -402,6 +462,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     const form = event.target;
     const supported = [
       "product-form",
+      "redirect-form",
       "sku-form",
       "product-media-form",
       "upload-form",
@@ -410,6 +471,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       "document-form",
       "report-filter",
       "audit-filter",
+      "cms-filter",
       "return-form",
       "catalog-search",
       "setting-form",
@@ -429,8 +491,19 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     );
     if (submit?.disabled) return;
     if (submit) submit.disabled = true;
+    if (form.id === "article-form" && savingArticle) {
+      if (submit) submit.disabled = false;
+      notify("Đang tự lưu, vui lòng chờ.");
+      return;
+    }
+    if (form.id === "article-form") savingArticle = true;
     const data = Object.fromEntries(new FormData(form));
     try {
+      if (form.id === "redirect-form") {
+        if (!confirm("Lưu chuyển hướng 301 vĩnh viễn?")) return;
+        await api("/api/admin/seo/redirects", { method: "POST", body: data });
+        await refresh("redirects-editor");
+      }
       if (form.id === "report-filter") {
         const q = new URLSearchParams();
         if (data.from)
@@ -442,6 +515,10 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         }
         reportQuery = "?" + q;
         await refresh("reports-editor");
+      }
+      if (form.id === "cms-filter") {
+        cmsQuery = "?" + new URLSearchParams(data);
+        await refresh("cms-editor");
       }
       if (form.id === "audit-filter") {
         auditQuery = "?" + new URLSearchParams(data);
@@ -505,6 +582,12 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
             ...values,
             id: line.dataset.skuId ? Number(line.dataset.skuId) : undefined,
             rowVersion: Number(line.dataset.version),
+            weightGrams:
+              values.weightGrams === "" ? null : Number(values.weightGrams),
+            lengthMm: values.lengthMm === "" ? null : Number(values.lengthMm),
+            widthMm: values.widthMm === "" ? null : Number(values.widthMm),
+            heightMm: values.heightMm === "" ? null : Number(values.heightMm),
+            lowStockThreshold: Number(values.lowStockThreshold),
             price: Number(values.price),
             originalPrice: Number(values.originalPrice),
             attributeValueIds: values.attributes
@@ -670,8 +753,61 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     } catch (err) {
       showError(err);
     } finally {
+      if (form.id === "article-form") savingArticle = false;
       if (submit?.isConnected) submit.disabled = false;
     }
   });
+  root.addEventListener("input", (event) => {
+    if (event.target.closest("#article-form")) articleDirty++;
+  });
+  setInterval(async () => {
+    const form = $("#article-form");
+    if (
+      !form ||
+      !article?.id ||
+      article.status !== "draft" ||
+      !has("content.write") ||
+      !articleDirty ||
+      savingArticle ||
+      !$("#article-autosave")?.checked ||
+      !form.checkValidity()
+    )
+      return;
+    const generation = articleDirty,
+      target = article.id,
+      data = Object.fromEntries(new FormData(form));
+    savingArticle = true;
+    try {
+      const { article: saved } = await api(
+        "/api/admin/cms/articles/" + target,
+        {
+          method: "PATCH",
+          body: {
+            ...data,
+            version: article.version,
+            categoryId: data.categoryId ? Number(data.categoryId) : null,
+            contentBlocks: collectBlocks(form),
+            tagIds: data.tagIds ? data.tagIds.split(",").map(Number) : [],
+            relatedProductIds: data.relatedProductIds
+              ? data.relatedProductIds.split(",").map(Number)
+              : [],
+          },
+        },
+      );
+      if (form.isConnected && article?.id === target) {
+        article = saved;
+        if (articleDirty === generation) articleDirty = 0;
+        $("#autosave-state").textContent =
+          "Đã tự lưu lúc " + new Date().toLocaleTimeString("vi-VN");
+      }
+    } catch (err) {
+      if (form.isConnected) {
+        $("#article-autosave").checked = false;
+        $("#autosave-state").textContent = "Tạm dừng tự lưu: " + err.message;
+      }
+    } finally {
+      savingArticle = false;
+    }
+  }, 15000);
   return { render };
 }
