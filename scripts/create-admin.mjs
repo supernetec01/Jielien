@@ -33,6 +33,10 @@ async function prompt(label, secret = false) {
 const pool = createPool();
 try {
   await migrate(pool);
+  const username =
+    process.env.ADMIN_USERNAME ||
+    (await prompt("Tên đăng nhập quản trị (Enter: admin): ")) ||
+    "admin";
   const email = process.env.ADMIN_EMAIL || (await prompt("Email quản trị: "));
   const phone =
     process.env.ADMIN_PHONE || (await prompt("Điện thoại quản trị: "));
@@ -41,6 +45,7 @@ try {
     process.env.ADMIN_PASSWORD ||
     (await prompt("Mật khẩu (ít nhất 10 ký tự, không hiển thị): ", true));
   const result = await createAuth(pool).ensureAdmin({
+    username,
     email,
     phone,
     name,

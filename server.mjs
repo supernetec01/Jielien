@@ -7,6 +7,8 @@ import { createPool } from "./lib/database.mjs";
 import { createStore } from "./db/store.mjs";
 import { createAuth } from "./lib/auth.mjs";
 import { createCartService } from "./lib/cart.mjs";
+import {createCommerce} from "./lib/commerce-routes.mjs";
+import {createSeo,seoConfig} from "./lib/seo.mjs";
 import QRCode from "qrcode";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
@@ -240,6 +242,7 @@ export async function createApp({
   catalogPath = resolve(publicRoot, "catalog.json"),
   legacyPath = externalPool ? null : resolve(projectRoot, "data/store.sqlite"),
   bankConfig,
+  mediaDirectory,
 } = {}) {
   const pool = externalPool || createPool();
   let store;
@@ -249,6 +252,10 @@ export async function createApp({
     if (!externalPool) await pool.end();
     throw error;
   }
+  const commerce=createCommerce(pool,{mediaDirectory,publicProducts:()=>store.listProducts()});
+  const indexing=seoConfig();
+  const seo=createSeo({pool,store,cms:commerce.cms,config:indexing});
+  const publisher=setInterval(()=>commerce.cms.runDue().catch(e=>console.error("CMS scheduler:",e.code||e.name)),30000); publisher.unref();
   const auth = createAuth(pool),
     carts = createCartService(pool),
     rates = new Map();
@@ -270,9 +277,11 @@ export async function createApp({
       for (const [k, v] of rates) if (v.until < now) rates.delete(k);
   }
   const server = http.createServer(async (req, res) => {
+    if(!indexing.index) res.setHeader("X-Robots-Tag","noindex, nofollow");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "same-origin");
     res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
     res.setHeader(
       "Permissions-Policy",
       "camera=(), microphone=(), geolocation=()",
@@ -293,10 +302,19 @@ export async function createApp({
         fail(403, "forbidden", "Không thể truy cập đường dẫn này.");
       const url = new URL(req.url, "http://localhost"),
         path = url.pathname;
+      if(path.startsWith('/media/') && ['GET','HEAD'].includes(req.method)) {
+        const token=cookieToken(req),session=token?await auth.authenticate(token):null;
+        const image=await commerce.media.serve(decoded.slice(7),session?.user);
+        res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'private, no-cache'});res.end(req.method==='HEAD'?undefined:image);return;
+      }
       if (path.startsWith("/api/")) {
         res.setHeader("Cache-Control", "no-store");
         const rawToken = cookieToken(req),
           session = rawToken ? await auth.authenticate(rawToken) : null;
+        if(path.startsWith('/api/admin/')) {
+          requireUser(session); if(!['GET','HEAD'].includes(req.method)) requireCsrf(req,session);
+        }
+        if(await commerce.api({req,res,path,url,user:session?.user,auth,readBody,json})) return;
         if (req.method === "GET" && path === "/api/health") {
           await pool.query("SELECT 1");
           return json(res, 200, { status: "ok", database: "postgresql" });
@@ -568,7 +586,7 @@ export async function createApp({
             /^\/api\/admin\/orders\/([A-Za-z0-9-]{1,80})\/bank-transfer$/,
           );
           if (req.method === "POST" && bankPaidMatch) {
-            requirePermission(session, "orders.manage");
+            requirePermission(session, "payments.reconcile");
             await readBody(req);
             return json(res, 200, {
               order: stripToken(
@@ -577,7 +595,7 @@ export async function createApp({
             });
           }
           if (req.method === "POST" && paidMatch) {
-            requirePermission(session, "orders.manage");
+            requirePermission(session, "payments.reconcile");
             await readBody(req);
             return json(res, 200, {
               order: stripToken(
@@ -602,6 +620,9 @@ export async function createApp({
       }
       if (req.method !== "GET" && req.method !== "HEAD")
         fail(405, "method_not_allowed", "Phương thức không được hỗ trợ.");
+      const rendered=await seo.render(decoded,url,()=>readFile(resolve(publicRoot,'index.html'),'utf8'));
+      if(rendered){res.writeHead(rendered.status||200,rendered.location?{Location:rendered.location}:{'Content-Type':rendered.type||'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:rendered.body);return;}
+      if(['/quan-tri','/tai-khoan','/gio-hang','/thanh-toan','/tra-cuu-don-hang'].includes(decoded))res.setHeader('X-Robots-Tag','noindex, nofollow');
       const special =
         decoded === "/tai-khoan"
           ? "/account.html"
@@ -654,6 +675,7 @@ export async function createApp({
       });
     }
   });
+  server.on("close",()=>clearInterval(publisher));
   if (!externalPool)
     server.on("close", () => {
       pool.end().catch(() => {});
