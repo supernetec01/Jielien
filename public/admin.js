@@ -1,3 +1,4 @@
+import { icon } from "/ui-icons.js";
 import { canAccessAdmin } from "/admin-access.js";
 import { createCommerceEditors } from "/commerce-admin.js";
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -35,7 +36,7 @@ const transitions = {
   cancelled: [],
 };
 const sections = [
-  { id: "dashboard", label: "◫ Tổng quan", permission: "dashboard.read" },
+  { id: "dashboard", label: "Tổng quan", permission: "dashboard.read" },
   {
     id: "redirects-editor",
     label: "Chuyển hướng SEO",
@@ -80,13 +81,13 @@ const sections = [
   },
   { id: "users", label: "Tài khoản & Phân quyền", permission: "users.manage" },
   { id: "products", label: "Giá & trạng thái SKU", permission: "catalog.read" },
-  { id: "orders", label: "▤ Đơn hàng", permission: "orders.read" },
+  { id: "orders", label: "Đơn hàng", permission: "orders.read" },
   {
     id: "inventory",
-    label: "⌂ Kho & tồn hàng",
+    label: "Kho & tồn hàng",
     permission: "inventory.read",
   },
-  { id: "audit", label: "☷ Nhật ký thao tác", permission: "audit.read" },
+  { id: "audit", label: "Nhật ký thao tác", permission: "audit.read" },
 ];
 const root = $("#admin-main");
 let user = null;
@@ -157,17 +158,83 @@ function noRows(cols, text = "Chưa có dữ liệu phù hợp.") {
 function gate(message, login = false) {
   root.innerHTML = `<section class="panel access-panel"><span class="access-icon" aria-hidden="true">♢</span><h1>${login ? "Đăng nhập để quản lý cửa hàng" : "Tài khoản chưa có quyền quản trị"}</h1><p>${escape(message)}</p><a href="/tai-khoan${login ? "?redirect=%2Fquan-tri" : ""}" class="primary">${login ? "Đăng nhập →" : "Về tài khoản"}</a><p class="small">Quyền truy cập được cấp bởi người vận hành. Đăng ký tài khoản khách hàng không tự cấp quyền quản trị.</p></section>`;
 }
+const navigationGroups = [
+  { title: "Tổng quan", icon: "chart", ids: ["dashboard", "reports-editor"] },
+  {
+    title: "Bán hàng & Kho",
+    icon: "box",
+    ids: [
+      "orders",
+      "catalog-editor",
+      "taxonomy-editor",
+      "products",
+      "inventory",
+      "documents-editor",
+      "returns-editor",
+      "import-editor",
+      "coupons-editor",
+    ],
+  },
+  {
+    title: "Nội dung & Website",
+    icon: "file",
+    ids: ["cms-editor", "media-editor", "banners-editor", "redirects-editor"],
+  },
+  {
+    title: "Quản lý hệ thống",
+    icon: "settings",
+    ids: [
+      "users",
+      "settings-editor",
+      "operations-editor",
+      "audit-tools",
+      "audit",
+    ],
+  },
+];
 function shell() {
-  root.innerHTML = `<div class="admin-layout"><aside class="admin-sidebar"><nav class="panel side-nav" aria-label="Mục quản trị"><div class="workspace-brand"><img src="/assets/jielien-logo.jpg" alt="Jielien International"><b>ADMIN WORKSPACE</b></div><span class="section-caption">QUẢN LÝ & VẬN HÀNH</span>${sections
-    .filter((section) => has(section.permission))
-    .map(
-      (section) =>
-        `<button data-section="${section.id}" class="${activeView === section.id ? "active" : ""}">${section.label}</button>`,
-    )
+  root.innerHTML = `<div class="admin-layout"><aside class="admin-sidebar"><div class="workspace-brand"><img src="/assets/jielien-logo.jpg" alt="Jielien International"><span>Không gian quản trị</span></div><label class="navigation-search">${icon("search")}<input id="admin-nav-search" type="search" aria-label="Tìm chức năng quản trị" placeholder="Tìm chức năng…"></label><nav id="workspace-navigation" class="side-nav" aria-label="Mục quản trị">${navigationGroups
+    .map((group) => {
+      const available = group.ids
+        .map((id) => sections.find((s) => s.id === id))
+        .filter((s) => s && has(s.permission));
+      return available.length
+        ? `<section class="navigation-group"><h2>${group.title}</h2>${available.map((s) => `<button data-section="${s.id}" class="${activeView === s.id ? "active" : ""}">${icon(s.id === "users" ? "users" : group.icon)}<span>${s.label}</span></button>`).join("")}</section>`
+        : "";
+    })
     .join(
       "",
-    )}<div class="admin-user"><b>${escape(user.fullName || user.full_name)}</b>${escape(user.email || user.phone || "Tài khoản quản trị")}</div></nav></aside><section id="admin-content" tabindex="-1" aria-live="polite"></section></div>`;
+    )}<p id="navigation-empty" hidden>Không tìm thấy chức năng.</p></nav><div class="admin-user"><span class="user-avatar">${escape((user.fullName || user.full_name || "A").slice(0, 1))}</span><div><b>${escape(user.fullName || user.full_name)}</b><small>Đã đăng nhập</small></div><a href="/tai-khoan" aria-label="Mở tài khoản">${icon("arrow")}</a></div></aside><div class="workspace-main"><div class="workspace-location"><button type="button" id="admin-menu-toggle" aria-expanded="false" aria-controls="workspace-navigation">☰ Mục quản trị</button><span>Quản trị <span aria-hidden="true">/</span> <b id="workspace-current">Tổng quan</b></span><span class="workspace-session">Phiên đăng nhập được bảo vệ</span></div><section id="admin-content" tabindex="-1" aria-live="polite"></section></div></div>`;
 }
+root.addEventListener("input", (event) => {
+  if (event.target.id !== "admin-nav-search") return;
+  const normalize = (v) =>
+    v
+      .toLocaleLowerCase("vi")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d");
+  const query = normalize(event.target.value.trim());
+  let visible = 0;
+  root.querySelectorAll(".navigation-group").forEach((group) => {
+    let matches = 0;
+    group.querySelectorAll("[data-section]").forEach((button) => {
+      button.hidden = !normalize(button.textContent).includes(query);
+      if (!button.hidden) matches++;
+    });
+    group.hidden = matches === 0;
+    visible += matches;
+  });
+  $("#navigation-empty").hidden = visible > 0;
+});
+root.addEventListener("click", (event) => {
+  const toggle = event.target.closest("#admin-menu-toggle");
+  if (toggle) {
+    const open = $(".admin-layout").classList.toggle("navigation-open");
+    toggle.setAttribute("aria-expanded", String(open));
+    if (open) $("#admin-nav-search").focus();
+  }
+});
 function header(title, text, button = "") {
   return `<div class="content-header"><div><h1>${title}</h1><p>${text}</p></div>${button}</div>`;
 }
@@ -301,6 +368,10 @@ async function renderView(view, { focus = true } = {}) {
   const selected = sections.find((section) => section.id === view);
   if (!selected || !has(selected.permission)) return;
   activeView = view;
+  document.title = selected.label + " | Jielien Admin";
+  $("#workspace-current").textContent = selected.label;
+  $(".admin-layout").classList.remove("navigation-open");
+  $("#admin-menu-toggle").setAttribute("aria-expanded", "false");
   const version = ++viewVersion;
   const content = $("#admin-content");
   $$("[data-section]").forEach((button) => {
