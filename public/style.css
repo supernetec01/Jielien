@@ -2894,3 +2894,33 @@ body {
 .site-footer .footer-grid a:not(.logo) {
   color: #cbd5e1;
 }
+@media (max-width: 600px) {
+  .header-main .icon-button {
+    color: #0b1b34;
+  }
+  .header-main .brand-logo {
+    width: 88px;
+    height: 60px;
+  }
+  .header-main .account-link > span:last-child {
+    display: none;
+  }
+  .header-main .cart-link {
+    min-height: 40px;
+  }
+  .hero-poster h2,
+  .hero-poster span,
+  .hero-poster small {
+    max-width: 100%;
+  }
+  .hero-poster img {
+    opacity: 0.25;
+    z-index: 0;
+  }
+  .account-invitation {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}

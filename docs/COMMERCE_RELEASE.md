@@ -1,6 +1,6 @@
-# Jielien International — bản nâng cấp commerce/CMS để review
+# Jielien International — bản demo commerce/CMS
 
-Nhánh `feature/jielien-commerce-cms`, dựa trên `8b460eb` (bao gồm nâng cấp LAN chưa merge main). Không tự merge, public hoặc thay database công ty. Bộ đặc tả gốc giữ nguyên tại `docs/commerce-spec`; task theo dõi tại `specs/001-jielien-commerce/tasks.md`. Spec Kit chính thức đã cài; xem `SPEC_KIT_SETUP.md`.
+Các nhánh LAN, commerce/CMS và phân quyền Admin đã được hợp nhất vào `main` theo yêu cầu chủ dự án. Bản nâng cấp giao diện tiếp nối được ghi tại [INTERFACE_REFRESH.md](INTERFACE_REFRESH.md); chạy từ `main` theo [DEMO_QUICKSTART.md](DEMO_QUICKSTART.md). Không tự xuất bản website công khai hoặc thay database máy công ty. Bộ đặc tả gốc giữ nguyên tại `docs/commerce-spec`; task theo dõi tại `specs/001-jielien-commerce/tasks.md`. Spec Kit chính thức đã cài; xem `SPEC_KIT_SETUP.md`.
 
 ## Chức năng có thể dùng
 
