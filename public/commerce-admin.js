@@ -32,6 +32,15 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     `<h1>${title}</h1><div class="editor-toolbar">${actions}</div>`;
   const jsonArea = (label, name, value) =>
     area(label, name, JSON.stringify(value, null, 2));
+  let previewMode = "desktop";
+  const bannerSlots = {
+    home_hero: "Trang chủ · Hero chính",
+    home_side_top: "Trang chủ · Poster trên",
+    home_side_bottom: "Trang chủ · Poster dưới",
+    home_wide: "Trang chủ · Banner ngang",
+    category_hero: "Danh mục · Banner đầu trang",
+    article_featured: "Tin tức · Banner nổi bật",
+  };
   const names = {
     categories: "Danh mục",
     brands: "Thương hiệu",
@@ -90,6 +99,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       return `<section class="panel"><h1>Thư viện ảnh</h1>${uploadForm()}<div class="news-grid">${assets.map((a) => `<article><img width="150" height="150" src="${e(a.url)}" alt="${e(a.alt_text)}"><p>#${a.id}: ${e(a.alt_text)}</p><code>${e(a.url)}</code></article>`).join("")}</div>${result}</section>`;
     }
     if (view === "taxonomy-editor") {
+      assets = has("media.read") ? (await api("/api/admin/media")).items : [];
       await loadTax();
       return taxonomyMarkup();
     }
@@ -138,7 +148,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     }
     if (view === "settings-editor") {
       const { items } = await api("/api/admin/settings/site");
-      return `<section class="panel"><h1>Cấu hình công ty</h1>${items.map((s) => `<p>${e(s.key)}: ${e(s.value_json)}</p>`).join("")}${has("settings.write") ? `<form id="setting-form" class="editor-form"><label>Trường<select name="key">${["companyName", "contactPhone", "contactEmail", "address", "footerText"].map((k) => option(k, k)).join("")}</select></label>${field("Giá trị", "value")}<button>Lưu</button></form>` : ""}${result}</section>`;
+      return `<section class="panel"><h1>Cấu hình công ty</h1>${items.map((s) => `<p>${e(s.key)}: ${e(s.value_json)}</p>`).join("")}${has("settings.write") ? `<form id="setting-form" class="editor-form"><label>Trường<select name="key">${["companyName", "contactPhone", "contactEmail", "address", "footerText", "tagline", "trust1", "trust2", "trust3", "trust4", "legalName", "registrationNumber"].map((k) => option(k, k)).join("")}</select></label>${field("Giá trị", "value")}<button>Lưu</button></form>` : ""}${result}</section>`;
     }
     if (view === "import-editor") {
       importPreview = null;
@@ -147,15 +157,32 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     if (view === "banners-editor") {
       assets = has("media.read") ? (await api("/api/admin/media")).items : [];
       bannerRows = (await api("/api/admin/banners")).items;
-      return `<section class="panel"><div class="content-header"><div><h1>Banner trang chủ</h1><p>Thiết kế nội dung, xem trước và đặt lịch hiển thị.</p></div></div><div class="banner-editor-layout">${
+      previewMode = "desktop";
+      return `${heading("Banner & Poster Studio", "Quản lý chiến dịch theo vị trí, thiết bị và thời gian hiển thị.")}<section class="panel"><div class="banner-editor-layout">${
         has("settings.write")
-          ? `<form id="banner-form" class="editor-form"><input type="hidden" name="bannerId"><input type="hidden" name="version">${field("Tiêu đề", "title", "", "text", 'required maxlength="150"')}${select(
-              "Ảnh từ thư viện",
+          ? `<form id="banner-form" class="editor-form"><input type="hidden" name="bannerId"><input type="hidden" name="version"><label>Vị trí hiển thị<select name="slot">${Object.entries(
+              bannerSlots,
+            )
+              .map(([key, label]) => option(key, label))
+              .join(
+                "",
+              )}</select></label>${field("Tiêu đề", "title", "", "text", 'required maxlength="150"')}${field("Mô tả ngắn", "subtitle", "", "text", 'maxlength="500"')}${select(
+              "Ảnh desktop · bắt buộc",
               "assetId",
               assets.map((a) => ({ id: a.id, name: a.alt_text })),
-            )}<p class="editor-note">Chọn ảnh đã upload ở Thư viện ảnh. Banner xuất bản còn hiệu lực sẽ hiển thị trên trang chủ.</p>${field("Link nội bộ", "targetPath", "/san-pham", "text", "required")}<label>Trạng thái<select name="status">${["draft", "published", "archived"].map((x) => option(x, { draft: "Bản nháp", published: "Xuất bản", archived: "Lưu trữ" }[x])).join("")}</select></label>${field("Bắt đầu (giờ máy bạn)", "startsAt", "", "datetime-local")}${field("Kết thúc", "endsAt", "", "datetime-local")}<div class="editor-toolbar"><button class="primary">Lưu banner</button>${button("Tạo mới", "banner-new")}</div></form>`
-          : "<p>Bạn có quyền xem danh sách banner.</p>"
-      }<aside><p class="section-caption">XEM TRƯỚC NỘI DUNG</p><div class="banner-live-preview"><small>JIELIEN INTERNATIONAL</small><h2 id="banner-preview-title">Tiêu đề banner của bạn</h2><img id="banner-preview-image" alt="" hidden><span>Khám phá →</span></div><p class="editor-note">Bản xem trước. Lưu và chọn Xuất bản để hiển thị theo lịch.</p></aside></div><div class="banner-library">${bannerRows.map((b) => `<article><img src="${e(b.url)}" alt="${e(b.alt_text)}"><div><b>${e(b.title)}</b><p>${e({ draft: "Bản nháp", published: "Xuất bản", archived: "Lưu trữ" }[b.status])} · ${e(b.target_path)}</p></div>${has("settings.write") ? button("Chỉnh sửa", "banner-edit:" + b.id) : ""}</article>`).join("") || "<p>Chưa có banner. Hãy tạo nội dung đầu tiên.</p>"}</div>${result}</section>`;
+            )}${select(
+              "Ảnh mobile · trống dùng desktop",
+              "assetMobileId",
+              assets.map((a) => ({ id: a.id, name: a.alt_text })),
+            )}${field("Mô tả ảnh cho người đọc màn hình", "alt", "", "text", 'maxlength="500"')}${field("Nhãn nút hành động", "ctaLabel", "Khám phá", "text", 'required maxlength="60"')}${field("Link nội bộ", "targetPath", "/san-pham", "text", "required")}${field("Thứ tự (số nhỏ hiển thị trước)", "sortOrder", 0, "number", 'required min="-10000" max="10000"')}<label>Trạng thái<select name="status">${["draft", "published", "archived"].map((v) => option(v, states[v])).join("")}</select></label>${field("Bắt đầu (giờ máy bạn)", "startsAt", "", "datetime-local")}${field("Kết thúc (giờ máy bạn)", "endsAt", "", "datetime-local")}<div class="field-row">${field("Lấy nét ngang (%)", "focalX", 50, "number", 'required min="0" max="100"')}${field("Lấy nét dọc (%)", "focalY", 50, "number", 'required min="0" max="100"')}</div><p class="editor-note">Ảnh được upload tại Thư viện ảnh. Gợi ý: hero 1600×900, poster 700×550, banner ngang 1600×450, mobile 750×920; không bắt buộc kích thước này.</p><div class="form-actions"><button class="primary">Lưu banner</button>${button("Tạo mới", "banner-new")}</div></form>`
+          : "<p>Bạn có quyền xem banner.</p>"
+      }<aside><div class="workspace-tabs"><button type="button" data-editor-action="banner-preview:desktop" aria-pressed="true">Desktop</button><button type="button" data-editor-action="banner-preview:mobile" aria-pressed="false">Mobile</button></div><div id="banner-preview-frame" class="banner-preview-frame"><div class="banner-live-preview"><img id="banner-preview-image" alt="" hidden><div><small id="banner-preview-slot">Trang chủ · Hero chính</small><h2 id="banner-preview-title">Tiêu đề banner của bạn</h2><p id="banner-preview-subtitle"></p><span id="banner-preview-cta">Khám phá →</span></div></div></div><p class="editor-note">Bản xem trước vùng lấy nét và nội dung. Banner chỉ hiển thị khi đã xuất bản và còn trong lịch.</p></aside></div></section><section class="panel"><div class="section-title"><h2>Danh sách banner</h2><label>Vị trí<select id="banner-slot-filter"><option value="">Tất cả vị trí</option>${Object.entries(
+        bannerSlots,
+      )
+        .map(([key, label]) => option(key, label))
+        .join(
+          "",
+        )}</select></label></div><div class="banner-library">${bannerRows.map((b) => `<article data-banner-slot="${e(b.slot)}"><img src="${e(b.url)}" alt="${e(b.alt || b.alt_text)}"><div><b>${e(b.title)}</b><p>${e(bannerSlots[b.slot])} · Thứ tự ${b.sort_order}</p><p>${e(states[b.status])} · ${e(b.target_path)}</p></div>${has("settings.write") ? button("Chỉnh sửa", "banner-edit:" + b.id) : ""}</article>`).join("") || "<p>Chưa có banner. Tạo chiến dịch đầu tiên bằng biểu mẫu phía trên.</p>"}</div>${result}</section>`;
     }
     if (view === "coupons-editor") {
       const { items } = await api("/api/admin/coupons");
@@ -179,7 +206,24 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
             )
             .join("")}</select></label>`
         : ""
-    }${kind === "attributes" ? area("Giá trị — mỗi dòng một lựa chọn", "values", (item.values || []).map((v) => v.value).join("\n")) : `<label>Trạng thái<select name="status">${["active", "inactive"].map((v) => option(v, states[v], (item.status || "active") === v)).join("")}</select></label>`}<div class="form-actions"><button class="primary">${item.id ? "Lưu thay đổi" : "Thêm " + names[kind].toLowerCase()}</button>${item.id ? button("Hủy chỉnh sửa", "taxonomy-cancel") : ""}</div></form>`;
+    }${kind === "attributes" ? area("Giá trị — mỗi dòng một lựa chọn", "values", (item.values || []).map((v) => v.value).join("\n")) : `<label>Trạng thái<select name="status">${["active", "inactive"].map((v) => option(v, states[v], (item.status || "active") === v)).join("")}</select></label>`}${
+      kind === "categories"
+        ? field(
+            "Thứ tự hiển thị",
+            "sortOrder",
+            item.sort_order || 0,
+            "number",
+          ) +
+          (has("media.read")
+            ? select(
+                "Ảnh danh mục",
+                "imageAssetId",
+                assets.map((a) => ({ id: a.id, name: a.alt_text })),
+                item.image_asset_id,
+              )
+            : "")
+        : ""
+    }<div class="form-actions"><button class="primary">${item.id ? "Lưu thay đổi" : "Thêm " + names[kind].toLowerCase()}</button>${item.id ? button("Hủy chỉnh sửa", "taxonomy-cancel") : ""}</div></form>`;
   }
   function cmsTaxForm(kind) {
     return `<form data-cms-tax="${kind}" class="editor-form">${field(kind === "categories" ? "Tên chuyên mục" : "Tên tag", "name", "", "text", "required")}${field("Slug", "slug", "", "text", "required")}<button>Tạo</button></form>`;
@@ -368,6 +412,18 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         preview.innerHTML = html;
         preview.focus();
       }
+      if (action?.startsWith("banner-preview:")) {
+        previewMode = action.split(":")[1];
+        root
+          .querySelectorAll('[data-editor-action^="banner-preview:"]')
+          .forEach((b) =>
+            b.setAttribute(
+              "aria-pressed",
+              String(b.dataset.editorAction.endsWith(previewMode)),
+            ),
+          );
+        previewBanner();
+      }
       if (action === "banner-new" || action?.startsWith("banner-edit:")) {
         const form = $("#banner-form");
         form.reset();
@@ -392,6 +448,14 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
             version: b.version,
             title: b.title,
             assetId: b.asset_id,
+            assetMobileId: b.asset_mobile_id || "",
+            slot: b.slot,
+            alt: b.alt,
+            subtitle: b.subtitle,
+            ctaLabel: b.cta_label,
+            sortOrder: b.sort_order,
+            focalX: b.focal_x,
+            focalY: b.focal_y,
             targetPath: b.target_path,
             status: b.status,
             startsAt: localDate(b.starts_at),
@@ -664,6 +728,12 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
             body: {
               ...data,
               assetId: Number(data.assetId),
+              assetMobileId: data.assetMobileId
+                ? Number(data.assetMobileId)
+                : null,
+              sortOrder: Number(data.sortOrder),
+              focalX: Number(data.focalX),
+              focalY: Number(data.focalY),
               version: Number(data.version),
               startsAt: data.startsAt
                 ? new Date(data.startsAt).toISOString()
@@ -897,15 +967,39 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     if (!form) return;
     $("#banner-preview-title").textContent =
       form.elements.title.value || "Tiêu đề banner của bạn";
+    $("#banner-preview-frame").classList.toggle(
+      "mobile",
+      previewMode === "mobile",
+    );
+    $("#banner-preview-slot").textContent =
+      bannerSlots[form.elements.slot.value];
+    $("#banner-preview-subtitle").textContent = form.elements.subtitle.value;
+    $("#banner-preview-cta").textContent =
+      (form.elements.ctaLabel.value || "Khám phá") + " →";
     const image = $("#banner-preview-image"),
-      asset = assets.find((a) => String(a.id) === form.elements.assetId.value);
+      selected =
+        previewMode === "mobile" && form.elements.assetMobileId.value
+          ? form.elements.assetMobileId.value
+          : form.elements.assetId.value;
+    const asset = assets.find((a) => String(a.id) === selected);
     image.hidden = !asset;
     if (asset) {
       image.src = asset.url;
-      image.alt = asset.alt_text;
+      image.alt = form.elements.alt.value || asset.alt_text;
+      image.style.objectPosition = `${Number(form.elements.focalX.value)}% ${Number(form.elements.focalY.value)}%`;
     } else image.removeAttribute("src");
   }
+
   root.addEventListener("change", (event) => {
+    if (event.target.id === "banner-slot-filter")
+      root
+        .querySelectorAll("[data-banner-slot]")
+        .forEach(
+          (el) =>
+            (el.hidden =
+              !!event.target.value &&
+              el.dataset.bannerSlot !== event.target.value),
+        );
     if (event.target.closest("#banner-form")) previewBanner();
   });
   root.addEventListener("input", (event) => {
