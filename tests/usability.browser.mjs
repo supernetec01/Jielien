@@ -220,6 +220,7 @@ try {
         scrollTo(0, 0);
         document.querySelector("#notice").hidden = true;
       });
+      await page.mouse.move(0, 0);
       await page.screenshot({
         path: `${directory}/${id}-${width}.png`,
         fullPage: true,
@@ -245,6 +246,11 @@ try {
       ),
       true,
     );
+    await page.evaluate(() => {
+      document.activeElement?.blur();
+      scrollTo(0, 0);
+    });
+    await page.mouse.move(0, 0);
     await page.screenshot({
       path: `${directory}/storefront-${width}.png`,
       fullPage: true,
