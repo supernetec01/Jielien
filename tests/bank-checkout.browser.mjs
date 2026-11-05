@@ -45,6 +45,14 @@ async function contextFor(base, width = 390) {
     viewport: { width, height: 900 },
     reducedMotion: "reduce",
   });
+  // Simulate clients opening the site on an HTTP LAN IP: randomUUID is
+  // unavailable there although getRandomValues remains supported.
+  await context.addInitScript(() => {
+    Object.defineProperty(window.crypto, "randomUUID", {
+      configurable: true,
+      value: undefined,
+    });
+  });
   // A QR image must load without sending receiving details to a third party.
   await context.route("**/*", async (route) => {
     const url = new URL(route.request().url());
