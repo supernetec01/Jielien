@@ -1,3 +1,4 @@
+import { canAccessAdmin } from "./public/admin-access.js";
 import http from "node:http";
 import { readFile, realpath } from "node:fs/promises";
 import { dirname, extname, resolve, sep } from "node:path";
@@ -239,7 +240,7 @@ function requireCsrf(req, session) {
 
 export async function createApp({
   pool: externalPool,
-  catalogPath = resolve(publicRoot, "catalog.json"),
+  catalogPath = process.env.JIELIEN_DEMO_DATA === "true" ? resolve(projectRoot, "db/fixtures/catalog.json") : null,
   legacyPath = externalPool ? null : resolve(projectRoot, "data/store.sqlite"),
   bankConfig,
   mediaDirectory,
@@ -255,7 +256,7 @@ export async function createApp({
   }
   const commerce=createCommerce(pool,{mediaDirectory,publicProducts:()=>store.listProducts()});
   const indexing=seoConfig(seoConfiguration||process.env);
-  const seo=createSeo({pool,store,cms:commerce.cms,config:indexing});
+  const seo=createSeo({pool,store,cms:commerce.cms,config:indexing,publicCatalog:commerce.publicCatalog,ops:commerce.ops});
   const publisher=setInterval(()=>commerce.cms.runDue().catch(e=>console.error("CMS scheduler:",e.code||e.name)),30000); publisher.unref();
   const auth = createAuth(pool),
     carts = createCartService(pool),
@@ -621,6 +622,13 @@ export async function createApp({
       }
       if (req.method !== "GET" && req.method !== "HEAD")
         fail(405, "method_not_allowed", "Phương thức không được hỗ trợ.");
+      if (decoded === "/quan-tri" || decoded === "/admin.html") {
+        const token = cookieToken(req), session = token ? await auth.authenticate(token) : null;
+        const status = !session ? 401 : canAccessAdmin(session.user) ? 200 : 403;
+        res.writeHead(status, {"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Robots-Tag":"noindex, nofollow"});
+        res.end(req.method === "HEAD" ? undefined : await readFile(resolve(publicRoot,"admin.html")));
+        return;
+      }
       const rendered=await seo.render(decoded,url,()=>readFile(resolve(publicRoot,'index.html'),'utf8'));
       if(rendered){res.writeHead(rendered.status||200,rendered.location?{Location:rendered.location}:{'Content-Type':rendered.type||'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:rendered.body);return;}
       if(['/quan-tri','/tai-khoan','/gio-hang','/thanh-toan','/tra-cuu-don-hang'].includes(decoded))res.setHeader('X-Robots-Tag','noindex, nofollow');
