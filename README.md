@@ -2,6 +2,7 @@
 
 Bản demo hợp nhất trên nhánh `main`, với giao diện cửa hàng và Admin theo bộ thiết kế Jielien. Chưa triển khai công khai. Có catalog cha/SKU/media, tài khoản nhân viên do admin tạo, CMS duyệt/xuất bản và SEO HTML, CSV, phiếu kho/đổi trả, backup database + media.
 
+- [Giao diện Admin và cải tiến sử dụng theo phản hồi](docs/ADMIN_USABILITY.md)
 - [Chạy nhanh bản demo mới trên Windows](docs/DEMO_QUICKSTART.md)
 - [Chạy/nâng cấp Windows Docker Desktop, backup và rollback](docs/COMMERCE_WINDOWS.md)
 - [Chức năng thực tế, migration, phân quyền và phần còn lại](docs/COMMERCE_RELEASE.md)

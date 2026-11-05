@@ -1,3 +1,4 @@
+import { icon } from "/ui-icons.js";
 // Editors share the existing authenticated API/CSRF adapter and permission gate.
 export function createCommerceEditors({ root, api, has, escape: e, notify }) {
   const $ = (s) => root.querySelector(s);
@@ -12,7 +13,8 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     reportQuery = "",
     auditQuery = "";
   let cmsQuery = "",
-    bannerRows = [];
+    bannerRows = [],
+    taxonomyKind = "categories";
   let articleDirty = 0,
     savingArticle = false;
   const field = (label, name, value = "", type = "text", extra = "") =>
@@ -30,6 +32,49 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     `<h1>${title}</h1><div class="editor-toolbar">${actions}</div>`;
   const jsonArea = (label, name, value) =>
     area(label, name, JSON.stringify(value, null, 2));
+  const names = {
+    categories: "Danh mục",
+    brands: "Thương hiệu",
+    attributes: "Thuộc tính",
+  };
+  const states = {
+    draft: "Bản nháp",
+    in_review: "Chờ duyệt",
+    approved: "Đã duyệt",
+    scheduled: "Đặt lịch",
+    published: "Đã xuất bản",
+    archived: "Lưu trữ",
+    active: "Đang sử dụng",
+    inactive: "Tạm ngưng",
+  };
+  const stateBadge = (status) =>
+    `<span class="status-pill status-${e(status)}">${e(states[status] || status)}</span>`;
+  const heading = (title, text, actions = "") =>
+    `<div class="page-heading"><div><span class="page-eyebrow">JIELIEN WORKSPACE</span><h1>${title}</h1><p>${text}</p></div><div class="page-actions">${actions}</div></div>`;
+  const emptyState = (title, text) =>
+    `<div class="workspace-empty">${icon("file")}<h3>${title}</h3><p>${text}</p></div>`;
+  const metric = (title, value, note, type = "chart") =>
+    `<article class="metric-card"><div class="metric-caption">${icon(type)}<span>${title}</span></div><strong>${e(value)}</strong><p>${note}</p></article>`;
+  const dateInput = (value) => {
+    const d = new Date(value);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 10);
+  };
+  function taxonomyMarkup() {
+    const kind = taxonomyKind,
+      rows = tax[kind];
+    return `${heading("Danh mục & thuộc tính", "Sắp xếp sản phẩm rõ ràng để khách hàng dễ tìm kiếm.", has("catalog.edit") ? button("+ Thêm mới", "taxonomy-new") : "")}<div class="workspace-tabs" aria-label="Nhóm dữ liệu">${Object.entries(
+      names,
+    )
+      .map(
+        ([key, label]) =>
+          `<button type="button" data-editor-action="taxonomy-tab:${key}" aria-pressed="${kind === key}">${label}<span>${tax[key].length}</span></button>`,
+      )
+      .join(
+        "",
+      )}</div><div class="taxonomy-layout"><section class="panel"><div class="section-title"><h2>${names[kind]}</h2><span>${rows.length} mục</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Tên ${names[kind].toLowerCase()}</th><th>${kind === "attributes" ? "Giá trị" : "Trạng thái"}</th><th><span class="sr-only">Thao tác</span></th></tr></thead><tbody>${rows.map((x) => `<tr><td><b>${e(x.name)}</b><small class="row-description">${e(x.slug || x.code || "")}</small></td><td>${kind === "attributes" ? `<div class="value-chips">${(x.values || []).map((v) => `<span>${e(v.value)}</span>`).join("")}</div>` : stateBadge(x.status)}</td><td>${has("catalog.edit") ? `<button type="button" class="secondary" data-tax-edit="${kind}:${x.id}" aria-label="Sửa ${e(x.name)}">Sửa</button>` : ""}</td></tr>`).join("")}</tbody></table>${!rows.length ? emptyState("Chưa có " + names[kind].toLowerCase(), "Thêm mục đầu tiên bằng biểu mẫu bên cạnh.") : ""}</div></section>${has("catalog.edit") ? `<aside id="taxonomy-editor-panel" class="panel"><h2>Thêm ${names[kind].toLowerCase()}</h2><p class="muted">Thông tin sẽ được dùng trong trình biên tập sản phẩm.</p>${taxonomyForm(kind)}</aside>` : ""}</div>${result}`;
+  }
   async function loadTax() {
     for (const kind of ["categories", "brands", "attributes"])
       tax[kind] = (await api("/api/admin/catalog/" + kind)).items;
@@ -46,11 +91,11 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     }
     if (view === "taxonomy-editor") {
       await loadTax();
-      return `<section class="panel"><h1>Danh mục, thương hiệu & thuộc tính</h1>${["categories", "brands", "attributes"].map((kind) => `<h2>${{ categories: "Danh mục", brands: "Thương hiệu", attributes: "Thuộc tính" }[kind]}</h2><p>${tax[kind].map((x) => `#${x.id} ${e(x.name)} ${x.values ? x.values.map((v) => `[${v.id}: ${e(v.value)}]`).join(" ") : ""} ${has("catalog.edit") ? `<button type="button" data-tax-edit="${kind}:${x.id}">Sửa</button>` : ""}`).join(" · ")}</p>${has("catalog.edit") ? taxonomyForm(kind) : ""}`).join("")}${result}</section>`;
+      return taxonomyMarkup();
     }
     if (view === "cms-editor") {
       const { items } = await api("/api/admin/cms/articles" + cmsQuery);
-      return `<section class="panel">${toolbar("Tin tức & SEO", has("content.write") ? button("Viết bài mới", "new-article") : "")}<form id="cms-filter" class="editor-toolbar">${field("Tìm tiêu đề", "q", new URLSearchParams(cmsQuery).get("q") || "")}<label>Trạng thái<select name="status"><option value="">Tất cả</option>${["draft", "in_review", "approved", "scheduled", "published", "archived"].map((v) => option(v, v, new URLSearchParams(cmsQuery).get("status") === v)).join("")}</select></label><button>Lọc</button></form><p>Bản nháp không công khai. Chỉnh sửa bài đã xuất bản cần duyệt lại trước khi thay phiên bản public.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Bài viết</th><th>Trạng thái</th><th></th></tr></thead><tbody>${items.map((a) => `<tr><td>${e(a.title)}</td><td>${e(a.status)}</td><td><button data-article-id="${a.id}">Mở biên tập</button></td></tr>`).join("")}</tbody></table></div>${has("content.manage") ? `<h2>Chuyên mục / Tag bài viết</h2>${cmsTaxForm("categories")}${cmsTaxForm("tags")}` : ""}${result}</section>`;
+      return `${heading("Tin tức & SEO", "Biên tập nội dung hữu ích và quản lý quy trình xuất bản.", has("content.write") ? button("+ Viết bài mới", "new-article") : "")}<section class="panel"><form id="cms-filter" class="filter-toolbar">${field("Tìm bài viết", "q", new URLSearchParams(cmsQuery).get("q") || "", "search", 'placeholder="Nhập tiêu đề bài viết…"')}<label>Trạng thái<select name="status"><option value="">Tất cả trạng thái</option>${["draft", "in_review", "approved", "scheduled", "published", "archived"].map((v) => option(v, states[v], new URLSearchParams(cmsQuery).get("status") === v)).join("")}</select></label><button class="primary">Áp dụng</button></form><div class="section-title"><h2>Danh sách bài viết</h2><span>${items.length} bài trong kết quả</span></div>${items.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>Bài viết</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>${items.map((a) => `<tr><td><b>${e(a.title)}</b></td><td>${stateBadge(a.status)}</td><td><button class="secondary" data-article-id="${a.id}">Mở biên tập</button></td></tr>`).join("")}</tbody></table></div>` : emptyState("Chưa có bài viết phù hợp", "Tạo bài viết đầu tiên hoặc thay đổi bộ lọc để xem nội dung khác.")}<div class="information-note">${icon("file")}<p>Bản nháp chỉ hiển thị trong Admin. Nội dung đã xuất bản cần được duyệt lại khi chỉnh sửa.</p></div></section>${has("content.manage") ? `<section class="panel"><div class="section-title"><div><h2>Phân loại nội dung</h2><p>Chuyên mục và thẻ giúp người đọc khám phá các bài liên quan.</p></div></div><div class="two-column"><div><h3>Thêm chuyên mục</h3>${cmsTaxForm("categories")}</div><div><h3>Thêm thẻ bài viết</h3>${cmsTaxForm("tags")}</div></div></section>` : ""}${result}`;
     }
     if (view === "documents-editor") {
       const data = await api("/api/admin/inventory/documents");
@@ -74,7 +119,9 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     }
     if (view === "operations-editor") {
       const data = await api("/api/admin/operations/status");
-      return `<section class="panel"><h1>Trạng thái vận hành</h1><p>Database: ${e(data.database)}</p><p>Backup gần nhất: ${data.backup ? e(new Date(data.backup.lastRecordedAt).toLocaleString("vi-VN")) + " · " + data.backup.mediaFiles + " ảnh" : "Chưa có bản ghi backup từ helper mới"}</p><p>${e(data.backupNote)}</p><p>Jobs: ${data.jobs.map((j) => e(j.state) + ": " + j.count).join(", ") || "Chưa có job"}</p></section>`;
+      const jobs = data.jobs.reduce((n, j) => n + Number(j.count), 0),
+        fresh = data.backup && data.backup.ageHours <= 24;
+      return `${heading("Trạng thái vận hành", "Theo dõi kết nối dữ liệu, sao lưu và lịch xuất bản.", button("Làm mới", "operations-refresh"))}<div class="health-grid"><article class="panel health-card"><div class="health-icon">${icon("check")}</div><span class="status-pill status-active">${data.database === "ok" ? "Đang kết nối" : "Cần kiểm tra"}</span><h2>Cơ sở dữ liệu</h2><p>PostgreSQL đang phản hồi yêu cầu kiểm tra.</p><small>Kiểm tra lúc ${e(new Date().toLocaleTimeString("vi-VN"))}</small></article><article class="panel health-card"><div class="health-icon">${icon("box")}</div><span class="status-pill ${fresh ? "status-active" : "status-draft"}">${data.backup ? (fresh ? "Có bản sao lưu gần đây" : "Cần kiểm tra lịch sao lưu") : "Chưa có bản ghi"}</span><h2>Sao lưu dữ liệu</h2><p>${data.backup ? e(new Date(data.backup.lastRecordedAt).toLocaleString("vi-VN")) : "Chưa ghi nhận bản sao lưu từ công cụ của ứng dụng."}</p><small>${data.backup ? Number(data.backup.mediaFiles) + " ảnh trong bản sao lưu" : "Tạo bản sao lưu trên máy chủ bằng công cụ đã cấu hình."}</small></article><article class="panel health-card"><div class="health-icon">${icon("clock")}</div><span class="status-pill status-scheduled">${jobs} tác vụ</span><h2>Lịch xuất bản</h2><p>${jobs ? "Tổng số tác vụ theo trạng thái hiện tại." : "Chưa có bài viết được đặt lịch."}</p><small>Lịch được thiết lập khi duyệt và xuất bản bài viết.</small></article></div><div class="two-column"><section class="panel"><h2>Chi tiết lịch xuất bản</h2>${data.jobs.length ? `<dl class="summary-list">${data.jobs.map((j) => `<div><dt>${e({ pending: "Đang chờ", processing: "Đang xử lý", completed: "Hoàn tất", done: "Hoàn tất", failed: "Thất bại", cancelled: "Đã hủy" }[j.state] || j.state)}</dt><dd>${Number(j.count)}</dd></div>`).join("")}</dl>` : emptyState("Không có tác vụ", "Đặt lịch trong phần Tin tức & SEO khi bài viết đã được duyệt.")}</section><section class="panel"><h2>Kiểm tra sao lưu</h2><div class="information-note">${icon("box")}<p>Có bản sao lưu chưa có nghĩa là đã khôi phục thử thành công. Nên kiểm tra khả năng khôi phục trên môi trường riêng.</p></div><p class="muted">Trang này cung cấp thông tin theo dõi. Liên hệ người quản lý máy chủ để kiểm tra lịch và nơi lưu bản sao.</p></section></div>`;
     }
     if (view === "audit-tools") {
       const data = await api("/api/admin/audit/search" + auditQuery);
@@ -82,7 +129,12 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     }
     if (view === "reports-editor") {
       const { report } = await api("/api/admin/reports/summary" + reportQuery);
-      return `<section class="panel"><h1>Báo cáo</h1><form id="report-filter" class="editor-toolbar">${field("Từ ngày", "from", "", "date")}${field("Đến ngày (bao gồm)", "to", "", "date")}<button>Lọc</button></form>${button("Export tổng hợp CSV", "report-export")}<p>${e(new Date(report.from).toLocaleDateString("vi-VN"))} → ${e(new Date(report.to).toLocaleDateString("vi-VN"))}</p><p>Đơn: ${report.orders}</p><p>GMV: ${Number(report.gmv).toLocaleString("vi-VN")}đ</p><p>Thu đã xác nhận: ${Number(report.collected).toLocaleString("vi-VN")}đ</p><p>${e(report.definitions.gmv)}</p><p>${e(report.definitions.collected)}</p>${result}</section>`;
+      const params = new URLSearchParams(reportQuery),
+        from = params.get("from") || report.from,
+        end = params.get("to")
+          ? new Date(new Date(params.get("to")).getTime() - 86400000)
+          : report.to;
+      return `${heading("Báo cáo bán hàng", "Nắm bắt đơn hàng và số tiền thực thu trong khoảng thời gian bạn chọn.", button("Xuất báo cáo CSV", "report-export"))}<section class="panel report-filters"><form id="report-filter" class="filter-toolbar">${field("Từ ngày", "from", dateInput(from), "date", "required")}${field("Đến ngày", "to", dateInput(end), "date", "required")}<button class="primary">Xem báo cáo</button><div class="date-presets"><button type="button" data-editor-action="report-days:7">7 ngày</button><button type="button" data-editor-action="report-days:30">30 ngày</button><button type="button" data-editor-action="report-days:90">90 ngày</button></div></form></section><div class="report-period">${icon("clock")}<span>Kỳ báo cáo: <b>${e(new Date(from).toLocaleDateString("vi-VN"))} – ${e(new Date(end).toLocaleDateString("vi-VN"))}</b></span></div><div class="report-metrics">${metric("Tổng đơn hàng", Number(report.orders).toLocaleString("vi-VN"), "Số đơn được tạo trong kỳ", "file")}${metric("Giá trị đơn hàng", Number(report.gmv).toLocaleString("vi-VN") + " ₫", "Tổng giá trị các đơn chưa hủy", "chart")}${metric("Tiền đã thu", Number(report.collected).toLocaleString("vi-VN") + " ₫", "Các khoản thanh toán đã xác nhận", "check")}</div><div class="two-column"><section class="panel"><h2>${Number(report.orders) ? "Kết quả trong kỳ" : "Chưa có đơn hàng trong kỳ"}</h2><p class="muted">${Number(report.orders) ? "Báo cáo tổng hợp đã sẵn sàng. Xuất CSV để xem và lưu kết quả." : "Khi có đơn hàng mới, số liệu sẽ xuất hiện tại đây. Bạn cũng có thể chọn khoảng ngày khác."}</p><div class="information-note">${icon("chart")}<p>Số liệu lấy trực tiếp từ hệ thống đơn hàng và thanh toán.</p></div></section><section class="panel"><h2>Cách đọc báo cáo</h2><dl class="summary-list"><div><dt>Giá trị đơn hàng</dt><dd>Tính theo ngày tạo đơn, loại trừ đơn đã hủy.</dd></div><div><dt>Tiền đã thu</dt><dd>Tính theo thời điểm xác nhận thanh toán; dữ liệu cũ dùng ngày ghi nhận. Chưa trừ các khoản hoàn tiền thủ công.</dd></div></dl></section></div>${result}`;
     }
     if (view === "settings-editor") {
       const { items } = await api("/api/admin/settings/site");
@@ -118,10 +170,19 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     return `<form id="upload-form" class="editor-form"><label>Ảnh JPEG/PNG/WebP tối đa 5 MB<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required></label>${field("Mô tả ảnh (alt)", "alt", "", "text", "required")}<button class="primary">Upload ảnh</button></form>`;
   }
   function taxonomyForm(kind, item = {}) {
-    return `<form data-tax-kind="${kind}" data-tax-id="${item.id || ""}" class="editor-form">${field("Tên", "name", item.name || "", "text", "required")}${field(kind === "attributes" ? "Mã thuộc tính" : "Slug (thương hiệu có thể bỏ trống)", kind === "attributes" ? "code" : "slug", item.code || item.slug || "")}${kind === "categories" ? field("ID danh mục cha (trống: gốc)", "parentId", item.parent_id || "", "number") : ""}${kind === "attributes" ? area("Giá trị, mỗi dòng một giá trị", "values", (item.values || []).map((v) => v.value).join("\n")) : `<label>Trạng thái<select name="status">${["active", "inactive"].map((v) => option(v, v, item.status === v)).join("")}</select></label>`}<button>Lưu ${e(kind)}</button></form>`;
+    return `<form data-tax-kind="${kind}" data-tax-id="${item.id || ""}" class="editor-form taxonomy-form">${field("Tên " + names[kind].toLowerCase(), "name", item.name || "", "text", "required")}${field(kind === "attributes" ? "Mã thuộc tính" : "Đường dẫn (slug)", kind === "attributes" ? "code" : "slug", item.code || item.slug || "", "text", kind === "brands" ? "" : "required")}${
+      kind === "categories"
+        ? `<label>Danh mục cha<select name="parentId"><option value="">Không có (danh mục gốc)</option>${tax.categories
+            .filter((c) => Number(c.id) !== Number(item.id))
+            .map((c) =>
+              option(c.id, c.name, Number(c.id) === Number(item.parent_id)),
+            )
+            .join("")}</select></label>`
+        : ""
+    }${kind === "attributes" ? area("Giá trị — mỗi dòng một lựa chọn", "values", (item.values || []).map((v) => v.value).join("\n")) : `<label>Trạng thái<select name="status">${["active", "inactive"].map((v) => option(v, states[v], (item.status || "active") === v)).join("")}</select></label>`}<div class="form-actions"><button class="primary">${item.id ? "Lưu thay đổi" : "Thêm " + names[kind].toLowerCase()}</button>${item.id ? button("Hủy chỉnh sửa", "taxonomy-cancel") : ""}</div></form>`;
   }
   function cmsTaxForm(kind) {
-    return `<form data-cms-tax="${kind}" class="editor-toolbar">${field(kind === "categories" ? "Tên chuyên mục" : "Tên tag", "name", "", "text", "required")}${field("Slug", "slug", "", "text", "required")}<button>Tạo</button></form>`;
+    return `<form data-cms-tax="${kind}" class="editor-form">${field(kind === "categories" ? "Tên chuyên mục" : "Tên tag", "name", "", "text", "required")}${field("Slug", "slug", "", "text", "required")}<button>Tạo</button></form>`;
   }
   async function productEditor(productId) {
     await loadTax();
@@ -215,14 +276,37 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       taxEdit = event.target.closest("[data-tax-edit]");
     if (!action && !p && !a && !taxEdit) return;
     try {
+      if (action?.startsWith("taxonomy-tab:")) {
+        const kind = action.split(":")[1];
+        if (!Object.hasOwn(names, kind)) return;
+        taxonomyKind = kind;
+        $("#admin-content").innerHTML = taxonomyMarkup();
+      }
+      if (action === "taxonomy-new") {
+        $("#taxonomy-editor-panel").innerHTML =
+          `<h2>Thêm ${names[taxonomyKind].toLowerCase()}</h2>${taxonomyForm(taxonomyKind)}`;
+        $("#taxonomy-editor-panel input").focus();
+      }
+      if (action === "taxonomy-cancel")
+        $("#admin-content").innerHTML = taxonomyMarkup();
+      if (action === "operations-refresh") await refresh("operations-editor");
+      if (action?.startsWith("report-days:")) {
+        const end = new Date(),
+          start = new Date();
+        start.setDate(start.getDate() - Number(action.split(":")[1]) + 1);
+        const form = $("#report-filter");
+        form.elements.from.value = dateInput(start);
+        form.elements.to.value = dateInput(end);
+        form.requestSubmit();
+      }
       if (p) return await productEditor(p.dataset.productId);
       if (a) return await articleEditor(a.dataset.articleId);
       if (taxEdit) {
         const [kind, target] = taxEdit.dataset.taxEdit.split(":");
         const item = tax[kind].find((x) => Number(x.id) === Number(target));
-        taxEdit
-          .closest("p")
-          .insertAdjacentHTML("afterend", taxonomyForm(kind, item));
+        $("#taxonomy-editor-panel").innerHTML =
+          `<h2>Sửa ${names[kind].toLowerCase()}</h2>${taxonomyForm(kind, item)}`;
+        $("#taxonomy-editor-panel input").focus();
         return;
       }
       if (["report-export", "audit-export"].includes(action)) {
@@ -515,7 +599,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       "import-form",
     ];
     if (
-      !supported.includes(form.id) &&
+      !supported.includes(form.getAttribute("id")) &&
       !form.dataset.taxKind &&
       !form.dataset.cmsTax
     )
@@ -526,20 +610,22 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     );
     if (submit?.disabled) return;
     if (submit) submit.disabled = true;
-    if (form.id === "article-form" && savingArticle) {
+    if (form.getAttribute("id") === "article-form" && savingArticle) {
       if (submit) submit.disabled = false;
       notify("Đang tự lưu, vui lòng chờ.");
       return;
     }
-    if (form.id === "article-form") savingArticle = true;
+    if (form.getAttribute("id") === "article-form") savingArticle = true;
     const data = Object.fromEntries(new FormData(form));
     try {
-      if (form.id === "redirect-form") {
+      if (form.getAttribute("id") === "redirect-form") {
         if (!confirm("Lưu chuyển hướng 301 vĩnh viễn?")) return;
         await api("/api/admin/seo/redirects", { method: "POST", body: data });
         await refresh("redirects-editor");
       }
-      if (form.id === "report-filter") {
+      if (form.getAttribute("id") === "report-filter") {
+        if (data.from > data.to)
+          throw Error("Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.");
         const q = new URLSearchParams();
         if (data.from)
           q.set("from", new Date(data.from + "T00:00:00").toISOString());
@@ -551,15 +637,15 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         reportQuery = "?" + q;
         await refresh("reports-editor");
       }
-      if (form.id === "cms-filter") {
+      if (form.getAttribute("id") === "cms-filter") {
         cmsQuery = "?" + new URLSearchParams(data);
         await refresh("cms-editor");
       }
-      if (form.id === "audit-filter") {
+      if (form.getAttribute("id") === "audit-filter") {
         auditQuery = "?" + new URLSearchParams(data);
         await refresh("audit-tools");
       }
-      if (form.id === "import-form") {
+      if (form.getAttribute("id") === "import-form") {
         const csv = await form.querySelector('[name="file"]').files[0].text();
         const preview = await api("/api/admin/catalog/import", {
           method: "POST",
@@ -569,7 +655,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         $("#import-result").innerHTML =
           `<p>${preview.rows} dòng / ${preview.items.length} sản phẩm</p><pre>${e(JSON.stringify(preview.errors, null, 2))}</pre>${preview.errors.length ? "" : button("Xác nhận import", "csv-commit")}`;
       }
-      if (form.id === "banner-form") {
+      if (form.getAttribute("id") === "banner-form") {
         await api(
           "/api/admin/banners" +
             (data.bannerId ? "/" + encodeURIComponent(data.bannerId) : ""),
@@ -588,13 +674,13 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         );
         await refresh("banners-editor");
       }
-      if (form.id === "catalog-search")
+      if (form.getAttribute("id") === "catalog-search")
         $("#catalog-results").innerHTML = productTable(
           await api(
             "/api/admin/catalog/products?q=" + encodeURIComponent(data.q),
           ),
         );
-      if (form.id === "product-form") {
+      if (form.getAttribute("id") === "product-form") {
         const { product: p } = await api(
           "/api/admin/catalog/products" + (product ? "/" + product.id : ""),
           {
@@ -610,7 +696,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         );
         await productEditor(p.id);
       }
-      if (form.id === "sku-form") {
+      if (form.getAttribute("id") === "sku-form") {
         const variants = [...form.querySelectorAll(".sku-line")].map((line) => {
           const values = Object.fromEntries(
             [...line.querySelectorAll("[name]")].map((input) => [
@@ -641,7 +727,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         });
         await productEditor(product.id);
       }
-      if (form.id === "product-media-form") {
+      if (form.getAttribute("id") === "product-media-form") {
         await api("/api/admin/catalog/products/" + product.id + "/media", {
           method: "PUT",
           body: {
@@ -662,7 +748,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         });
         await productEditor(product.id);
       }
-      if (form.id === "upload-form") {
+      if (form.getAttribute("id") === "upload-form") {
         const file = form.querySelector('[name="image"]').files[0];
         await api("/api/admin/media/uploads", {
           method: "POST",
@@ -699,7 +785,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         });
         await refresh("cms-editor");
       }
-      if (form.id === "article-form") {
+      if (form.getAttribute("id") === "article-form") {
         const { article: a } = await api(
           "/api/admin/cms/articles" + (article ? "/" + article.id : ""),
           {
@@ -718,7 +804,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         );
         await articleEditor(a.id);
       }
-      if (form.id === "schedule-form") {
+      if (form.getAttribute("id") === "schedule-form") {
         await api("/api/admin/cms/articles/" + article.id + "/publish", {
           method: "POST",
           body: {
@@ -728,7 +814,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         });
         await articleEditor(article.id);
       }
-      if (form.id === "return-form") {
+      if (form.getAttribute("id") === "return-form") {
         await api("/api/admin/returns", {
           method: "POST",
           body: {
@@ -745,7 +831,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         });
         await refresh("returns-editor");
       }
-      if (form.id === "document-form") {
+      if (form.getAttribute("id") === "document-form") {
         await api("/api/admin/inventory/documents", {
           method: "POST",
           body: {
@@ -766,7 +852,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         });
         await refresh("documents-editor");
       }
-      if (form.id === "setting-form") {
+      if (form.getAttribute("id") === "setting-form") {
         const items = (await api("/api/admin/settings/site")).items;
         await api("/api/admin/settings/site", {
           method: "PATCH",
@@ -777,7 +863,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         });
         await refresh("settings-editor");
       }
-      if (form.id === "coupon-form") {
+      if (form.getAttribute("id") === "coupon-form") {
         await api("/api/admin/coupons" + (data.id ? "/" + data.id : ""), {
           method: data.id ? "PATCH" : "POST",
           body: {
@@ -789,11 +875,20 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         });
         await refresh("coupons-editor");
       }
-      notify("Đã lưu.");
+      notify(
+        [
+          "report-filter",
+          "cms-filter",
+          "audit-filter",
+          "catalog-search",
+        ].includes(form.getAttribute("id"))
+          ? "Đã cập nhật kết quả."
+          : "Đã lưu.",
+      );
     } catch (err) {
       showError(err);
     } finally {
-      if (form.id === "article-form") savingArticle = false;
+      if (form.getAttribute("id") === "article-form") savingArticle = false;
       if (submit?.isConnected) submit.disabled = false;
     }
   });

@@ -29,7 +29,8 @@
     "test:local:stack": "node tests/local-stack.mjs",
     "test:commerce": "node tests/commerce.browser.mjs",
     "test:load": "node tests/commerce-load.mjs",
-    "test:admin-access": "node tests/admin-access.browser.mjs"
+    "test:admin-access": "node tests/admin-access.browser.mjs",
+    "test:usability": "node tests/usability.browser.mjs"
   },
   "engines": {
     "node": ">=24.11.0"
