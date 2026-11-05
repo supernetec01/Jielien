@@ -45,6 +45,14 @@ async function contextFor(base, width = 390) {
     viewport: { width, height: 900 },
     reducedMotion: "reduce",
   });
+  // Simulate clients opening the site on an HTTP LAN IP: randomUUID is
+  // unavailable there although getRandomValues remains supported.
+  await context.addInitScript(() => {
+    Object.defineProperty(window.crypto, "randomUUID", {
+      configurable: true,
+      value: undefined,
+    });
+  });
   // A QR image must load without sending receiving details to a third party.
   await context.route("**/*", async (route) => {
     const url = new URL(route.request().url());
@@ -108,6 +116,24 @@ async function checkout(page, base) {
   await page.locator("#district").fill("Phường Bến Nghé");
   await page.locator("#address").fill("123 Đường Kiểm Thử");
   await page.locator('input[name="agreement"]').check();
+  // Regression for the actual checkout form (not only the storefront shell).
+  // Test compact/mobile, tablet and desktop without horizontal scrolling.
+  for (const width of [320, 375, 390, 768, 1024, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    const state = await page.evaluate(() => ({
+      actual: document.documentElement.scrollWidth,
+      viewport: window.innerWidth,
+      formVisible: !!document.querySelector("#checkout-form"),
+      error: document.querySelector(".server-error")?.textContent || "",
+    }));
+    assert.equal(state.formVisible, true, "Missing checkout form at " + width);
+    assert.equal(state.error, "", "Checkout failed at " + width + ": " + state.error);
+    assert.ok(
+      state.actual <= state.viewport + 1,
+      "Checkout horizontal overflow at " + width + ": " + JSON.stringify(state),
+    );
+  }
+
 }
 
 try {
