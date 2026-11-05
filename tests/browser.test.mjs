@@ -74,6 +74,7 @@ try {
   const price = (value) => value.toLocaleString("vi-VN") + "đ";
 
   await go("/");
+  await page.locator(".hero").waitFor({ state: "visible" });
   assert.ok(await page.locator(".hero").isVisible());
   await page.locator('[data-hero="1"]').click();
   assert.ok(

@@ -35,6 +35,7 @@ const transitions = {
   cancelled: [],
 };
 const sections = [
+  { id: "dashboard", label: "◫ Tổng quan", permission: "dashboard.read" },
   {
     id: "redirects-editor",
     label: "Chuyển hướng SEO",
@@ -78,8 +79,7 @@ const sections = [
     permission: "promotions.manage",
   },
   { id: "users", label: "Tài khoản & Phân quyền", permission: "users.manage" },
-  { id: "dashboard", label: "◫ Tổng quan", permission: "dashboard.read" },
-  { id: "products", label: "▦ Sản phẩm & SKU", permission: "catalog.read" },
+  { id: "products", label: "Giá & trạng thái SKU", permission: "catalog.read" },
   { id: "orders", label: "▤ Đơn hàng", permission: "orders.read" },
   {
     id: "inventory",
@@ -158,7 +158,7 @@ function gate(message, login = false) {
   root.innerHTML = `<section class="panel access-panel"><span class="access-icon" aria-hidden="true">♢</span><h1>${login ? "Đăng nhập để quản lý cửa hàng" : "Tài khoản chưa có quyền quản trị"}</h1><p>${escape(message)}</p><a href="/tai-khoan${login ? "?redirect=%2Fquan-tri" : ""}" class="primary">${login ? "Đăng nhập →" : "Về tài khoản"}</a><p class="small">Quyền truy cập được cấp bởi người vận hành. Đăng ký tài khoản khách hàng không tự cấp quyền quản trị.</p></section>`;
 }
 function shell() {
-  root.innerHTML = `<div class="admin-layout"><aside class="admin-sidebar"><nav class="panel side-nav" aria-label="Mục quản trị"><span class="section-caption">VẬN HÀNH CỬA HÀNG</span>${sections
+  root.innerHTML = `<div class="admin-layout"><aside class="admin-sidebar"><nav class="panel side-nav" aria-label="Mục quản trị"><div class="workspace-brand"><img src="/assets/jielien-logo.jpg" alt="Jielien International"><b>ADMIN WORKSPACE</b></div><span class="section-caption">QUẢN LÝ & VẬN HÀNH</span>${sections
     .filter((section) => has(section.permission))
     .map(
       (section) =>
@@ -175,7 +175,16 @@ function refreshButton() {
   return '<button class="secondary" id="refresh-view">↻ Làm mới</button>';
 }
 function dashboardMarkup(stats) {
-  return `${header("Tổng quan cửa hàng", "Theo dõi đơn hàng và tình trạng hàng hóa.", refreshButton())}<div class="stats-grid"><article class="stat-card"><span>ĐƠN HÀNG</span><strong>${Number(stats.orders || 0).toLocaleString("vi-VN")}</strong><em>Đơn đã được ghi nhận</em></article><article class="stat-card"><span>DOANH SỐ</span><strong style="font-size:23px">${money(stats.revenue)}</strong><em>Theo dữ liệu đơn hàng máy chủ</em></article><article class="stat-card"><span>SẢN PHẨM CHA</span><strong>${Number(stats.products || 0).toLocaleString("vi-VN")}</strong><em>${Number(stats.variants || 0).toLocaleString("vi-VN")} SKU / quy cách bán</em></article><article class="stat-card"><span>CẢNH BÁO TỒN THẤP</span><strong>${Number(stats.lowStock || 0).toLocaleString("vi-VN")}</strong><em>Các mã hàng cần kiểm tra</em></article></div><section class="panel"><h2>Vận hành theo từng bước</h2><div class="profile-grid"><div class="profile-item"><small>01 · Quản lý hàng hóa</small><b>Giá và trạng thái được quản lý theo SKU</b><p class="support-text">Mỗi quy cách có giá và tồn riêng. Đơn hàng giữ nguyên thông tin và giá tại thời điểm khách mua.</p></div><div class="profile-item"><small>02 · Theo dõi đơn hàng</small><b>Xác nhận, chuẩn bị và giao đơn</b><p class="support-text">Thay đổi trạng thái theo luồng cho phép. Việc giữ hàng, xuất hàng và hoàn giữ tồn được xử lý ở máy chủ.</p></div><div class="profile-item"><small>03 · Quản lý tồn kho</small><b>Phân biệt hàng có sẵn và hàng đang giữ</b><p class="support-text">Mỗi điều chỉnh cần lý do. Mức có thể bán dựa trên lượng tồn trừ lượng đã giữ cho đơn.</p></div><div class="profile-item"><small>04 · Truy vết thay đổi</small><b>Quyền hạn và nhật ký rõ ràng</b><p class="support-text">Máy chủ kiểm tra quyền cho từng thao tác; lịch sử giúp xác định ai đã thay đổi dữ liệu.</p></div></div><p class="permission-note">Đây là hệ thống phát triển với dữ liệu minh họa. Chưa kết nối cổng thanh toán hoặc nhà vận chuyển thực tế.</p></section>`;
+  return `${header("Tổng quan", "Chào mừng trở lại. Cùng chăm chút cửa hàng Jielien hôm nay.", refreshButton())}<div class="stats-grid"><article class="stat-card"><span>ĐƠN HÀNG</span><strong>${Number(stats.orders || 0).toLocaleString("vi-VN")}</strong><em>Đơn đã được ghi nhận</em></article><article class="stat-card"><span>DOANH SỐ</span><strong style="font-size:23px">${money(stats.revenue)}</strong><em>Theo dữ liệu đơn hàng máy chủ</em></article><article class="stat-card"><span>SẢN PHẨM CHA</span><strong>${Number(stats.products || 0).toLocaleString("vi-VN")}</strong><em>${Number(stats.variants || 0).toLocaleString("vi-VN")} SKU / quy cách bán</em></article><article class="stat-card"><span>CẢNH BÁO TỒN THẤP</span><strong>${Number(stats.lowStock || 0).toLocaleString("vi-VN")}</strong><em>Các mã hàng cần kiểm tra</em></article></div><section class="panel"><div class="content-header"><div><h2>Truy cập nhanh</h2><p>Công việc thường dùng trong cửa hàng</p></div></div><div class="workspace-actions">${sections
+    .filter((s) => s.id !== "dashboard" && has(s.permission))
+    .slice(0, 8)
+    .map(
+      (s) =>
+        `<button class="workspace-action" data-workspace-section="${s.id}"><span>${escape(s.label)}</span><b aria-hidden="true">↗</b></button>`,
+    )
+    .join(
+      "",
+    )}</div></section><section class="panel"><h2>Vận hành theo từng bước</h2><div class="profile-grid"><div class="profile-item"><small>01 · Quản lý hàng hóa</small><b>Giá và trạng thái được quản lý theo SKU</b><p class="support-text">Mỗi quy cách có giá và tồn riêng. Đơn hàng giữ nguyên thông tin và giá tại thời điểm khách mua.</p></div><div class="profile-item"><small>02 · Theo dõi đơn hàng</small><b>Xác nhận, chuẩn bị và giao đơn</b><p class="support-text">Thay đổi trạng thái theo luồng cho phép. Việc giữ hàng, xuất hàng và hoàn giữ tồn được xử lý ở máy chủ.</p></div><div class="profile-item"><small>03 · Quản lý tồn kho</small><b>Phân biệt hàng có sẵn và hàng đang giữ</b><p class="support-text">Mỗi điều chỉnh cần lý do. Mức có thể bán dựa trên lượng tồn trừ lượng đã giữ cho đơn.</p></div><div class="profile-item"><small>04 · Truy vết thay đổi</small><b>Quyền hạn và nhật ký rõ ràng</b><p class="support-text">Máy chủ kiểm tra quyền cho từng thao tác; lịch sử giúp xác định ai đã thay đổi dữ liệu.</p></div></div><p class="permission-note">Đây là hệ thống phát triển với dữ liệu minh họa. Chưa kết nối cổng thanh toán hoặc nhà vận chuyển thực tế.</p></section>`;
 }
 function productsMarkup() {
   return `<section class="panel">${header("Sản phẩm & SKU", "Quản lý giá và trạng thái bán theo từng quy cách.", refreshButton())}<div class="table-controls"><input id="product-search" type="search" placeholder="Tìm tên sản phẩm, SKU, thương hiệu…" aria-label="Tìm sản phẩm quản trị"><select id="product-status" aria-label="Lọc trạng thái sản phẩm"><option value="">Tất cả trạng thái</option><option value="active">Đang bán</option><option value="inactive">Ngừng bán</option><option value="draft">Bản nháp</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Sản phẩm / quy cách</th><th scope="col">Giá bán</th><th scope="col">Có thể bán</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="product-table-body">${productTable(productRows)}</tbody></table></div></section>`;
@@ -551,9 +560,11 @@ root.addEventListener("click", (event) => {
     );
     return;
   }
-  const section = event.target.closest("[data-section]");
+  const section = event.target.closest(
+    "[data-section], [data-workspace-section]",
+  );
   if (section) {
-    renderView(section.dataset.section);
+    renderView(section.dataset.section || section.dataset.workspaceSection);
     return;
   }
   if (event.target.closest("#refresh-view")) {
@@ -632,9 +643,7 @@ async function init() {
     const result = await api("/api/auth/me");
     user = result.user;
     csrfToken = result.csrfToken || "";
-    if (
-      !canAccessAdmin(user)
-    ) {
+    if (!canAccessAdmin(user)) {
       gate(
         "Tài khoản này có thể mua sắm và xem đơn hàng cá nhân. Vui lòng dùng tài khoản đã được cấp quyền để vào không gian vận hành.",
       );

@@ -121,11 +121,19 @@ try {
   );
   pass("verified upload and gallery allow publishing actual product");
   await mkdir("docs/screenshots/commerce", { recursive: true });
+  await page.evaluate(() => {
+    document.activeElement?.blur();
+    window.scrollTo(0, 0);
+  });
   await page.screenshot({
     path: "docs/screenshots/commerce/product-editor-desktop.png",
     fullPage: true,
   });
   await page.setViewportSize({ width: 375, height: 900 });
+  await page.evaluate(() => {
+    document.activeElement?.blur();
+    window.scrollTo(0, 0);
+  });
   await page.screenshot({
     path: "docs/screenshots/commerce/product-editor-mobile.png",
     fullPage: true,
@@ -200,6 +208,10 @@ try {
   page.once("dialog", (d) => d.accept());
   await page.locator('[data-editor-action="article:publish"]').click();
   await page.getByRole("heading", { name: /published/ }).waitFor();
+  await page.evaluate(() => {
+    document.activeElement?.blur();
+    window.scrollTo(0, 0);
+  });
   await page.screenshot({
     path: "docs/screenshots/commerce/cms-editor-desktop.png",
     fullPage: true,
@@ -208,6 +220,10 @@ try {
     "CMS UI creates structured content, submits, approves and publishes with SEO",
   );
   await page.setViewportSize({ width: 375, height: 900 });
+  await page.evaluate(() => {
+    document.activeElement?.blur();
+    window.scrollTo(0, 0);
+  });
   await page.screenshot({
     path: "docs/screenshots/commerce/cms-editor-mobile.png",
     fullPage: true,
@@ -219,6 +235,77 @@ try {
     true,
   );
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.locator('[data-section="dashboard"]').click();
+  await page.locator(".workspace-actions").waitFor();
+  await page.evaluate(() => {
+    document.activeElement?.blur();
+    window.scrollTo(0, 0);
+  });
+  await page.screenshot({
+    path: "docs/screenshots/commerce/admin-dashboard-1440.png",
+    fullPage: true,
+  });
+  await page.locator('[data-workspace-section="catalog-editor"]').click();
+  await page.locator("#catalog-results").waitFor();
+  pass("new dashboard shortcuts open real permission-gated editors");
+  await page.locator('[data-section="banners-editor"]').click();
+  await page.locator('#banner-form [name="title"]').fill("Banner thiết kế mới");
+  const assetOption = await page
+    .locator('#banner-form [name="assetId"] option')
+    .nth(1)
+    .getAttribute("value");
+  await page.locator('#banner-form [name="assetId"]').selectOption(assetOption);
+  await page.locator('#banner-form [name="status"]').selectOption("published");
+  assert.equal(
+    await page.locator("#banner-preview-title").textContent(),
+    "Banner thiết kế mới",
+  );
+  assert.equal(await page.locator("#banner-preview-image").isVisible(), true);
+  await page.locator("#banner-form button.primary").click();
+  await page
+    .locator(".banner-library article")
+    .filter({ hasText: "Banner thiết kế mới" })
+    .waitFor();
+  pass("banner live preview persists a published banner through API");
+  await page.locator('[data-editor-action^="banner-edit:"]').first().click();
+  await page.locator('#banner-form [name="title"]').fill("Banner đã chỉnh sửa");
+  await page.locator("#banner-form button.primary").click();
+  await page
+    .locator(".banner-library article")
+    .filter({ hasText: "Banner đã chỉnh sửa" })
+    .waitFor();
+  await page.evaluate(() => {
+    document.activeElement?.blur();
+    window.scrollTo(0, 0);
+  });
+  await page.screenshot({
+    path: "docs/screenshots/commerce/admin-banners-1440.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 375, height: 1000 });
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1,
+    ),
+    true,
+  );
+  await page.evaluate(() => {
+    document.activeElement?.blur();
+    window.scrollTo(0, 0);
+  });
+  await page.screenshot({
+    path: "docs/screenshots/commerce/admin-banners-375.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const bannerPage = await context.newPage();
+  await bannerPage.goto(base + "/");
+  await bannerPage
+    .locator(".hero h1")
+    .filter({ hasText: "Banner đã chỉnh sửa" })
+    .waitFor();
+  await bannerPage.close();
+  pass("editing existing banner updates storefront and fits mobile workspace");
   await page.locator('[data-section="settings-editor"]').click();
   await page.locator('#setting-form [name="key"]').selectOption("companyName");
   await page
@@ -252,6 +339,10 @@ try {
       }
       if (path === "/san-pham")
         await page.locator(".product-card").first().waitFor();
+      await page.evaluate(() => {
+        document.activeElement?.blur();
+        window.scrollTo(0, 0);
+      });
       await page.screenshot({
         path: `docs/screenshots/commerce/${name}-${width}.png`,
         fullPage: true,

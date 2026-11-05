@@ -49,7 +49,7 @@ test("The storefront hides its Admin link before authentication", async () => {
     new URL("../public/index.html", import.meta.url),
     "utf8",
   );
-  assert.match(html, /id="staff-admin-link" hidden style="display:none"/);
+  assert.match(html, /id="staff-admin-link"\s+hidden\s+style="display:\s*none"/);
   const app = await readFile(
     new URL("../public/app.js", import.meta.url),
     "utf8",

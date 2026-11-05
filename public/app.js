@@ -164,12 +164,11 @@ function section(title, subtitle, list, url = "/san-pham") {
 }
 const heroes = [
   {
-    eyebrow: "LỚN LÊN CÙNG YÊU THƯƠNG",
-    title: "Điều nhỏ xinh.<br>Yêu thương <em>thật lớn.</em>",
-    text: "Cùng mẹ chăm chút từng khoảnh khắc,<br>cho hành trình khôn lớn của con.",
+    eyebrow: "JIELIEN INTERNATIONAL",
+    title: "Khám phá điều hay.<br><em>Nâng tầm cuộc sống.</em>",
+    text: "Lựa chọn chất lượng cho gia đình.<br>Cùng Jielien chăm chút từng khoảnh khắc.",
     image: "/family.svg",
     link: "/san-pham",
-    background: "#F2F7E6",
   },
   {
     eyebrow: "ÊM ÁI TỪ NHỮNG NGÀY ĐẦU",
@@ -177,7 +176,6 @@ const heroes = [
     text: "Bỉm tã mềm mại và những món đồ<br>chăm sóc nhỏ xinh dành cho bé.",
     image: "/assets/diaper-blue.svg",
     link: href({ category: "Bỉm & tã" }),
-    background: "#e5f0e9",
   },
   {
     eyebrow: "DINH DƯỠNG CHO BÉ YÊU",
@@ -185,7 +183,6 @@ const heroes = [
     text: "Khám phá danh mục dinh dưỡng<br>và đồ dùng cho bữa ăn của bé.",
     image: "/assets/cereal.svg",
     link: href({ category: "Ăn dặm" }),
-    background: "#fff0d8",
   },
 ];
 function heroMarkup() {
@@ -193,7 +190,7 @@ function heroMarkup() {
   if (banner)
     return `<div class="hero"><div class="hero-content"><h1>${escape(banner.title)}</h1><a href="${escape(banner.target_path)}" class="primary">Khám phá →</a></div><div class="hero-art"><img src="${escape(banner.url)}" alt="${escape(banner.alt_text)}"></div></div>`;
   const h = heroes[heroIndex];
-  return `<div class="hero" style="background:${h.background}"><div class="hero-content"><div class="eyebrow">${h.eyebrow}</div><h1>${h.title}</h1><p>${h.text}</p><a href="${escape(h.link)}" data-link class="primary">Khám phá cho bé →</a><div class="hero-note">Chọn kỹ cho con · An tâm cho mẹ</div></div><div class="hero-art"><img src="${h.image}" alt="Minh họa sản phẩm và thế giới của bé"></div><div class="banner-controls" aria-label="Chọn banner">${heroes.map((_, i) => `<button class="${i === heroIndex ? "active" : ""}" data-hero="${i}" aria-label="Banner ${i + 1}" aria-pressed="${i === heroIndex}"></button>`).join("")}</div></div>`;
+  return `<div class="hero"><div class="hero-content"><div class="eyebrow">${h.eyebrow}</div><h1>${h.title}</h1><p>${h.text}</p><a href="${escape(h.link)}" data-link class="primary">Khám phá cho bé →</a><div class="hero-note">Chọn kỹ cho con · An tâm cho mẹ</div></div><div class="hero-art"><img src="${h.image}" alt="Minh họa sản phẩm và thế giới của bé"></div><div class="banner-controls" aria-label="Chọn banner">${heroes.map((_, i) => `<button class="${i === heroIndex ? "active" : ""}" data-hero="${i}" aria-label="Banner ${i + 1}" aria-pressed="${i === heroIndex}"></button>`).join("")}</div></div>`;
 }
 function couponMarkup() {
   const coupons = siteData.coupons || [];
@@ -206,24 +203,10 @@ function home() {
   const sale = [...products]
     .sort((a, b) => 1 - b.price / b.oldPrice - (1 - a.price / a.oldPrice))
     .slice(0, 5);
-  return `${identity ? `<div class="account-invitation"><span>Xin chào, <b>${escape(identity.fullName)}</b></span><a href="/tai-khoan">Đơn hàng & tài khoản →</a></div>` : `<div class="account-invitation"><span>Lưu địa chỉ, giỏ hàng và theo dõi đơn của mẹ</span><div><a href="/tai-khoan">Đăng nhập</a><a href="/tai-khoan?mode=register">Đăng ký tài khoản →</a></div></div>`}<section class="hero-layout"><nav class="category-sidebar" aria-label="Danh mục">${categories.map(([name, img]) => `<a href="${escape(href({ category: name }))}" data-link><img src="/assets/${img}.svg" alt="">${name}<span style="margin-left:auto;color:#aaa">›</span></a>`).join("")}</nav><div id="hero-container">${heroMarkup()}</div></section>
-    <div class="small-banners">${[
-      ["DINH DƯỠNG MỖI NGÀY", "Bé khỏe, mẹ vui", "Sữa cho bé", "milk-gold"],
-      ["ÊM ÁI SUỐT NGÀY DÀI", "Mềm như mẹ ôm", "Bỉm & tã", "diaper-blue"],
-      [
-        "DỊU NHẸ CHO LÀN DA",
-        "Chăm chút yêu thương",
-        "Chăm sóc bé",
-        "baby-care",
-      ],
-    ]
-      .map(
-        ([tag, title, category, img]) =>
-          `<a class="small-banner" href="${escape(href({ category }))}" data-link><div><small>${tag}</small><h3>${title}</h3><b>Khám phá ngay →</b></div><img src="/assets/${img}.svg" alt=""></a>`,
-      )
-      .join("")}</div>
-    <section class="panel"><div class="section-heading"><div><h2>Mẹ tìm gì cho bé?</h2><p>Đủ đầy những điều bé cần, từ những ngày đầu tiên.</p></div></div><div class="category-tiles">${categories.map(([name, img]) => `<a class="category-tile" href="${escape(href({ category: name }))}" data-link><span><img src="/assets/${img}.svg" alt=""></span>${name}</a>`).join("")}</div></section>
-    <section class="flash-sale"><div class="section-heading"><div><h2><span>ϟ</span> Ưu đãi mẹ & bé</h2><div class="sale-note">Giá xinh, yêu thương đong đầy · Sản phẩm minh họa</div></div><a href="/san-pham?sort=discount" data-link>Xem tất cả →</a></div>${couponMarkup()}${productGrid(sale)}</section>
+  return `${identity ? `<div class="account-invitation"><span>Xin chào, <b>${escape(identity.fullName)}</b></span><a href="/tai-khoan">Đơn hàng & tài khoản →</a></div>` : `<div class="account-invitation"><span>Lưu địa chỉ, giỏ hàng và theo dõi đơn của mẹ</span><div><a href="/tai-khoan">Đăng nhập</a><a href="/tai-khoan?mode=register">Đăng ký tài khoản →</a></div></div>`}<section class="hero-layout" aria-label="Khám phá Jielien"><div id="hero-container">${heroMarkup()}</div><div class="hero-posters"><a class="hero-poster" href="${escape(href({ category: "Sữa cho bé" }))}" data-link><small>DINH DƯỠNG MỖI NGÀY</small><h2>Lựa chọn tốt.<br>Khởi đầu vui.</h2><span>Khám phá sản phẩm →</span><img src="/assets/milk-gold.svg" alt=""></a><a class="hero-poster" href="${escape(href({ category: "Chăm sóc bé" }))}" data-link><small>CHĂM CHÚT GIA ĐÌNH</small><h2>Điều nhỏ bé.<br>Yêu thương lớn.</h2><span>Xem bộ sản phẩm →</span><img src="/assets/baby-care.svg" alt=""></a></div></section>
+    <div class="store-promise" aria-label="Mua sắm tại Jielien"><div><span aria-hidden="true">◇</span><p><b>Lựa chọn rõ ràng</b><small>Thông tin và quy cách sản phẩm</small></p></div><div><span aria-hidden="true">▤</span><p><b>Theo dõi đơn hàng</b><small>Tra cứu trạng thái trực tuyến</small></p></div><div><span aria-hidden="true">♡</span><p><b>Mua sắm thuận tiện</b><small>Lưu sản phẩm bạn yêu thích</small></p></div><div><span aria-hidden="true">♙</span><p><b>Tài khoản của bạn</b><small>Lưu địa chỉ và lịch sử mua hàng</small></p></div></div>
+    <section class="panel"><div class="section-heading"><div><h2>Khám phá danh mục</h2><p>Tìm sản phẩm phù hợp cho bạn và gia đình.</p></div></div><div class="category-tiles">${categories.map(([name, img]) => `<a class="category-tile" href="${escape(href({ category: name }))}" data-link><span><img src="/assets/${img}.svg" alt=""></span>${name}</a>`).join("")}</div></section>
+    <section class="flash-sale"><div class="section-heading"><div><h2><span>ϟ</span> Sản phẩm nổi bật</h2><div class="sale-note">Khám phá sản phẩm và giá bán hiện tại</div></div><a href="/san-pham?sort=discount" data-link>Xem tất cả →</a></div>${couponMarkup()}${productGrid(sale)}</section>
     ${section("Sữa & dinh dưỡng cho bé", "Chọn sản phẩm phù hợp với độ tuổi và nhu cầu của con.", products.filter((p) => p.category === "Sữa cho bé" || p.category === "Ăn dặm").slice(0, 5), href({ category: "Sữa cho bé" }))}
     <section class="panel"><div class="section-heading"><h2>Thương hiệu trong bộ sưu tập</h2></div><div class="brand-row">${[
       ...new Set(products.map((p) => p.brand)),

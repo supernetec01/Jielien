@@ -1,7 +1,8 @@
 # Jielien International — Commerce & CMS PostgreSQL
 
-Bản nâng cấp đang được review trên nhánh `feature/jielien-commerce-cms`, chưa tự merge main hoặc triển khai public. Có catalog cha/SKU/media, tài khoản nhân viên do admin tạo, CMS duyệt/xuất bản và SEO HTML, CSV, phiếu kho/đổi trả, backup database + media.
+Bản demo hợp nhất trên nhánh `main`, với giao diện cửa hàng và Admin theo bộ thiết kế Jielien. Chưa triển khai công khai. Có catalog cha/SKU/media, tài khoản nhân viên do admin tạo, CMS duyệt/xuất bản và SEO HTML, CSV, phiếu kho/đổi trả, backup database + media.
 
+- [Chạy nhanh bản demo mới trên Windows](docs/DEMO_QUICKSTART.md)
 - [Chạy/nâng cấp Windows Docker Desktop, backup và rollback](docs/COMMERCE_WINDOWS.md)
 - [Chức năng thực tế, migration, phân quyền và phần còn lại](docs/COMMERCE_RELEASE.md)
 - [Bằng chứng kiểm thử và giới hạn](docs/validation/RESULTS.md)

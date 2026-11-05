@@ -1,6 +1,6 @@
 # Cài và nâng cấp trên Windows Docker Desktop
 
-Chỉ triển khai sau khi người phụ trách duyệt nhánh và kế hoạch cutover. Push GitHub không tự cập nhật máy công ty. Không merge main hoặc public trong quy trình này.
+Mã nguồn đã được hợp nhất vào `main` theo yêu cầu chủ dự án. Push/merge GitHub không tự cập nhật máy công ty hoặc xuất bản website lên Internet. Hướng dẫn chạy demo ngắn gọn: [DEMO_QUICKSTART.md](DEMO_QUICKSTART.md).
 
 ## 1. Giữ dữ liệu và lấy source
 
@@ -11,8 +11,8 @@ cd D:\SuperNet\Jielien
 git status --short
 # Chỉ tiếp tục khi sạch. Không reset/hủy thay đổi đang có.
 git fetch origin
-git switch feature/jielien-commerce-cms
-git pull --ff-only origin feature/jielien-commerce-cms
+git switch main
+git pull --ff-only origin main
 ```
 
 Nếu Git báo dubious ownership và đây đúng là thư mục bạn tin cậy, chỉ thêm ngoại lệ cho thư mục đó:

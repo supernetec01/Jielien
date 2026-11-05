@@ -11,7 +11,8 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     returnRows = [],
     reportQuery = "",
     auditQuery = "";
-  let cmsQuery = "";
+  let cmsQuery = "",
+    bannerRows = [];
   let articleDirty = 0,
     savingArticle = false;
   const field = (label, name, value = "", type = "text", extra = "") =>
@@ -93,16 +94,16 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     }
     if (view === "banners-editor") {
       assets = has("media.read") ? (await api("/api/admin/media")).items : [];
-      const { items } = await api("/api/admin/banners");
-      return `<section class="panel"><h1>Banner trang chủ</h1><p>${items.map((b) => `#${b.id} ${e(b.title)} — ${e(b.status)}`).join("<br>")}</p>${
+      bannerRows = (await api("/api/admin/banners")).items;
+      return `<section class="panel"><div class="content-header"><div><h1>Banner trang chủ</h1><p>Thiết kế nội dung, xem trước và đặt lịch hiển thị.</p></div></div><div class="banner-editor-layout">${
         has("settings.write")
-          ? `<form id="banner-form" class="editor-form">${field("Tiêu đề", "title", "", "text", "required")}${select(
-              "Ảnh",
+          ? `<form id="banner-form" class="editor-form"><input type="hidden" name="bannerId"><input type="hidden" name="version">${field("Tiêu đề", "title", "", "text", 'required maxlength="150"')}${select(
+              "Ảnh từ thư viện",
               "assetId",
               assets.map((a) => ({ id: a.id, name: a.alt_text })),
-            )}${field("Link nội bộ", "targetPath", "/san-pham")}<label>Trạng thái<select name="status">${["draft", "published", "archived"].map((x) => option(x, x)).join("")}</select></label>${field("Bắt đầu (giờ máy bạn)", "startsAt", "", "datetime-local")}${field("Kết thúc", "endsAt", "", "datetime-local")}<button class="primary">Tạo banner</button></form>`
-          : ""
-      }${result}</section>`;
+            )}<p class="editor-note">Chọn ảnh đã upload ở Thư viện ảnh. Banner xuất bản còn hiệu lực sẽ hiển thị trên trang chủ.</p>${field("Link nội bộ", "targetPath", "/san-pham", "text", "required")}<label>Trạng thái<select name="status">${["draft", "published", "archived"].map((x) => option(x, { draft: "Bản nháp", published: "Xuất bản", archived: "Lưu trữ" }[x])).join("")}</select></label>${field("Bắt đầu (giờ máy bạn)", "startsAt", "", "datetime-local")}${field("Kết thúc", "endsAt", "", "datetime-local")}<div class="editor-toolbar"><button class="primary">Lưu banner</button>${button("Tạo mới", "banner-new")}</div></form>`
+          : "<p>Bạn có quyền xem danh sách banner.</p>"
+      }<aside><p class="section-caption">XEM TRƯỚC NỘI DUNG</p><div class="banner-live-preview"><small>JIELIEN INTERNATIONAL</small><h2 id="banner-preview-title">Tiêu đề banner của bạn</h2><img id="banner-preview-image" alt="" hidden><span>Khám phá →</span></div><p class="editor-note">Bản xem trước. Lưu và chọn Xuất bản để hiển thị theo lịch.</p></aside></div><div class="banner-library">${bannerRows.map((b) => `<article><img src="${e(b.url)}" alt="${e(b.alt_text)}"><div><b>${e(b.title)}</b><p>${e({ draft: "Bản nháp", published: "Xuất bản", archived: "Lưu trữ" }[b.status])} · ${e(b.target_path)}</p></div>${has("settings.write") ? button("Chỉnh sửa", "banner-edit:" + b.id) : ""}</article>`).join("") || "<p>Chưa có banner. Hãy tạo nội dung đầu tiên.</p>"}</div>${result}</section>`;
     }
     if (view === "coupons-editor") {
       const { items } = await api("/api/admin/coupons");
@@ -282,6 +283,40 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         }
         preview.innerHTML = html;
         preview.focus();
+      }
+      if (action === "banner-new" || action?.startsWith("banner-edit:")) {
+        const form = $("#banner-form");
+        form.reset();
+        form.elements.bannerId.value = "";
+        form.elements.version.value = "";
+        if (action !== "banner-new") {
+          const b = bannerRows.find(
+            (b) => String(b.id) === action.split(":")[1],
+          );
+          if (!b) throw Error("Không tìm thấy banner.");
+          const localDate = (v) =>
+            v
+              ? new Date(
+                  new Date(v).getTime() -
+                    new Date(v).getTimezoneOffset() * 60000,
+                )
+                  .toISOString()
+                  .slice(0, 16)
+              : "";
+          for (const [key, value] of Object.entries({
+            bannerId: b.id,
+            version: b.version,
+            title: b.title,
+            assetId: b.asset_id,
+            targetPath: b.target_path,
+            status: b.status,
+            startsAt: localDate(b.starts_at),
+            endsAt: localDate(b.ends_at),
+          }))
+            form.elements[key].value = value;
+        }
+        previewBanner();
+        form.elements.title.focus();
       }
       if (action === "new-product") await productEditor();
       if (action === "catalog-list") await refresh("catalog-editor");
@@ -535,17 +570,22 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
           `<p>${preview.rows} dòng / ${preview.items.length} sản phẩm</p><pre>${e(JSON.stringify(preview.errors, null, 2))}</pre>${preview.errors.length ? "" : button("Xác nhận import", "csv-commit")}`;
       }
       if (form.id === "banner-form") {
-        await api("/api/admin/banners", {
-          method: "POST",
-          body: {
-            ...data,
-            assetId: Number(data.assetId),
-            startsAt: data.startsAt
-              ? new Date(data.startsAt).toISOString()
-              : null,
-            endsAt: data.endsAt ? new Date(data.endsAt).toISOString() : null,
+        await api(
+          "/api/admin/banners" +
+            (data.bannerId ? "/" + encodeURIComponent(data.bannerId) : ""),
+          {
+            method: data.bannerId ? "PATCH" : "POST",
+            body: {
+              ...data,
+              assetId: Number(data.assetId),
+              version: Number(data.version),
+              startsAt: data.startsAt
+                ? new Date(data.startsAt).toISOString()
+                : null,
+              endsAt: data.endsAt ? new Date(data.endsAt).toISOString() : null,
+            },
           },
-        });
+        );
         await refresh("banners-editor");
       }
       if (form.id === "catalog-search")
@@ -757,7 +797,24 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       if (submit?.isConnected) submit.disabled = false;
     }
   });
+  function previewBanner() {
+    const form = $("#banner-form");
+    if (!form) return;
+    $("#banner-preview-title").textContent =
+      form.elements.title.value || "Tiêu đề banner của bạn";
+    const image = $("#banner-preview-image"),
+      asset = assets.find((a) => String(a.id) === form.elements.assetId.value);
+    image.hidden = !asset;
+    if (asset) {
+      image.src = asset.url;
+      image.alt = asset.alt_text;
+    } else image.removeAttribute("src");
+  }
+  root.addEventListener("change", (event) => {
+    if (event.target.closest("#banner-form")) previewBanner();
+  });
   root.addEventListener("input", (event) => {
+    if (event.target.closest("#banner-form")) previewBanner();
     if (event.target.closest("#article-form")) articleDirty++;
   });
   setInterval(async () => {
