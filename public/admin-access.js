@@ -14,11 +14,22 @@ const adminScreenPermissions = new Set([
   "promotions.manage",
   "users.manage",
   "dashboard.read",
-  "orders.read"
+  "orders.read",
 ]);
 
 export function canAccessAdmin(user) {
-  if (!user || !Array.isArray(user.roles) || !Array.isArray(user.permissions)) return false;
-  if (!user.roles.some((role) => role !== "customer")) return false;
-  return user.permissions.some((permission) => adminScreenPermissions.has(permission));
+  if (!user || !Array.isArray(user.roles) || !Array.isArray(user.permissions))
+    return false;
+  if (
+    !user.roles.some(
+      (role) =>
+        typeof role === "string" &&
+        role.trim() !== "" &&
+        role.trim() !== "customer",
+    )
+  )
+    return false;
+  return user.permissions.some((permission) =>
+    adminScreenPermissions.has(permission),
+  );
 }
