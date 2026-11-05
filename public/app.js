@@ -1,3 +1,4 @@
+import { canAccessAdmin } from "/admin-access.js";
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 const escape = (value) =>
@@ -1246,6 +1247,12 @@ async function init() {
         storage.set("jielien-cart-v2", {});
         storage.set("jielien-cart-owner", null);
       }
+    }
+    const adminLink = document.getElementById("staff-admin-link");
+    if (adminLink) {
+      const allowAdmin = canAccessAdmin(identity);
+      adminLink.hidden = !allowAdmin;
+      adminLink.style.display = allowAdmin ? "" : "none";
     }
     if (identity) {
       const owner = storage.get("jielien-cart-owner", null);

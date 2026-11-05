@@ -41,3 +41,4 @@ jobs:
       - run: npm run test:account
       - run: npm run test:bank
       - run: npm run test:commerce
+      - run: npm run test:admin-access

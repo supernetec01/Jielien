@@ -1,3 +1,4 @@
+import { canAccessAdmin } from "/admin-access.js";
 import { createCommerceEditors } from "/commerce-admin.js";
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -632,7 +633,7 @@ async function init() {
     user = result.user;
     csrfToken = result.csrfToken || "";
     if (
-      !sections.some((section) => section.permission && has(section.permission))
+      !canAccessAdmin(user)
     ) {
       gate(
         "Tài khoản này có thể mua sắm và xem đơn hàng cá nhân. Vui lòng dùng tài khoản đã được cấp quyền để vào không gian vận hành.",

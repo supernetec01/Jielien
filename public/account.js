@@ -1,3 +1,4 @@
+import { canAccessAdmin } from "/admin-access.js";
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const escape = (value) =>
@@ -89,18 +90,7 @@ function renderAuth(focus = false) {
   if (focus) $("#identifier, #fullName")?.focus();
 }
 function accountShell() {
-  const canManage = (user.permissions || []).some((permission) =>
-    [
-      "catalog.read",
-      "content.read",
-      "reports.read",
-      "users.manage",
-      "catalog.manage",
-      "orders.manage",
-      "inventory.manage",
-      "audit.read",
-    ].includes(permission),
-  );
+  const canManage = canAccessAdmin(user);
   root.innerHTML = `<div class="account-banner"><div><h1>Chào ${escape(user.fullName || user.full_name || "mẹ")} ♡</h1><p>Mọi thông tin mua sắm của mẹ, ở cùng một nơi.</p></div><div class="actions">${canManage ? '<a href="/quan-tri" class="secondary">Quản trị cửa hàng ↗</a>' : ""}<button class="secondary" id="logout">Đăng xuất</button></div></div><div class="account-layout"><nav class="panel side-nav" aria-label="Mục tài khoản"><button data-view="profile" class="active">◎ Thông tin tài khoản</button><button data-view="orders">▤ Đơn hàng của mẹ</button><button data-view="addresses">⌂ Địa chỉ nhận hàng</button><button data-view="security">♢ Đổi mật khẩu</button></nav><section id="account-content" class="panel" tabindex="-1" aria-live="polite"></section></div>`;
 }
 function profileMarkup() {
