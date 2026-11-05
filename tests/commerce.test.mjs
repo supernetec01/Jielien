@@ -1116,3 +1116,22 @@ test("admin bootstrap works without a TTY using configured credentials and adds 
   assert.ok(invalid.stderr.includes("Email không hợp lệ"));
   assert.ok(!invalid.stderr.includes(password));
 });
+
+test("catalog and news pagination remain bounded for non-finite/fractional input and Vietnamese uppercase Đ is accent-normalized", async (t) => {
+  const { request } = await fixture(t);
+  const a = await request("/api/catalog/search?q=" + encodeURIComponent("Đồ"));
+  const b = await request("/api/catalog/search?q=do");
+  assert.deepEqual(
+    a.data.items.map((p) => p.id),
+    b.data.items.map((p) => p.id),
+  );
+  assert.equal(
+    (await request("/api/catalog/search?page=Infinity")).data.page,
+    100000,
+  );
+  assert.equal(
+    (await request("/api/admin/catalog/products?page=1.25")).status,
+    200,
+  );
+  assert.equal((await request("/api/news?page=1.25")).status, 200);
+});

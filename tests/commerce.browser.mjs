@@ -219,6 +219,13 @@ try {
     true,
   );
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.locator('[data-section="settings-editor"]').click();
+  await page.locator('#setting-form [name="key"]').selectOption("companyName");
+  await page
+    .locator('#setting-form [name="value"]')
+    .fill("Jielien Test Company");
+  await page.locator("#setting-form button").click();
+  await page.getByText("companyName: Jielien Test Company").waitFor();
   await page.goto(base + "/tin-tuc/bai-viet-cms-that");
   await page
     .locator("h1")
@@ -236,6 +243,15 @@ try {
     ]) {
       await page.goto(base + path);
       await page.locator("h1").first().waitFor();
+      if (path === "/") {
+        await page.locator(".hero").waitFor();
+        await page
+          .locator("#company-contact")
+          .filter({ hasText: "Jielien Test Company" })
+          .waitFor();
+      }
+      if (path === "/san-pham")
+        await page.locator(".product-card").first().waitFor();
       await page.screenshot({
         path: `docs/screenshots/commerce/${name}-${width}.png`,
         fullPage: true,
@@ -273,6 +289,7 @@ try {
     "home/catalog/news/article fit 320, 375, 768 and 1440px, screenshots saved",
   );
   assert.deepEqual(errors, []);
+  pass("company settings persist and render in the hydrated storefront footer");
   pass("no browser JavaScript exceptions");
   console.log(`Commerce browser complete: ${checks} checks passed.`);
 } finally {

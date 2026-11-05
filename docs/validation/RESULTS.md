@@ -4,13 +4,13 @@ Ngày 2026-11-05, nhánh feature/jielien-commerce-cms; Linux cloud, Node.js 24.2
 
 | Lệnh / kiểm tra | Kết quả |
 |---|---|
-| npm test | 44 pass, 0 fail / skipped / cancelled |
+| npm test | 45 pass, 0 fail / skipped / cancelled |
 | npm run test:local | 6 pass; mật khẩu/file cũ được giữ, validate IP/port |
 | npm run test:browser | 14 kiểm tra storefront pass |
 | npm run test:management | 11 kiểm tra quản trị pass |
 | npm run test:account | 9 kiểm tra tài khoản pass |
 | npm run test:bank | 7 kiểm tra VietQR/đối soát pass |
-| npm run test:commerce | 9 kiểm tra mới pass, gồm username admin, 3 SKU, upload/gallery, nhân viên, autosave, CMS review/publish, SEO HTML và 320/375/768/1440px |
+| npm run test:commerce | 10 kiểm tra mới pass, gồm username admin, 3 SKU, upload/gallery, nhân viên, autosave, CMS review/publish, SEO HTML và 320/375/768/1440px |
 | npm run test:local:stack | Pass: Compose localhost/LAN, DB không expose; Node/Postgres, register/CSRF/VietQR; upload decode, media host bind; recreate container giữ order/session/stock/media; pg_dump custom + media checksum + pg_restore vào DB drill riêng giữ order/media metadata |
 | node tests/commerce-load.mjs | 120 request, concurrency 8, 0 lỗi; p50/p95/max thực tế trong load.json |
 | git diff --check / node --check | Chạy trước commit cuối |
@@ -32,3 +32,5 @@ Lần Docker đầu khi thêm media đã phát hiện quyền file do root conta
 Không có test failed/unexplained được chấp nhận là pass. Các phần chưa triển khai của đặc tả được nêu trong COMMERCE_RELEASE.md và tasks.md; không dùng kết quả test phần lõi để tuyên bố hoàn tất toàn bộ backlog.
 
 GitHub Actions workflow `.github/workflows/commerce-tests.yml` đã bổ sung để chạy lại các guard trên PostgreSQL CI cô lập và Chrome. Các lệnh tương ứng đã chạy trong cloud; kết quả GitHub Actions sau push chưa được giả định là pass.
+
+Ảnh home/catalog được chụp sau khi JS hydrate (.hero/.product-card đã xuất hiện); bài/news giữ kiểm tra SSR riêng. Footer cấu hình công ty có test ghi qua admin và kiểm chứng DOM thật, không chỉ xác minh API.
