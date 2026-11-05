@@ -1,0 +1,21 @@
+/* Reference theme only. Codex must adapt, not blindly override semantic status colors. */
+:root {
+  --brand-green: #86B529;
+  --brand-green-hover: #709C20;
+  --brand-navy: #0B1B34;
+  --brand-soft-green: #F2F7E6;
+  --surface: #FFFFFF;
+  --page-bg: #F7F9FC;
+  --text-primary: #0B1B34;
+  --text-secondary: #64748B;
+  --border-color: #E3E9EE;
+  --status-success: #19754B;
+  --status-warning: #A56700;
+  --status-danger: #B42318;
+  --focus-ring: #0B1B34;
+  --radius-sm: 8px;
+  --radius-button: 10px;
+  --radius-card: 16px;
+  --container-width: 1220px;
+  --font-body: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+}

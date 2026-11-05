@@ -1,0 +1,44 @@
+{
+  "NOTICE": "DỮ LIỆU MẪU, không phải sản phẩm thật và không dùng seed production",
+  "product": {
+    "id": "generated",
+    "name": "Bình sữa BabyCare 240ml",
+    "slug": "binh-sua-babycare-240ml",
+    "brand": "BabyCare",
+    "category": "Bình sữa",
+    "status": "draft",
+    "shortDescription": "Bình sữa minh họa",
+    "descriptionBlocks": [
+      {
+        "type": "paragraph",
+        "text": "Nội dung mô tả an toàn, kiểm chứng trước công bố."
+      }
+    ],
+    "seo": {
+      "title": "Bình sữa BabyCare 240ml | Jielien",
+      "description": "Thông tin sản phẩm và các lựa chọn phân loại."
+    }
+  },
+  "variants": [
+    {
+      "sku": "BC-240-BLUE",
+      "attributes": {
+        "color": "Xanh",
+        "capacity": "240ml"
+      },
+      "priceVnd": 179000,
+      "status": "active",
+      "stockFromWarehouse": "only inventory ledger"
+    },
+    {
+      "sku": "BC-240-PINK",
+      "attributes": {
+        "color": "Hồng",
+        "capacity": "240ml"
+      },
+      "priceVnd": 179000,
+      "status": "active",
+      "stockFromWarehouse": "only inventory ledger"
+    }
+  ]
+}

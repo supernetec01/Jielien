@@ -1,0 +1,23 @@
+{
+  "NOTICE": "DỮ LIỆU MẪU, chỉ dùng trong staging/QA",
+  "title": "Hướng dẫn lựa chọn bình sữa phù hợp",
+  "slug": "huong-dan-chon-binh-sua",
+  "status": "draft",
+  "excerpt": "Những yếu tố cần cân nhắc",
+  "seoTitle": "Hướng dẫn chọn bình sữa | Jielien",
+  "seoDescription": "Tìm hiểu tiêu chí chọn bình sữa theo nhu cầu",
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Chất liệu"
+    },
+    {
+      "type": "paragraph",
+      "text": "Dữ liệu mẫu cần biên tập và kiểm duyệt."
+    }
+  ],
+  "relatedProductSkus": [
+    "BC-240-BLUE"
+  ]
+}
