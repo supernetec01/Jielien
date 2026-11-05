@@ -2,6 +2,7 @@
 
 Bản demo hợp nhất trên nhánh `main`, với giao diện cửa hàng và Admin theo bộ thiết kế Jielien. Chưa triển khai công khai. Có catalog cha/SKU/media, tài khoản nhân viên do admin tạo, CMS duyệt/xuất bản và SEO HTML, CSV, phiếu kho/đổi trả, backup database + media.
 
+- [Frontend V3: phạm vi F1–F8, API, migration và chạy bản PR](docs/frontend-v3/README.md)
 - [Giao diện Admin và cải tiến sử dụng theo phản hồi](docs/ADMIN_USABILITY.md)
 - [Chạy nhanh bản demo mới trên Windows](docs/DEMO_QUICKSTART.md)
 - [Chạy/nâng cấp Windows Docker Desktop, backup và rollback](docs/COMMERCE_WINDOWS.md)
@@ -99,7 +100,7 @@ Khi tạo đơn, server tính số tiền và lưu cố định ngân hàng, tà
 
 ## Dữ liệu và migration
 
-- Nguồn dữ liệu chạy là PostgreSQL. `public/catalog.json` chỉ dùng seed ban đầu; seed chạy lại không ghi đè giá/tồn đang vận hành.
+- Nguồn dữ liệu chạy là PostgreSQL. Không tự seed danh mục demo khi database trống. Bộ dữ liệu cũ đã chuyển vào `db/fixtures/catalog.json` để kiểm thử; chỉ được nạp khi opt-in rõ ràng bằng `JIELIEN_DEMO_DATA=true` trong môi trường thử nghiệm riêng, không bật trên máy công ty.
 - ID cũ được giữ ở `product_variants.id`. `products.id` là sản phẩm cha. Mã đơn JL cũ nằm trong `orders.order_number`; FK dùng `orders.id` nội bộ.
 - `order_items` giữ tên/SKU/ảnh/giá lúc mua. Sửa giá SKU không làm thay đổi đơn cũ.
 - `available = on_hand - reserved` ở kho normal đang active. Tạo đơn giữ tồn; hủy trước xuất giao nhả giữ; xuất giao giảm thực có và giữ.

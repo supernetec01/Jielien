@@ -1,6 +1,6 @@
 # Jielien: hướng dẫn sửa giao diện cho Codex
 
-Ứng dụng dùng JavaScript ES modules, HTML render từ template string và CSS; backend Node/PostgreSQL. Không chỉ sửa file HTML: màn hình Admin được sinh trong `public/admin.js` và `public/commerce-admin.js`; storefront trong `public/app.js`; trang tin tức SSR trong `lib/seo.mjs`.
+Ứng dụng dùng JavaScript ES modules, HTML render từ template string và CSS; backend Node/PostgreSQL. Không chỉ sửa file HTML: màn hình Admin được sinh trong `public/admin.js` và `public/commerce-admin.js`; storefront trong `public/app.js` và renderer dùng chung SSR `public/v3-storefront.js`; trang tin tức SSR trong `lib/seo.mjs`.
 
 ## Cách thực hiện thay đổi UI
 
@@ -15,8 +15,10 @@
 ## Kiểm chứng trước bàn giao
 
 - Chạy ứng dụng bằng test database/schema riêng và mở Chromium thật. Đi qua các thao tác bị tác động: tạo, sửa, lọc, hủy, lỗi và tải lại khi liên quan.
-- Với thay đổi Admin, chạy `npm run test:usability`, `npm run test:commerce`, `npm run test:management`, `npm run test:admin-access`. Chạy `npm run test:browser` nếu sửa storefront và `npm test` nếu thay luồng dữ liệu hoặc validation.
+- Với thay đổi Admin, chạy `npm run test:usability`, `npm run test:commerce`, `npm run test:management`, `npm run test:admin-access`. Chạy `npm run test:browser` và `npm run test:frontend-v3` nếu sửa storefront và `npm test` nếu thay luồng dữ liệu hoặc validation.
 - Chụp và **xem** các màn hình đã sửa ở desktop và điện thoại. Kiểm tra 320/375/768/1440/1920px, tràn ngang và menu cảm ứng. Ảnh nằm trong `docs/screenshots/`; ghi rõ dữ liệu fixture. Test pass không thay thế việc xem bố cục.
 - Nêu chính xác file, thay đổi hành vi, kiểm thử và giới hạn; không nói đã triển khai lên máy công ty khi mới push GitHub. Hướng dẫn người dùng cập nhật source và rebuild Docker.
 
 Không reset database hoặc thay mật khẩu để sửa UI. Không commit `.env*`, token, mật khẩu thật, backup hay dữ liệu khách hàng. Không xuất bản website ra Internet nếu chưa được yêu cầu.
+
+V3: danh mục và chiến dịch lấy từ database. Không phục hồi mảng danh mục cứng hoặc mẫu banner vào giao diện. `db/fixtures/catalog.json` chỉ dành cho schema/test stack riêng; production mặc định không seed. Bảo toàn migration 013; không sửa các migration đã áp dụng.

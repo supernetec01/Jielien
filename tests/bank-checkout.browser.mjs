@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { once } from "node:events";
 import { chromium } from "playwright-core";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createAuth } from "../lib/auth.mjs";
 
 // These receiving details exist only in disposable PostgreSQL test schemas.

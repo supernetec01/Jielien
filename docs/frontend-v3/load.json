@@ -1,0 +1,12 @@
+{
+  "recordedAt": "2026-11-05T09:07:48.380Z",
+  "environment": "Linux cloud isolated PostgreSQL schema, local HTTP",
+  "node": "v24.22.1",
+  "requests": 120,
+  "concurrency": 8,
+  "failures": 0,
+  "p50Ms": 27,
+  "p95Ms": 97,
+  "maxMs": 124,
+  "limitations": "Development lab only; not production capacity, Lighthouse, LCP/INP/CLS p75 or Windows/LAN evidence."
+}

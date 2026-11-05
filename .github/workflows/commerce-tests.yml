@@ -43,3 +43,4 @@ jobs:
       - run: npm run test:commerce
       - run: npm run test:admin-access
       - run: npm run test:usability
+      - run: npm run test:frontend-v3
