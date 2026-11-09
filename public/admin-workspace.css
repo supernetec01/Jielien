@@ -117,6 +117,8 @@
   min-width: 0;
   padding: 10px 0;
   font-size: 13px;
+  box-sizing: border-box;
+  width: 100%;
 }
 .navigation-search input::placeholder {
   color: #a7b6c7;
@@ -139,10 +141,10 @@
 .admin-workspace .navigation-group h2 {
   padding: 8px 12px;
   margin: 0 0 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1.3px;
+  letter-spacing: 1.1px;
   color: #8fa4bc;
 }
 .admin-workspace .side-nav button {
@@ -153,7 +155,7 @@
   border: 0;
   color: #d2deec;
   min-height: 42px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   padding: 10px 12px;
   border-radius: 8px;
@@ -313,16 +315,15 @@
 .section-title h2,
 .section-title p {
   margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 5px;
 }
 .section-title > span {
   font-size: 12px;
   color: var(--muted);
 }
-.section-title p {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 5px;
-}
+
 .admin-workspace button,
 .admin-workspace .secondary,
 .admin-workspace .primary {
@@ -703,22 +704,25 @@
 }
 .admin-workspace .data-table th {
   background: #f6f8fa;
-  color: #74879a;
-  font-size: 11px;
+  color: #526479;
+  font-size: 12px;
   font-weight: 650;
   padding: 13px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 .admin-workspace .data-table td {
-  padding: 16px 14px;
+  padding: 12px 14px;
   border-bottom: 1px solid #edf1f5;
 }
 .admin-workspace .data-table td b {
   font-weight: 600;
 }
 .admin-workspace .data-table .secondary {
-  font-size: 12px;
-  min-height: 36px;
-  padding: 7px 12px;
+  font-size: 14px;
+  min-height: 44px;
+  padding: 9px 12px;
 }
 .workspace-empty {
   padding: 38px 20px;
@@ -758,6 +762,8 @@
 .admin-workspace .stat-card {
   padding: 22px;
   border-radius: 14px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-1);
 }
 .admin-workspace .stat-card span {
   font-size: 11px;
@@ -1151,5 +1157,305 @@
     grid-column: 2;
     grid-row: 1 / span 2;
     align-self: center;
+  }
+}
+/* Daily workspace: compact navigation, readable tables and clear task hierarchy. */
+.admin-workspace .navigation-search {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: calc(100% - 28px);
+}
+
+.admin-workspace .content-header h1,
+.admin-workspace .page-heading h1 {
+  letter-spacing: -0.8px;
+  font-family: var(--font-heading);
+}
+.dashboard-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  background: linear-gradient(115deg, #0b1b34, #193d42);
+  border-radius: 16px;
+  padding: 28px 32px;
+  color: white;
+  margin-bottom: 24px;
+}
+.dashboard-intro .page-eyebrow {
+  color: #c3df83;
+}
+.dashboard-intro h2 {
+  font-size: 26px;
+  line-height: 1.35;
+  margin: 12px 0;
+}
+.dashboard-intro p {
+  color: #d3dfe9;
+  margin: 0;
+  max-width: 65ch;
+  font-size: 14px;
+}
+.dashboard-intro > .ui-icon {
+  width: 72px;
+  height: 72px;
+  color: #b6d873;
+}
+.dashboard-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.admin-workspace .dashboard-shortcuts button {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 20px 16px;
+  min-height: 88px;
+  text-align: left;
+}
+.dashboard-shortcuts .ui-icon:last-child {
+  margin-left: auto;
+}
+
+.admin-workspace .stat-money {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+.table-filter-label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  min-width: 0;
+}
+.table-filter-label input,
+.table-filter-label select {
+  width: 100%;
+  min-width: 0;
+}
+.admin-workspace .table-wrap {
+  max-height: 70dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.admin-workspace .data-table tbody tr:hover {
+  background: #f5f8fc;
+}
+.admin-workspace .data-table .table-product b {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.admin-workspace .data-table :is(.numeric, .inventory-numbers, .price-cell) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.stock-caption {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.admin-workspace .stock-low .stock-caption {
+  color: var(--warning);
+}
+.company-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.company-guide {
+  background: var(--green-50);
+}
+.company-guide > .ui-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--green-700);
+}
+.company-guide p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.admin-workspace .company-layout .editor-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.role-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 8px 0;
+}
+.role-option input {
+  min-height: 24px;
+  width: 20px;
+}
+.role-option small {
+  display: block;
+  color: var(--text-muted);
+}
+.admin-workspace .report-chart {
+  width: 100%;
+  height: auto;
+  max-height: 260px;
+  overflow: visible;
+}
+.chart-caption {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: 12px;
+  gap: 12px;
+}
+.insight-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.insight-grid .panel {
+  min-width: 0;
+}
+.dashboard-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.dashboard-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.dashboard-list small {
+  display: block;
+  color: var(--text-muted);
+}
+.admin-workspace dialog[open] {
+  animation: admin-dialog-in 220ms var(--ease-out);
+}
+.admin-workspace button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+@keyframes admin-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 1100px) {
+  .dashboard-shortcuts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .company-layout,
+  .insight-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-workspace .company-layout .editor-form {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-intro {
+    padding: 24px;
+  }
+  .dashboard-intro h2 {
+    font-size: 22px;
+  }
+  .dashboard-intro > .ui-icon {
+    display: none;
+  }
+  .dashboard-shortcuts {
+    grid-template-columns: 1fr 1fr;
+  }
+  .admin-workspace .dashboard-shortcuts button {
+    padding: 14px;
+  }
+  .admin-workspace .table-controls {
+    align-items: stretch;
+  }
+  .table-filter-label {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-workspace *,
+  .admin-workspace *::before,
+  .admin-workspace *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (max-width: 700px) {
+  .admin-workspace .mobile-cards {
+    display: block;
+    min-width: 0;
+    width: 100%;
+    border: 0;
+  }
+  .admin-workspace .mobile-cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .admin-workspace .mobile-cards tbody {
+    display: grid;
+    gap: 12px;
+  }
+  .admin-workspace .mobile-cards tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    background: white;
+  }
+  .admin-workspace .mobile-cards td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+  .admin-workspace .mobile-cards td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .admin-workspace .mobile-cards td:first-child,
+  .admin-workspace .mobile-cards td:last-child,
+  .admin-workspace .mobile-cards td[colspan] {
+    grid-column: 1 / -1;
+  }
+  .admin-workspace .mobile-cards td:first-child {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 12px;
+  }
+  .admin-workspace .mobile-cards td:last-child button {
+    width: 100%;
+  }
+  .admin-workspace .mobile-cards .inventory-numbers {
+    font-size: 18px;
+  }
+  .admin-workspace .mobile-cards .table-product b {
+    font-size: 14px;
   }
 }

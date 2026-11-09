@@ -1,3 +1,4 @@
+import { reportVisuals } from "/report-visuals.js";
 import { icon } from "/ui-icons.js";
 import { canAccessAdmin } from "/admin-access.js";
 import { createCommerceEditors } from "/commerce-admin.js";
@@ -16,6 +17,19 @@ const date = (value) =>
   value && !Number.isNaN(new Date(value).valueOf())
     ? new Date(value).toLocaleString("vi-VN")
     : "—";
+const roleLabels = {
+  admin: "Quản trị viên",
+  boss: "Chủ cửa hàng (chỉ xem)",
+  sales: "Bán hàng",
+  warehouse: "Kho",
+  finance: "Kế toán",
+  catalog_manager: "Quản lý sản phẩm",
+  writer: "Biên tập viên",
+  seo: "SEO",
+  content: "Nội dung",
+  viewer: "Chỉ xem",
+  customer: "Khách hàng",
+};
 const statusNames = {
   pending: "Chờ xác nhận",
   confirmed: "Đã xác nhận",
@@ -192,6 +206,27 @@ const navigationGroups = [
     ],
   },
 ];
+const sectionIcons = {
+  dashboard: "grid",
+  orders: "receipt",
+  products: "tag",
+  inventory: "warehouse",
+  "catalog-editor": "box",
+  "taxonomy-editor": "grid",
+  "media-editor": "image",
+  "cms-editor": "news",
+  "banners-editor": "image",
+  "coupons-editor": "percent",
+  "inventory-docs": "warehouse",
+  "returns-editor": "return",
+  "reports-editor": "chart",
+  "audit-tools": "log",
+  audit: "log",
+  users: "users",
+  "settings-editor": "settings",
+  "operations-editor": "shield",
+  "redirects-editor": "external",
+};
 function shell() {
   root.innerHTML = `<div class="admin-layout"><aside class="admin-sidebar"><div class="workspace-brand"><img src="/assets/jielien-logo.jpg" alt="Jielien International"><span>Không gian quản trị</span></div><label class="navigation-search">${icon("search")}<input id="admin-nav-search" type="search" aria-label="Tìm chức năng quản trị" placeholder="Tìm chức năng…"></label><nav id="workspace-navigation" class="side-nav" aria-label="Mục quản trị">${navigationGroups
     .map((group) => {
@@ -199,12 +234,12 @@ function shell() {
         .map((id) => sections.find((s) => s.id === id))
         .filter((s) => s && has(s.permission));
       return available.length
-        ? `<section class="navigation-group"><h2>${group.title}</h2>${available.map((s) => `<button data-section="${s.id}" class="${activeView === s.id ? "active" : ""}">${icon(s.id === "users" ? "users" : group.icon)}<span>${s.label}</span></button>`).join("")}</section>`
+        ? `<section class="navigation-group"><h2>${group.title}</h2>${available.map((s) => `<button data-section="${s.id}" class="${activeView === s.id ? "active" : ""}">${icon(sectionIcons[s.id] || group.icon)}<span>${s.label}</span></button>`).join("")}</section>`
         : "";
     })
     .join(
       "",
-    )}<p id="navigation-empty" hidden>Không tìm thấy chức năng.</p></nav><div class="admin-user"><span class="user-avatar">${escape((user.fullName || user.full_name || "A").slice(0, 1))}</span><div><b>${escape(user.fullName || user.full_name)}</b><small>Đã đăng nhập</small></div><a href="/tai-khoan" aria-label="Mở tài khoản">${icon("arrow")}</a></div></aside><div class="workspace-main"><div class="workspace-location"><button type="button" id="admin-menu-toggle" aria-expanded="false" aria-controls="workspace-navigation">☰ Mục quản trị</button><span>Quản trị <span aria-hidden="true">/</span> <b id="workspace-current">Tổng quan</b></span><span class="workspace-session">Phiên đăng nhập được bảo vệ</span></div><section id="admin-content" tabindex="-1" aria-live="polite"></section></div></div>`;
+    )}<p id="navigation-empty" hidden>Không tìm thấy chức năng.</p></nav><div class="admin-user"><span class="user-avatar">${escape((user.fullName || user.full_name || "A").slice(0, 1))}</span><div><b>${escape(user.fullName || user.full_name)}</b><small>Đã đăng nhập</small></div><a href="/tai-khoan" aria-label="Mở tài khoản">${icon("arrow")}</a></div></aside><div class="workspace-main"><div class="workspace-location"><button type="button" id="admin-menu-toggle" aria-expanded="false" aria-controls="workspace-navigation">${icon("menu")} Mục quản trị</button><span>Quản trị <span aria-hidden="true">/</span> <b id="workspace-current">Tổng quan</b></span><span class="workspace-session">Phiên đăng nhập được bảo vệ</span></div><section id="admin-content" tabindex="-1" aria-live="polite"></section></div></div>`;
 }
 root.addEventListener("input", (event) => {
   if (event.target.id !== "admin-nav-search") return;
@@ -239,22 +274,17 @@ function header(title, text, button = "") {
   return `<div class="content-header"><div><h1>${title}</h1><p>${text}</p></div>${button}</div>`;
 }
 function refreshButton() {
-  return '<button class="secondary" id="refresh-view">↻ Làm mới</button>';
+  return `<button class="secondary" id="refresh-view">${icon("refresh")} Làm mới</button>`;
 }
 function dashboardMarkup(stats) {
-  return `${header("Tổng quan", "Chào mừng trở lại. Cùng chăm chút cửa hàng Jielien hôm nay.", refreshButton())}<div class="stats-grid"><article class="stat-card"><span>ĐƠN HÀNG</span><strong>${Number(stats.orders || 0).toLocaleString("vi-VN")}</strong><em>Đơn đã được ghi nhận</em></article><article class="stat-card"><span>DOANH SỐ</span><strong style="font-size:23px">${money(stats.revenue)}</strong><em>Theo dữ liệu đơn hàng máy chủ</em></article><article class="stat-card"><span>SẢN PHẨM CHA</span><strong>${Number(stats.products || 0).toLocaleString("vi-VN")}</strong><em>${Number(stats.variants || 0).toLocaleString("vi-VN")} SKU / quy cách bán</em></article><article class="stat-card"><span>CẢNH BÁO TỒN THẤP</span><strong>${Number(stats.lowStock || 0).toLocaleString("vi-VN")}</strong><em>Các mã hàng cần kiểm tra</em></article></div><section class="panel"><div class="content-header"><div><h2>Truy cập nhanh</h2><p>Công việc thường dùng trong cửa hàng</p></div></div><div class="workspace-actions">${sections
-    .filter((s) => s.id !== "dashboard" && has(s.permission))
-    .slice(0, 8)
-    .map(
-      (s) =>
-        `<button class="workspace-action" data-workspace-section="${s.id}"><span>${escape(s.label)}</span><b aria-hidden="true">↗</b></button>`,
-    )
-    .join(
-      "",
-    )}</div></section><section class="panel"><h2>Vận hành theo từng bước</h2><div class="profile-grid"><div class="profile-item"><small>01 · Quản lý hàng hóa</small><b>Giá và trạng thái được quản lý theo SKU</b><p class="support-text">Mỗi quy cách có giá và tồn riêng. Đơn hàng giữ nguyên thông tin và giá tại thời điểm khách mua.</p></div><div class="profile-item"><small>02 · Theo dõi đơn hàng</small><b>Xác nhận, chuẩn bị và giao đơn</b><p class="support-text">Thay đổi trạng thái theo luồng cho phép. Việc giữ hàng, xuất hàng và hoàn giữ tồn được xử lý ở máy chủ.</p></div><div class="profile-item"><small>03 · Quản lý tồn kho</small><b>Phân biệt hàng có sẵn và hàng đang giữ</b><p class="support-text">Mỗi điều chỉnh cần lý do. Mức có thể bán dựa trên lượng tồn trừ lượng đã giữ cho đơn.</p></div><div class="profile-item"><small>04 · Truy vết thay đổi</small><b>Quyền hạn và nhật ký rõ ràng</b><p class="support-text">Máy chủ kiểm tra quyền cho từng thao tác; lịch sử giúp xác định ai đã thay đổi dữ liệu.</p></div></div><p class="permission-note">Đây là hệ thống phát triển với dữ liệu minh họa. Chưa kết nối cổng thanh toán hoặc nhà vận chuyển thực tế.</p></section>`;
+  const quick = ["orders", "inventory", "catalog-editor", "reports-editor"]
+    .map((id) => sections.find((s) => s.id === id))
+    .filter((s) => s && has(s.permission));
+  return `${header("Tổng quan", "Một góc nhìn rõ ràng để bắt đầu ngày làm việc.", refreshButton())}<div class="dashboard-intro"><div><span class="page-eyebrow">JIELIEN WORKSPACE</span><h2>Chăm chút từng đơn hàng.<br>Quản lý cửa hàng chủ động hơn.</h2><p>Kiểm tra đơn, hàng hóa và kết quả kinh doanh từ dữ liệu đang có.</p></div>${icon("warehouse", { size: 64 })}</div><div class="stats-grid"><article class="stat-card"><span>ĐƠN CHỜ XÁC NHẬN</span><strong>${Number(stats.pendingOrders || 0).toLocaleString("vi-VN")}</strong><em>${Number(stats.orders || 0)} đơn được ghi nhận tổng cộng</em></article><article class="stat-card"><span>TIỀN ĐÃ THU</span><strong class="stat-money">${money(stats.revenue)}</strong><em>Các khoản thanh toán đã xác nhận</em></article><article class="stat-card"><span>SẢN PHẨM</span><strong>${Number(stats.products || 0)}</strong><em>${Number(stats.variants || 0)} SKU / quy cách</em></article><article class="stat-card"><span>CẢNH BÁO TỒN THẤP</span><strong>${Number(stats.lowStock || 0)}</strong><em>Kiểm tra hàng có thể bán</em></article></div><section class="panel"><div class="section-title"><div><h2>Công việc thường ngày</h2><p>Đi thẳng đến màn hình bạn cần.</p></div></div><div class="dashboard-shortcuts workspace-actions">${quick.map((s) => `<button class="workspace-action" data-workspace-section="${s.id}">${icon(sectionIcons[s.id])}<span>${s.label}</span>${icon("arrow")}</button>`).join("")}</div></section><div id="dashboard-insights"></div>`;
 }
+
 function productsMarkup() {
-  return `<section class="panel">${header("Sản phẩm & SKU", "Quản lý giá và trạng thái bán theo từng quy cách.", refreshButton())}<div class="table-controls"><input id="product-search" type="search" placeholder="Tìm tên sản phẩm, SKU, thương hiệu…" aria-label="Tìm sản phẩm quản trị"><select id="product-status" aria-label="Lọc trạng thái sản phẩm"><option value="">Tất cả trạng thái</option><option value="active">Đang bán</option><option value="inactive">Ngừng bán</option><option value="draft">Bản nháp</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Sản phẩm / quy cách</th><th scope="col">Giá bán</th><th scope="col">Có thể bán</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="product-table-body">${productTable(productRows)}</tbody></table></div></section>`;
+  return `<section class="panel">${header("Sản phẩm & SKU", "Quản lý giá và trạng thái bán theo từng quy cách.", refreshButton())}<div class="table-controls"><label class="table-filter-label">Tìm sản phẩm<input id="product-search" type="search" placeholder="Tìm tên sản phẩm, SKU, thương hiệu…" aria-label="Tìm sản phẩm quản trị"></label><label class="table-filter-label">Trạng thái bán<select id="product-status" aria-label="Lọc trạng thái sản phẩm"><option value="">Tất cả trạng thái</option><option value="active">Đang bán</option><option value="inactive">Ngừng bán</option><option value="draft">Bản nháp</option></select></label></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Sản phẩm / quy cách</th><th scope="col">Giá bán</th><th scope="col">Có thể bán</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="product-table-body">${productTable(productRows)}</tbody></table></div></section>`;
 }
 function productTable(rows) {
   return (
@@ -284,24 +314,39 @@ function filterProducts() {
   );
 }
 function ordersMarkup() {
-  return `<section class="panel">${header("Đơn hàng", "Kiểm tra thông tin, cập nhật trạng thái và theo dõi quá trình xử lý.", refreshButton())}<div class="table-controls"><input id="order-search" type="search" placeholder="Tìm mã đơn, người nhận hoặc điện thoại…" aria-label="Tìm đơn quản trị"><select id="order-status" aria-label="Lọc trạng thái đơn"><option value="">Tất cả trạng thái</option>${Object.entries(
+  return `<section class="panel">${header("Đơn hàng", "Kiểm tra thông tin, cập nhật trạng thái và theo dõi quá trình xử lý.", refreshButton())}<div class="table-controls"><label class="table-filter-label">Tìm đơn hàng<input id="order-search" type="search" placeholder="Tìm mã đơn, người nhận hoặc điện thoại…" aria-label="Tìm đơn quản trị"></label><label class="table-filter-label">Trạng thái đơn<select id="order-status" aria-label="Lọc trạng thái đơn"><option value="">Tất cả trạng thái</option>${Object.entries(
     statusNames,
   )
     .filter(([key]) => Object.hasOwn(transitions, key))
     .map(([key, label]) => `<option value="${key}">${label}</option>`)
     .join(
       "",
-    )}</select></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Mã đơn / thời gian</th><th scope="col">Người nhận</th><th scope="col">Tổng cộng</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="order-table-body">${orderTable(orderRows)}</tbody></table></div></section>`;
+    )}</select></label></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Mã đơn / thời gian</th><th scope="col">Người nhận</th><th scope="col">Tổng cộng</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="order-table-body">${orderTable(orderRows)}</tbody></table></div></section>`;
 }
 function orderTable(rows) {
   return (
     rows
       .map(
         (order) =>
-          `<tr><td><b>${escape(order.id)}</b><div class="small muted">${date(order.createdAt)}</div></td><td>${escape(order.customer?.name)}<div class="small muted">${escape(order.customer?.phone)}</div></td><td class="price-cell">${money(order.total)}<div class="small muted" style="font-weight:400">${escape(paymentLabel(order.payment || "cod"))}</div></td><td>${badge(order.status)}</td><td><button class="secondary" data-admin-order="${escape(order.id)}" style="padding:6px 9px;font-size:10px">Xem / xử lý</button></td></tr>`,
+          `<tr><td><b>${escape(order.id)}</b><div class="small muted">${date(order.createdAt)}</div></td><td>${escape(order.customer?.name)}<div class="small muted">${escape(order.customer?.phone)}</div></td><td class="price-cell">${money(order.total)}<div class="small muted" style="font-weight:400">${escape(paymentLabel(order.payment || "cod"))}</div></td><td>${badge(order.status)}</td><td><button class="secondary" data-admin-order="${escape(order.id)}">Xem / xử lý</button></td></tr>`,
       )
       .join("") || noRows(5)
   );
+}
+function prepareMobileTables() {
+  for (const id of ["order-table-body", "inventory-table-body"]) {
+    const body = document.getElementById(id);
+    if (!body) continue;
+    const table = body.closest("table");
+    table.classList.add("mobile-cards");
+    const headings = [...table.querySelectorAll("thead th")].map((th) =>
+      th.textContent.trim(),
+    );
+    for (const row of body.rows)
+      for (const [index, cell] of [...row.cells].entries()) {
+        if (cell.colSpan === 1) cell.dataset.label = headings[index] || "";
+      }
+  }
 }
 function filterOrders() {
   const query = ($("#order-search")?.value || "")
@@ -319,6 +364,7 @@ function filterOrders() {
             .includes(query)),
     ),
   );
+  prepareMobileTables();
 }
 function inventoryMarkup() {
   const warehouses = [
@@ -329,14 +375,14 @@ function inventoryMarkup() {
       ]),
     ).values(),
   ];
-  return `<section class="panel">${header("Kho & tồn hàng", "Có thể bán = tồn thực tế − lượng giữ cho đơn chưa xuất.", refreshButton())}<div class="table-controls"><input id="inventory-search" type="search" placeholder="Tìm tên sản phẩm hoặc mã SKU…" aria-label="Tìm sản phẩm trong kho"><select id="inventory-warehouse" aria-label="Lọc kho"><option value="">Tất cả kho</option>${warehouses.map((warehouse) => `<option value="${escape(warehouse.id)}">${escape(warehouse.name)}</option>`).join("")}</select></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Sản phẩm / SKU</th><th scope="col">Kho</th><th scope="col">Tồn thực tế</th><th scope="col">Đang giữ</th><th scope="col">Có thể bán</th><th scope="col">Thao tác</th></tr></thead><tbody id="inventory-table-body">${inventoryTable(inventoryRows)}</tbody></table></div><p class="support-text">Kho hư hỏng được tách khỏi kho bán thông thường. Việc chuyển kho có thể cần nghiệp vụ riêng; biểu mẫu hiện tại chỉ ghi điều chỉnh tăng hoặc giảm tại một kho.</p></section>`;
+  return `<section class="panel">${header("Kho & tồn hàng", "Có thể bán = tồn thực tế − lượng giữ cho đơn chưa xuất.", refreshButton())}<div class="table-controls"><label class="table-filter-label">Tìm sản phẩm / SKU<input id="inventory-search" type="search" placeholder="Tìm tên sản phẩm hoặc mã SKU…" aria-label="Tìm sản phẩm trong kho"></label><label class="table-filter-label">Kho hàng<select id="inventory-warehouse" aria-label="Lọc kho"><option value="">Tất cả kho</option>${warehouses.map((warehouse) => `<option value="${escape(warehouse.id)}">${escape(warehouse.name)}</option>`).join("")}</select></label><label class="table-filter-label">Tình trạng tồn<select id="inventory-stock"><option value="">Tất cả</option><option value="out">Hết hàng</option><option value="low">Sắp hết</option><option value="enough">Đủ hàng</option></select></label><label class="table-filter-label">Sắp xếp<select id="inventory-sort"><option value="">Theo sản phẩm</option><option value="available">Có thể bán tăng dần</option></select></label></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Sản phẩm / SKU</th><th scope="col">Kho</th><th scope="col">Tồn thực tế</th><th scope="col">Đang giữ</th><th scope="col">Có thể bán</th><th scope="col">Thao tác</th></tr></thead><tbody id="inventory-table-body">${inventoryTable(inventoryRows)}</tbody></table></div><p class="support-text">Kho hư hỏng được tách khỏi kho bán thông thường. Việc chuyển kho có thể cần nghiệp vụ riêng; biểu mẫu hiện tại chỉ ghi điều chỉnh tăng hoặc giảm tại một kho.</p></section>`;
 }
 function inventoryTable(rows) {
   return (
     rows
       .map(
         (row) =>
-          `<tr><td><div class="table-product"><div><b>${escape(row.name)}</b><small>${escape(row.sku)}</small></div></div></td><td>${escape(row.warehouseName)}<div class="small muted">${row.warehouseType === "damaged" ? "Kho hư hỏng" : "Kho thông thường"}</div></td><td class="inventory-numbers">${Number(row.onHand)}</td><td>${Number(row.reserved)}</td><td class="inventory-numbers ${Number(row.available) <= (row.lowStockThreshold ?? 5) ? "stock-low" : ""}">${row.warehouseType === "damaged" ? "Không bán" : Number(row.available)}</td><td><button class="secondary" data-adjust-variant="${Number(row.variantId)}" data-warehouse="${Number(row.warehouseId)}" style="font-size:10px;padding:6px 9px">Điều chỉnh</button></td></tr>`,
+          `<tr><td><div class="table-product"><div><b>${escape(row.name)}</b><small>${escape(row.sku)}</small></div></div></td><td>${escape(row.warehouseName)}<div class="small muted">${row.warehouseType === "damaged" ? "Kho hư hỏng" : "Kho thông thường"}</div></td><td class="inventory-numbers">${Number(row.onHand)}</td><td class="numeric">${Number(row.reserved)}</td><td class="inventory-numbers ${Number(row.available) <= (row.lowStockThreshold ?? 5) ? "stock-low" : ""}">${row.warehouseType === "damaged" ? "Không bán" : `${Number(row.available)}<small class="stock-caption">${Number(row.available) <= 0 ? "Hết hàng" : Number(row.available) <= (row.lowStockThreshold ?? 5) ? "Sắp hết" : "Đủ hàng"}</small>`}</td><td><button class="secondary" data-adjust-variant="${Number(row.variantId)}" data-warehouse="${Number(row.warehouseId)}">Điều chỉnh</button></td></tr>`,
       )
       .join("") || noRows(6)
   );
@@ -346,23 +392,39 @@ function filterInventory() {
     .trim()
     .toLocaleLowerCase("vi");
   const warehouse = $("#inventory-warehouse")?.value || "";
+  const state = $("#inventory-stock")?.value || "";
   $("#inventory-table-body").innerHTML = inventoryTable(
-    inventoryRows.filter(
-      (row) =>
-        (!warehouse || String(row.warehouseId) === warehouse) &&
-        (!query ||
-          [row.name, row.sku]
-            .join(" ")
-            .toLocaleLowerCase("vi")
-            .includes(query)),
-    ),
+    [...inventoryRows]
+      .sort((a, b) =>
+        $("#inventory-sort")?.value === "available"
+          ? a.available - b.available
+          : 0,
+      )
+      .filter(
+        (row) =>
+          (!warehouse || String(row.warehouseId) === warehouse) &&
+          (!state ||
+            (row.warehouseType !== "damaged" &&
+              (state === "out"
+                ? row.available <= 0
+                : state === "low"
+                  ? row.available > 0 &&
+                    row.available <= (row.lowStockThreshold ?? 5)
+                  : row.available > (row.lowStockThreshold ?? 5)))) &&
+          (!query ||
+            [row.name, row.sku]
+              .join(" ")
+              .toLocaleLowerCase("vi")
+              .includes(query)),
+      ),
   );
+  prepareMobileTables();
 }
 function auditMarkup() {
   return `<section class="panel">${header("Nhật ký thao tác", "Lịch sử thay đổi do máy chủ ghi nhận.", refreshButton())}<div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Thời gian</th><th scope="col">Thao tác / đối tượng</th><th scope="col">Người thực hiện</th><th scope="col">Thông tin</th></tr></thead><tbody>${auditRows.map((log) => `<tr><td style="white-space:nowrap">${date(log.createdAt)}</td><td><span class="log-action">${escape(log.action)}</span><span class="log-entity">${escape(log.entityType)} #${escape(log.entityId)}</span></td><td>${log.actorId == null ? "Hệ thống" : "Tài khoản #" + escape(log.actorId)}</td><td><button class="text-button" data-audit="${escape(log.id)}">Xem chi tiết</button></td></tr>`).join("") || noRows(4, "Chưa có thao tác được ghi nhận.")}</tbody></table></div></section>`;
 }
 function staffTable(rows) {
-  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr></thead><tbody>${rows.map((u) => `<tr><td>${escape(u.full_name)}<br>${escape(u.email)}<br>${escape(u.phone)}</td><td>${escape(u.roles.join(", "))}</td><td>${escape(u.status)}</td><td><button data-staff="${Number(u.id)}">Phân quyền</button></td></tr>`).join("")}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr></thead><tbody>${rows.map((u) => `<tr><td>${escape(u.full_name)}<br>${escape(u.email)}<br>${escape(u.phone)}</td><td>${escape(u.roles.map((r) => roleLabels[r] || r).join(", "))}</td><td>${escape(u.status)}</td><td><button data-staff="${Number(u.id)}">Phân quyền</button></td></tr>`).join("")}</tbody></table></div>`;
 }
 async function renderView(view, { focus = true } = {}) {
   const selected = sections.find((section) => section.id === view);
@@ -413,11 +475,27 @@ async function renderView(view, { focus = true } = {}) {
     }
     if (version !== viewVersion) return;
     content.innerHTML = html;
+    prepareMobileTables();
     if (!has("catalog.manage"))
       $$("[data-edit-variant]", content).forEach((e) => e.remove());
     if (!has("inventory.manage"))
       $$("[data-adjust-variant]", content).forEach((e) => e.remove());
     if (focus) content.focus({ preventScroll: true });
+    if (view === "dashboard") {
+      const insights = $("#dashboard-insights");
+      if (has("reports.read")) {
+        api("/api/admin/reports/summary")
+          .then(({ report }) => {
+            if (version === viewVersion && insights.isConnected)
+              insights.innerHTML = reportVisuals(report, escape);
+          })
+          .catch(() => {
+            if (insights.isConnected)
+              insights.innerHTML =
+                '<p class="form-error">Chưa tải được báo cáo. Mở mục Báo cáo để thử lại.</p>';
+          });
+      }
+    }
   } catch (error) {
     if (version === viewVersion)
       content.innerHTML = `<section class="panel"><div class="form-error" role="alert">${escape(error.message)}</div>${error.status === 403 ? '<p class="support-text">Tài khoản chưa được cấp quyền cho mục này. Quyền truy cập phải được thay đổi ở máy chủ.</p>' : ""}<button class="secondary" id="refresh-view">Thử tải lại</button></section>`;
@@ -609,7 +687,10 @@ root.addEventListener("click", (event) => {
       "Tạo tài khoản nhân viên",
       `<form id="create-staff-form" class="editor-form"><label>Họ tên<input name="fullName" required minlength="2"></label><label>Tên đăng nhập<input name="username" required minlength="3" autocomplete="off"></label><label>Điện thoại Việt Nam<input name="phone" required></label><label>Email (tùy chọn)<input name="email" type="email"></label><label>Mật khẩu riêng (ít nhất 10 ký tự)<input name="password" type="password" required minlength="10" autocomplete="new-password"></label><label>Vai trò<select name="role">${staffRoles
         .filter((r) => !["customer", "admin"].includes(r))
-        .map((r) => `<option value="${escape(r)}">${escape(r)}</option>`)
+        .map(
+          (r) =>
+            `<option value="${escape(r)}">${escape(roleLabels[r] || r)}</option>`,
+        )
         .join(
           "",
         )}</select></label><div class="form-error" role="alert"></div><button class="primary">Tạo nhân viên</button></form>`,
@@ -625,7 +706,7 @@ root.addEventListener("click", (event) => {
     );
     showDialog(
       "Tài khoản & Phân quyền",
-      `<form id="staff-form">${staffRoles.map((r) => `<label><input type="checkbox" name="roles" value="${escape(r)}" ${item.roles.includes(r) ? "checked" : ""}>${escape(r)}</label><br>`).join("")}<select name="status"><option value="active" ${item.status === "active" ? "selected" : ""}>Hoạt động</option><option value="inactive" ${item.status === "inactive" ? "selected" : ""}>Vô hiệu hóa</option></select><div class="form-error" role="alert"></div><button>Lưu quyền</button></form>`,
+      `<form id="staff-form">${staffRoles.map((r) => `<label class="role-option"><input type="checkbox" name="roles" value="${escape(r)}" ${item.roles.includes(r) ? "checked" : ""}><span>${escape(roleLabels[r] || r)}<small>Quyền theo nhóm công việc được phân công</small></span></label>`).join("")}<select name="status"><option value="active" ${item.status === "active" ? "selected" : ""}>Hoạt động</option><option value="inactive" ${item.status === "inactive" ? "selected" : ""}>Vô hiệu hóa</option></select><div class="form-error" role="alert"></div><button>Lưu quyền</button></form>`,
       "staff",
       item,
     );
@@ -691,7 +772,12 @@ root.addEventListener("input", (event) => {
 root.addEventListener("change", (event) => {
   if (event.target.id === "product-status") filterProducts();
   if (event.target.id === "order-status") filterOrders();
-  if (event.target.id === "inventory-warehouse") filterInventory();
+  if (
+    ["inventory-warehouse", "inventory-stock", "inventory-sort"].includes(
+      event.target.id,
+    )
+  )
+    filterInventory();
 });
 $("#admin-dialog").addEventListener("submit", (event) => {
   event.preventDefault();

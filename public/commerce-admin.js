@@ -1,3 +1,4 @@
+import { reportVisuals } from "/report-visuals.js";
 import { icon } from "/ui-icons.js";
 // Editors share the existing authenticated API/CSRF adapter and permission gate.
 export function createCommerceEditors({ root, api, has, escape: e, notify }) {
@@ -10,6 +11,8 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     documents = [],
     importPreview = null,
     returnRows = [],
+    companyItems = [],
+    couponItems = [],
     reportQuery = "",
     auditQuery = "";
   let cmsQuery = "",
@@ -134,11 +137,56 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         end = params.get("to")
           ? new Date(new Date(params.get("to")).getTime() - 86400000)
           : report.to;
-      return `${heading("Báo cáo bán hàng", "Nắm bắt đơn hàng và số tiền thực thu trong khoảng thời gian bạn chọn.", button("Xuất báo cáo CSV", "report-export"))}<section class="panel report-filters"><form id="report-filter" class="filter-toolbar">${field("Từ ngày", "from", dateInput(from), "date", "required")}${field("Đến ngày", "to", dateInput(end), "date", "required")}<button class="primary">Xem báo cáo</button><div class="date-presets"><button type="button" data-editor-action="report-days:7">7 ngày</button><button type="button" data-editor-action="report-days:30">30 ngày</button><button type="button" data-editor-action="report-days:90">90 ngày</button></div></form></section><div class="report-period">${icon("clock")}<span>Kỳ báo cáo: <b>${e(new Date(from).toLocaleDateString("vi-VN"))} – ${e(new Date(end).toLocaleDateString("vi-VN"))}</b></span></div><div class="report-metrics">${metric("Tổng đơn hàng", Number(report.orders).toLocaleString("vi-VN"), "Số đơn được tạo trong kỳ", "file")}${metric("Giá trị đơn hàng", Number(report.gmv).toLocaleString("vi-VN") + " ₫", "Tổng giá trị các đơn chưa hủy", "chart")}${metric("Tiền đã thu", Number(report.collected).toLocaleString("vi-VN") + " ₫", "Các khoản thanh toán đã xác nhận", "check")}</div><div class="two-column"><section class="panel"><h2>${Number(report.orders) ? "Kết quả trong kỳ" : "Chưa có đơn hàng trong kỳ"}</h2><p class="muted">${Number(report.orders) ? "Báo cáo tổng hợp đã sẵn sàng. Xuất CSV để xem và lưu kết quả." : "Khi có đơn hàng mới, số liệu sẽ xuất hiện tại đây. Bạn cũng có thể chọn khoảng ngày khác."}</p><div class="information-note">${icon("chart")}<p>Số liệu lấy trực tiếp từ hệ thống đơn hàng và thanh toán.</p></div></section><section class="panel"><h2>Cách đọc báo cáo</h2><dl class="summary-list"><div><dt>Giá trị đơn hàng</dt><dd>Tính theo ngày tạo đơn, loại trừ đơn đã hủy.</dd></div><div><dt>Tiền đã thu</dt><dd>Tính theo thời điểm xác nhận thanh toán; dữ liệu cũ dùng ngày ghi nhận. Chưa trừ các khoản hoàn tiền thủ công.</dd></div></dl></section></div>${result}`;
+      return `${heading("Báo cáo bán hàng", "Nắm bắt đơn hàng và số tiền thực thu trong khoảng thời gian bạn chọn.", button("Xuất báo cáo CSV", "report-export"))}<section class="panel report-filters"><form id="report-filter" class="filter-toolbar">${field("Từ ngày", "from", dateInput(from), "date", "required")}${field("Đến ngày", "to", dateInput(end), "date", "required")}<button class="primary">Xem báo cáo</button><div class="date-presets"><button type="button" data-editor-action="report-days:7">7 ngày</button><button type="button" data-editor-action="report-days:30">30 ngày</button><button type="button" data-editor-action="report-days:90">90 ngày</button></div></form></section><div class="report-period">${icon("clock")}<span>Kỳ báo cáo: <b>${e(new Date(from).toLocaleDateString("vi-VN"))} – ${e(new Date(end).toLocaleDateString("vi-VN"))}</b></span></div><div class="report-metrics">${metric("Tổng đơn hàng", Number(report.orders).toLocaleString("vi-VN"), "Số đơn được tạo trong kỳ", "file")}${metric("Giá trị đơn hàng", Number(report.gmv).toLocaleString("vi-VN") + " ₫", "Tổng giá trị các đơn chưa hủy", "chart")}${metric("Tiền đã thu", Number(report.collected).toLocaleString("vi-VN") + " ₫", "Các khoản thanh toán đã xác nhận", "check")}</div><div class="two-column"><section class="panel"><h2>${Number(report.orders) ? "Kết quả trong kỳ" : "Chưa có đơn hàng trong kỳ"}</h2><p class="muted">${Number(report.orders) ? "Báo cáo tổng hợp đã sẵn sàng. Xuất CSV để xem và lưu kết quả." : "Khi có đơn hàng mới, số liệu sẽ xuất hiện tại đây. Bạn cũng có thể chọn khoảng ngày khác."}</p><div class="information-note">${icon("chart")}<p>Số liệu lấy trực tiếp từ hệ thống đơn hàng và thanh toán.</p></div></section><section class="panel"><h2>Cách đọc báo cáo</h2><dl class="summary-list"><div><dt>Giá trị đơn hàng</dt><dd>Tính theo ngày tạo đơn, loại trừ đơn đã hủy.</dd></div><div><dt>Tiền đã thu</dt><dd>Tính theo thời điểm xác nhận thanh toán; dữ liệu cũ dùng ngày ghi nhận. Chưa trừ các khoản hoàn tiền thủ công.</dd></div></dl></section></div>${reportVisuals(report, e)}${result}`;
     }
     if (view === "settings-editor") {
-      const { items } = await api("/api/admin/settings/site");
-      return `<section class="panel"><h1>Cấu hình công ty</h1>${items.map((s) => `<p>${e(s.key)}: ${e(s.value_json)}</p>`).join("")}${has("settings.write") ? `<form id="setting-form" class="editor-form"><label>Trường<select name="key">${["companyName", "contactPhone", "contactEmail", "address", "footerText"].map((k) => option(k, k)).join("")}</select></label>${field("Giá trị", "value")}<button>Lưu</button></form>` : ""}${result}</section>`;
+      companyItems = (await api("/api/admin/settings/site")).items;
+      const values = Object.fromEntries(
+        companyItems.map((item) => [item.key, item.value_json]),
+      );
+      const fields = [
+        ["companyName", "Tên cửa hàng", "text", "Tên cửa hàng của bạn"],
+        ["hotline", "Hotline tư vấn", "tel", "Nhập số điện thoại thực tế"],
+        ["zalo", "Liên kết Zalo", "url", "https://zalo.me/…"],
+        ["messenger_url", "Liên kết Messenger", "url", "https://m.me/…"],
+        [
+          "email_support",
+          "Email hỗ trợ",
+          "email",
+          "Địa chỉ email của cửa hàng",
+        ],
+        [
+          "store_address",
+          "Địa chỉ cửa hàng",
+          "text",
+          "Số nhà, đường, phường/xã, tỉnh/thành",
+        ],
+        [
+          "working_hours",
+          "Giờ làm việc",
+          "text",
+          "Nhập ngày và khung giờ hỗ trợ",
+        ],
+        [
+          "footerText",
+          "Giới thiệu ngắn",
+          "text",
+          "Một câu giới thiệu cửa hàng",
+        ],
+      ];
+      return `${heading("Thông tin cửa hàng", "Cập nhật thông tin để khách liên hệ đúng nơi. Chỉ thông tin đã lưu mới xuất hiện trên website.")}<div class="company-layout"><section class="panel"><h2>Thông tin liên hệ công khai</h2><form id="company-form" class="editor-form">${fields.map(([key, label, type, placeholder]) => field(label, key, values[key] || "", type, `maxlength="500" placeholder="${e(placeholder)}" ${has("settings.write") ? "" : "disabled"}`)).join("")}<h2>Nội dung giới thiệu & chính sách</h2><p class="editor-note">Chỉ lưu nội dung đã được cửa hàng duyệt. Văn bản thuần, ngắt đoạn bằng một dòng trống; không cần nhập HTML.</p>${[
+        ["policy_about", "Giới thiệu"],
+        ["policy_shipping", "Giao hàng & thanh toán"],
+        ["policy_returns", "Đổi trả"],
+        ["policy_privacy", "Bảo mật"],
+      ]
+        .map(
+          ([key, label]) =>
+            `<label>${label}<textarea name="${key}" maxlength="10000" ${has("settings.write") ? "" : "disabled"}>${e(values[key] || "")}</textarea></label>`,
+        )
+        .join(
+          "",
+        )}<div class="form-actions">${has("settings.write") ? '<button class="primary">Lưu thông tin cửa hàng</button>' : ""}</div>${result}</form></section><aside class="panel company-guide">${icon("shield")}<h2>Bạn chủ động cập nhật</h2><p>Để trống kênh chưa sử dụng. Nút tư vấn chỉ xuất hiện khi có số điện thoại hoặc liên kết hợp lệ.</p><p>Ví dụ trong ô nhập chỉ để hướng dẫn, không được công khai như thông tin thật.</p><p>Không lưu mật khẩu, API key hoặc thông tin ngân hàng tại đây.</p></aside></div>`;
     }
     if (view === "import-editor") {
       importPreview = null;
@@ -158,8 +206,8 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       }<aside><p class="section-caption">XEM TRƯỚC NỘI DUNG</p><div class="banner-live-preview"><small>JIELIEN INTERNATIONAL</small><h2 id="banner-preview-title">Tiêu đề banner của bạn</h2><img id="banner-preview-image" alt="" hidden><span>Khám phá →</span></div><p class="editor-note">Bản xem trước. Lưu và chọn Xuất bản để hiển thị theo lịch.</p></aside></div><div class="banner-library">${bannerRows.map((b) => `<article><img src="${e(b.url)}" alt="${e(b.alt_text)}"><div><b>${e(b.title)}</b><p>${e({ draft: "Bản nháp", published: "Xuất bản", archived: "Lưu trữ" }[b.status])} · ${e(b.target_path)}</p></div>${has("settings.write") ? button("Chỉnh sửa", "banner-edit:" + b.id) : ""}</article>`).join("") || "<p>Chưa có banner. Hãy tạo nội dung đầu tiên.</p>"}</div>${result}</section>`;
     }
     if (view === "coupons-editor") {
-      const { items } = await api("/api/admin/coupons");
-      return `<section class="panel"><h1>Mã giảm giá</h1><p>${items.map((c) => `#${c.id} ${e(c.code)}: ${e(c.status)} — đã dùng ${c.used_count}`).join("<br>")}</p><form id="coupon-form" class="editor-form">${field("ID để sửa; trống để tạo", "id", "", "number")}${field("Mã", "code", "", "text", "required")}<label>Loại<select name="discountType">${["fixed", "percentage", "shipping"].map((t) => option(t, t)).join("")}</select></label>${field("Mức giảm", "discountValue", 0, "number", 'min="0" required')}${field("Đơn tối thiểu", "minimumOrder", 0, "number", 'min="0" required')}${field("Giới hạn lượt dùng (trống: không giới hạn)", "usageLimit", "", "number", 'min="1"')}<label>Trạng thái<select name="status">${["active", "inactive"].map((v) => option(v, v)).join("")}</select></label><button class="primary">Lưu mã</button></form>${result}</section>`;
+      couponItems = (await api("/api/admin/coupons")).items;
+      return `${heading("Mã giảm giá", "Tạo ưu đãi rõ ràng, kiểm soát điều kiện và lượt sử dụng.", button("Tạo mã mới", "coupon-new"))}<section class="panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>Mã ưu đãi</th><th>Loại / mức giảm</th><th>Đơn tối thiểu</th><th>Đã dùng</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>${couponItems.map((c) => `<tr><td><b>${e(c.code)}</b></td><td>${e({ fixed: "Giảm số tiền", percentage: "Giảm phần trăm", shipping: "Phí giao hàng" }[c.discount_type])}<small class="row-description">${c.discount_type === "percentage" ? Number(c.discount_value) + "%" : Number(c.discount_value).toLocaleString("vi-VN") + " ₫"}</small></td><td class="numeric">${Number(c.minimum_order).toLocaleString("vi-VN")} ₫</td><td class="numeric">${Number(c.used_count)}${c.usage_limit ? " / " + Number(c.usage_limit) : ""}</td><td>${stateBadge(c.status)}</td><td><button type="button" class="secondary" data-editor-action="coupon-edit:${c.id}">Sửa ${e(c.code)}</button></td></tr>`).join("") || '<tr><td colspan="6">Chưa có mã ưu đãi. Tạo mã đầu tiên bên dưới.</td></tr>'}</tbody></table></div></section><section class="panel"><h2 id="coupon-editor-title">Tạo mã giảm giá</h2><form id="coupon-form" class="editor-form"><input type="hidden" name="id">${field("Mã ưu đãi", "code", "", "text", 'required maxlength="40"')}<label>Loại giảm giá<select name="discountType"><option value="fixed">Giảm số tiền (₫)</option><option value="percentage">Giảm phần trăm (%)</option><option value="shipping">Ưu đãi phí giao hàng</option></select></label>${field("Mức giảm (₫ hoặc %)", "discountValue", 0, "number", 'min="0" required')}${field("Giá trị đơn tối thiểu (₫)", "minimumOrder", 0, "number", 'min="0" required')}${field("Giới hạn lượt dùng (trống: không giới hạn)", "usageLimit", "", "number", 'min="1"')}<label>Trạng thái<select name="status"><option value="active">Đang áp dụng</option><option value="inactive">Tạm ngưng</option></select></label><div class="form-actions"><button class="primary">Lưu mã</button>${button("Hủy chỉnh sửa", "coupon-new")}</div></form>${result}</section>`;
     }
     return null;
   }
@@ -307,6 +355,30 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         $("#taxonomy-editor-panel").innerHTML =
           `<h2>Sửa ${names[kind].toLowerCase()}</h2>${taxonomyForm(kind, item)}`;
         $("#taxonomy-editor-panel input").focus();
+        return;
+      }
+      if (action === "coupon-new" || action.startsWith("coupon-edit:")) {
+        const form = $("#coupon-form"),
+          item = couponItems.find((c) => c.id === Number(action.split(":")[1]));
+        form.reset();
+        const values = item
+          ? {
+              id: item.id,
+              code: item.code,
+              discountType: item.discount_type,
+              discountValue: item.discount_value,
+              minimumOrder: item.minimum_order,
+              usageLimit: item.usage_limit ?? "",
+              status: item.status,
+            }
+          : { id: "" };
+        Object.entries(values).forEach(
+          ([key, value]) => (form.elements.namedItem(key).value = value),
+        );
+        $("#coupon-editor-title").textContent = item
+          ? "Sửa mã " + item.code
+          : "Tạo mã giảm giá";
+        form.elements.namedItem("code").focus();
         return;
       }
       if (["report-export", "audit-export"].includes(action)) {
@@ -594,6 +666,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       "return-form",
       "catalog-search",
       "setting-form",
+      "company-form",
       "coupon-form",
       "banner-form",
       "import-form",
@@ -851,6 +924,28 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
           },
         });
         await refresh("documents-editor");
+      }
+      if (form.getAttribute("id") === "company-form") {
+        for (const [key, value] of Object.entries(data)) {
+          const old = companyItems.find((item) => item.key === key);
+          if ((old?.value_json || "") === value) continue;
+          const { item: setting } = await api("/api/admin/settings/site", {
+            method: "PATCH",
+            body: { key, value, version: old?.version },
+          });
+          // Update the local version after each successful field; a later error can be retried safely.
+          const fresh =
+            setting ||
+            (await api("/api/admin/settings/site")).items.find(
+              (item) => item.key === key,
+            );
+          if (fresh) {
+            const index = companyItems.findIndex((item) => item.key === key);
+            if (index < 0) companyItems.push(fresh);
+            else companyItems[index] = fresh;
+          }
+        }
+        await refresh("settings-editor");
       }
       if (form.getAttribute("id") === "setting-form") {
         const items = (await api("/api/admin/settings/site")).items;
