@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {once} from 'node:events';
 import {createTestDatabase,closeServer} from './support/database.mjs';
-import {createApp} from '../server.mjs';
+import {createApp} from './support/app.mjs';
 import {createAuth} from '../lib/auth.mjs';
 test('staff API enforces role matrix, CSRF, last admin and session revocation',async()=>{
  const db=await createTestDatabase(); let app;

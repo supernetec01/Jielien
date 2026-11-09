@@ -1,0 +1,15 @@
+
+> jielien-baby-store@3.0.0 test:upgrade
+> node tests/ui-upgrade.browser.mjs
+
+PASS 1: variant changes URL/cart identity, survives reload, mini-cart updates quantities and closes with Escape
+PASS 2: mobile filter drawer applies selections only after confirmation
+PASS 3: buy-now bypasses drawer; checkout validation preserves input
+PASS 4: six storefront screens fit all five target widths; sticky purchase and 44px quantity controls verified
+PASS 5: dashboard chart and top SKU use actual fixture orders, separate from collected money
+PASS 6: company contacts/policies persist through Admin; unsupported contact destinations rejected
+PASS 7: six Admin screens fit all five target widths with actual order fixtures
+PASS 8: coupon selection hides internal ID; configured contacts and policy content appear on storefront
+PASS 9: dynamic category names are escaped in menu and home tiles
+PASS 10: no uncaught JavaScript errors
+Upgrade browser complete: 10 checks passed.

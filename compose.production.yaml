@@ -1,0 +1,68 @@
+# Standalone public deployment. Does not replace the local/LAN compose stack.
+name: jielien-production
+services:
+  db:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jielien
+      POSTGRES_USER: jielien
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a unique URL-safe password}
+    volumes:
+      - production_database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U jielien -d jielien']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+  app:
+    build: .
+    restart: unless-stopped
+    init: true
+    environment:
+      DATABASE_URL: postgresql://jielien:${POSTGRES_PASSWORD:?Set password}@db:5432/jielien
+      PORT: '3001'
+      NODE_ENV: production
+      COOKIE_SECURE: 'true'
+      PUBLIC_BASE_URL: https://${SITE_DOMAIN:?Set the public domain}
+      SEO_INDEXING_ENABLED: ${SEO_INDEXING_ENABLED:-false}
+      JIELIEN_DEMO_DATA: 'false'
+      DEMO_MODE: 'false'
+      BANK_BIN: ${BANK_BIN:-}
+      BANK_NAME: ${BANK_NAME:-}
+      BANK_ACCOUNT_NUMBER: ${BANK_ACCOUNT_NUMBER:-}
+      BANK_ACCOUNT_NAME: ${BANK_ACCOUNT_NAME:-}
+    volumes:
+      - production_files:/app/data
+    expose: ['3001']
+    depends_on:
+      db:
+        condition: service_healthy
+    logging: *logging
+  gateway:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?Set the public domain}
+      ACME_EMAIL: ${ACME_EMAIL:?Set certificate contact email}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - production_certificates:/data
+      - production_caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    logging: *logging
+volumes:
+  production_database:
+  production_files:
+  production_certificates:
+  production_caddy_config:

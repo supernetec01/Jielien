@@ -1,0 +1,54 @@
+name: Commerce regression and migration guard
+on:
+  pull_request:
+  push:
+    branches: [main, 'feature/**']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: agent
+          POSTGRES_DB: jielien_ci
+          # Ephemeral CI only, bound to runner loopback; never production config.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - '127.0.0.1:5432:5432'
+        options: >-
+          --health-cmd "pg_isready -U agent -d jielien_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_URL: postgresql://agent@127.0.0.1:5432/jielien_ci
+      CHROMIUM_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run test:local
+      - run: npm run test:browser
+      - run: npm run test:management
+      - run: npm run test:account
+      - run: npm run test:bank
+      - run: npm run test:commerce
+      - run: npm run test:admin-access
+      - run: npm run test:usability
+      - run: npm run test:frontend-v3
+      - run: npm run test:upgrade
+      - run: npm run test:contrast
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fixture-browser-screenshots
+          path: docs/screenshots/upgrade
+          retention-days: 7

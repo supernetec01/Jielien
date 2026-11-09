@@ -2,87 +2,100 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#0B1B34" />
     <meta
       name="description"
-      content="Jielien — thế giới mẹ và bé. Mua sắm sữa, bỉm tã, đồ dùng chăm sóc bé và đặt hàng COD."
+      content="Jielien International — lựa chọn cho gia đình và cuộc sống."
     />
-    <title>Jielien — Thế giới mẹ và bé</title>
+    <title>Jielien International</title>
     <link rel="icon" href="/assets/jielien-logo.jpg" />
     <link rel="stylesheet" href="/brand.css" />
     <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/storefront.css" />
   </head>
-  <body>
+  <body class="storefront-v3">
     <a class="skip-link" href="#main">Đi đến nội dung</a>
-    <div class="top-promo">
-      THÁNG YÊU THƯƠNG <strong>Giảm 50.000đ</strong> cho đơn từ 500.000đ
-      <span>• Mã: MEBE50</span><a href="/san-pham" data-link>Mua ngay →</a>
+    <div class="topline">
+      <div class="container topline-content">
+        <span>JIELIEN INTERNATIONAL</span
+        ><span id="company-tagline" hidden></span
+        ><span id="company-phone" hidden></span>
+      </div>
     </div>
-    <header class="site-header">
-      <div class="header-main wrap">
+    <header class="head site-header">
+      <div class="container head-content">
         <button
           id="mobile-menu"
-          class="icon-button mobile-only"
+          class="mobile-menu-toggle"
           aria-label="Mở danh mục"
+          aria-controls="category-dropdown"
+          aria-expanded="false"
         >
-          ☰
-        </button>
-        <a href="/" data-link class="logo" aria-label="Jielien trang chủ"
-          ><img class="brand-logo" src="/assets/jielien-logo.jpg" alt="Jielien International" width="128" height="96"></a
-        >
-        <form id="search-form" role="search" class="search-form">
-          <input
+          <span data-v3-icon="menu"></span></button
+        ><a class="brand" href="/" data-link aria-label="Jielien trang chủ"
+          ><img
+            src="/assets/jielien-logo.jpg"
+            alt="Jielien International"
+            width="154"
+            height="93"
+        /></a>
+        <form class="searchbox" id="search-form" role="search">
+          <label class="sr-only" for="search">Tìm kiếm sản phẩm</label
+          ><input
             id="search"
             type="search"
+            placeholder="Tìm sản phẩm, thương hiệu, danh mục…"
             autocomplete="off"
-            placeholder="Mẹ tìm sữa, bỉm tã, đồ dùng cho bé…"
-            aria-label="Tìm sản phẩm"
+            maxlength="120"
           /><button aria-label="Tìm kiếm">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-            >
-              <circle cx="10" cy="10" r="6.5" />
-              <path d="m15 15 6 6" />
-            </svg>
+            <span data-v3-icon="search"></span>
           </button>
           <div id="suggestions" hidden></div>
         </form>
-        <a href="/tai-khoan" class="header-action account-link" aria-label="Tài khoản và đăng nhập"
-          ><span class="line-icon">♙</span
-          ><span>Tài khoản<br /><b id="account-label">Đăng nhập</b></span></a
-        >
-        <a href="/tra-cuu-don-hang" data-link class="header-action"
-          ><span class="line-icon">▤</span
-          ><span>Tra cứu<br /><b>đơn hàng</b></span></a
-        >
-        <a href="/yeu-thich" data-link class="header-action wish-header"
-          ><span class="line-icon">♡</span
-          ><span>Sản phẩm<br /><b>yêu thích</b></span></a
-        >
-        <a href="/gio-hang" data-link class="cart-link"
-          ><span class="bag-icon">♧</span><span>Giỏ hàng</span
-          ><b id="cart-count">0</b></a
-        >
-      </div>
-      <nav class="nav-bar">
-        <div class="wrap nav-inner">
-          <button id="category-menu">
-            ☰ <b>Danh mục sản phẩm</b><span>⌄</span></button
-          ><a href="/san-pham?category=Sữa%20cho%20bé" data-link>Sữa cho bé</a
-          ><a href="/san-pham?category=Bỉm%20%26%20tã" data-link>Bỉm & tã</a
-          ><a href="/san-pham?category=Ăn%20dặm" data-link>Ăn dặm</a
-          ><a href="/san-pham?category=Chăm%20sóc%20bé" data-link>Chăm sóc bé</a
-          ><a href="/bai-viet/an-dam" data-link>Góc của mẹ</a
-          ><a href="/san-pham?sort=discount" data-link class="nav-hot"
-            >ϟ Ưu đãi hôm nay</a
+        <div class="head-actions">
+          <a class="head-action" href="/tai-khoan"
+            ><span data-v3-icon="user"></span
+            ><span
+              ><small>Chào mừng bạn</small
+              ><strong id="account-label">Tài khoản</strong></span
+            ></a
+          ><a
+            class="head-action"
+            href="/yeu-thich"
+            data-link
+            aria-label="Sản phẩm yêu thích"
+            ><span data-v3-icon="heart"></span
+            ><span><small>Danh sách</small><strong>Yêu thích</strong></span></a
+          ><a
+            class="head-action"
+            href="/gio-hang"
+            data-link
+            aria-label="Giỏ hàng"
+            ><span class="bag-icon"
+              ><span data-v3-icon="bag"></span
+              ><b class="count-bubble" id="cart-count">0</b></span
+            ><span
+              ><small>Đơn mua của bạn</small><strong>Giỏ hàng</strong></span
+            ></a
           >
         </div>
-      </nav>
+      </div>
     </header>
+    <nav class="nav" aria-label="Điều hướng chính">
+      <div class="container nav-content">
+        <button
+          class="all-cats"
+          id="category-menu"
+          aria-controls="category-dropdown"
+          aria-expanded="false"
+        >
+          <span data-v3-icon="grid"></span> Khám phá danh mục</button
+        ><a class="navlink" href="/" data-link>Trang chủ</a>
+        <div id="dynamic-nav" class="dynamic-nav"></div>
+        <a class="navlink" href="/tin-tuc">Góc cảm hứng</a>
+      </div>
+    </nav>
     <div id="menu-backdrop" hidden></div>
     <nav
       id="category-dropdown"
@@ -90,90 +103,63 @@
       aria-label="Danh mục sản phẩm"
       hidden
     ></nav>
-    <a class="brand-news-link wrap" href="/tin-tuc">Tin tức & Cẩm nang →</a>
-    <main id="main" class="wrap" tabindex="-1">
-      <div class="loading">Đang chuẩn bị thế giới nhỏ cho bé…</div>
+    <main id="main" class="container wrap" tabindex="-1">
+      <div class="loading v3-skeleton" role="status">Đang tải sản phẩm…</div>
     </main>
-    <section class="benefits">
-      <div class="wrap">
-        <div>
-          <i>✓</i
-          ><span
-            ><b>Chọn lọc cho bé</b
-            ><small>Thông tin sản phẩm rõ ràng</small></span
-          >
+    <noscript><p class="container">Bật JavaScript để sử dụng giỏ hàng và thanh toán. Bạn vẫn có thể đọc sản phẩm và tin tức bằng các liên kết trên trang.</p></noscript>
+    <footer class="footer site-footer">
+      <div class="container">
+        <div class="footer-main">
+          <div class="footer-brand-col">
+            <a class="footer-brand" href="/" data-link
+              ><img
+                src="/assets/jielien-logo.jpg"
+                alt="Jielien International"
+                width="154"
+                height="93"
+            /></a>
+            <p>Những lựa chọn thiết thực cho gia đình và cuộc sống hiện đại.</p>
+            <p id="company-footer" hidden></p>
+            <p id="company-contact"></p>
+          </div>
+          <div>
+            <h3>KHÁM PHÁ</h3>
+            <a href="/san-pham" data-link>Tất cả sản phẩm</a>
+            <div id="footer-categories"></div>
+          </div>
+          <div>
+            <h3>HỖ TRỢ KHÁCH HÀNG</h3>
+            <a href="/tai-khoan">Tài khoản của tôi</a
+            ><a href="/gio-hang" data-link>Giỏ hàng</a
+            ><a href="/tra-cuu-don-hang" data-link>Tra cứu đơn hàng</a
+            ><a href="/tin-tuc">Tin tức & Cẩm nang</a
+            ><a href="/chinh-sach/bao-mat" data-link>Thông tin cá nhân</a>
+          </div>
+          <div>
+            <h3>VỀ JIELIEN</h3>
+            <p id="company-legal" hidden></p>
+            <p id="company-registration" hidden></p>
+            <p id="company-address" hidden></p>
+            <p id="company-email" hidden></p>
+            <a href="/chinh-sach/gioi-thieu" data-link>Giới thiệu</a>
+          </div>
         </div>
-        <div>
-          <i>♧</i
-          ><span
-            ><b>Giao hàng tận nơi</b><small>Miễn phí từ 499.000đ</small></span
-          >
+        <div class="footer-bottom">
+          <span>© JIELIEN INTERNATIONAL</span
+          ><a href="/tra-cuu-don-hang" data-link>Theo dõi đơn hàng</a>
         </div>
-        <div>
-          <i>↻</i
-          ><span
-            ><b>Chính sách minh bạch</b
-            ><small>Xem điều kiện đổi trả</small></span
-          >
-        </div>
-        <div>
-          <i>♡</i
-          ><span
-            ><b>Đồng hành cùng mẹ</b
-            ><small>Quan tâm từ điều nhỏ nhất</small></span
-          >
-        </div>
-      </div>
-    </section>
-    <footer>
-      <div class="wrap footer-grid">
-        <div>
-          <a class="logo" href="/" data-link>JIE<span>LIEN</span></a>
-          <p>
-            Yêu thương cho mẹ, trọn vẹn cho bé.<br />Website độc lập, dữ liệu và
-            hình sản phẩm minh họa.
-          </p>
-          <span class="demo-tag">BẢN PHÁT TRIỂN · ĐẶT HÀNG THỬ</span>
-        </div>
-        <div>
-          <h3>Hỗ trợ mua sắm</h3>
-          <a href="/tra-cuu-don-hang" data-link>Tra cứu đơn hàng</a
-          ><a href="/chinh-sach/giao-hang" data-link>Giao hàng & thanh toán</a
-          ><a href="/chinh-sach/doi-tra" data-link>Chính sách đổi trả</a>
-        </div>
-        <div>
-          <h3>Thông tin cửa hàng</h3>
-          <a href="/tai-khoan">Tài khoản của mẹ</a
-          ><a href="/quan-tri">Quản trị cửa hàng</a>
-          <a href="/chinh-sach/gioi-thieu" data-link>Về Jielien</a
-          ><a href="/chinh-sach/bao-mat" data-link>Bảo vệ thông tin cá nhân</a
-          ><a href="/bai-viet/an-dam" data-link>Kiến thức mẹ & bé</a>
-        </div>
-        <div>
-          <h3>Phương thức thanh toán</h3>
-          <span class="cod-label">COD</span>
-          <p>
-            Thanh toán khi nhận hàng.<br />Đơn tạo ở môi trường thử nghiệm,<br />chưa
-            chuyển đơn cho đơn vị vận chuyển.
-          </p>
-        </div>
-      </div>
-      <div class="wrap footer-bottom">
-        © 2026 Jielien. Không phải website chính thức của AVAKids.<a
-          href="/chinh-sach/gioi-thieu"
-          data-link
-          >Thông tin về bản phát triển ↗</a
-        >
       </div>
     </footer>
     <nav class="mobile-bottom" aria-label="Điều hướng điện thoại">
-      <a href="/" data-link>⌂<span>Trang chủ</span></a
-      ><a href="/san-pham" data-link>▦<span>Sản phẩm</span></a
-      ><a href="/tai-khoan" class="bottom-account">♙<span>Tài khoản</span></a
-      ><a href="/gio-hang" data-link>♧<span>Giỏ hàng</span></a
-      ><a href="/tra-cuu-don-hang" data-link>▤<span>Đơn hàng</span></a>
+      <a href="/" data-link><span data-v3-icon="home"></span>Trang chủ</a
+      ><a href="/san-pham" data-link
+        ><span data-v3-icon="grid"></span>Danh mục</a
+      ><a href="/tin-tuc"><span data-v3-icon="book"></span>Tin tức</a
+      ><a href="/gio-hang" data-link
+        ><span data-v3-icon="bag"></span>Giỏ hàng</a
+      >
     </nav>
-    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script type="module" src="/app.js"></script>
   </body>
 </html>

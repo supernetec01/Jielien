@@ -1,0 +1,18 @@
+
+> jielien-baby-store@3.0.0 test:local
+> node --test tests/local-setup.test.mjs
+
+✔ local initialization generates a unique stable database password and preserves native configuration and data (21.675164ms)
+✔ complete receiving instructions copy from native configuration without copying unrelated secrets (3.603878ms)
+✔ partial bank configuration stays disabled and existing local receiving settings are never overwritten (3.125675ms)
+✔ invalid existing database configuration is rejected without replacing its password or file (2.204232ms)
+✔ concurrent initialization preserves the one created configuration (2.926354ms)
+✔ LAN bind and port validation preserves existing database configuration (9.336128ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 135.254147

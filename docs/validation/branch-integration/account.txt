@@ -1,0 +1,14 @@
+
+> jielien-baby-store@3.0.0 test:account
+> node tests/account-settings.browser.mjs
+
+PASS 1: responsive registration opens the editable profile with HttpOnly session
+PASS 2: profile name changes persist after reloading
+PASS 3: email cannot change without reauthentication and persists with current password
+PASS 4: address editing updates the existing default address without creating a duplicate
+PASS 5: deleting the default address promotes the remaining address and survives reload
+PASS 6: mismatched password confirmation preserves the existing session
+PASS 7: password change returns to login and revokes sessions on both devices
+PASS 8: new email and new password sign in successfully; mobile layout has no overflow or script errors
+PASS 9: temporary cart loading failure preserves identity and CSRF for authenticated checkout and order history
+Passed 9 account settings browser checks.

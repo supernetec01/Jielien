@@ -1,0 +1,5 @@
+
+> jielien-baby-store@3.0.0 test:load
+> node tests/commerce-load.mjs
+
+{"recordedAt":"2026-11-09T04:13:42.551Z","environment":"Linux cloud isolated PostgreSQL schema, local HTTP","node":"v24.22.1","requests":120,"concurrency":8,"failures":0,"p50Ms":14,"p95Ms":51,"maxMs":92,"limitations":"Development lab only; not production capacity, Lighthouse, LCP/INP/CLS p75 or Windows/LAN evidence."}

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env server.mjs",
     "start": "node --env-file-if-exists=.env server.mjs",
-    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs",
+    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs tests/commerce.test.mjs tests/commerce-upgrade.test.mjs tests/admin-visibility.test.mjs tests/frontend-v3.test.mjs tests/checkout-key.test.mjs tests/ui-upgrade.test.mjs tests/production-config.test.mjs",
     "test:browser": "node tests/browser.test.mjs",
     "db:backup": "node scripts/backup.mjs",
     "db:local": "bash scripts/dev-postgres.sh",
@@ -26,12 +26,22 @@
     "local:logs": "node scripts/local.mjs logs",
     "local:admin": "node scripts/local.mjs admin",
     "test:local": "node --test tests/local-setup.test.mjs",
-    "test:local:stack": "node tests/local-stack.mjs"
+    "test:local:stack": "node tests/local-stack.mjs",
+    "test:commerce": "node tests/commerce.browser.mjs",
+    "test:load": "node tests/commerce-load.mjs",
+    "test:admin-access": "node tests/admin-access.browser.mjs",
+    "test:usability": "node tests/usability.browser.mjs",
+    "test:frontend-v3": "node tests/frontend-v3.browser.mjs",
+    "test:upgrade": "node tests/ui-upgrade.browser.mjs",
+    "test:contrast": "node scripts/check-contrast.mjs",
+    "production:check": "node scripts/check-production.mjs",
+    "db:backup:production": "node scripts/backup.mjs --production"
   },
   "engines": {
     "node": ">=24.11.0"
   },
   "devDependencies": {
+    "axe-core": "4.11.0",
     "playwright-core": "1.58.2"
   },
   "dependencies": {

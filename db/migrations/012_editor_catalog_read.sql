@@ -1,0 +1,1 @@
+INSERT INTO role_permissions(role_id,permission_id) SELECT r.id,p.id FROM roles r CROSS JOIN permissions p WHERE (r.name IN ('writer','seo') AND p.code='catalog.read') OR (r.name='content' AND p.code IN ('content.read','content.write')) OR (r.name='catalog_manager' AND p.code='inventory.read') ON CONFLICT DO NOTHING;

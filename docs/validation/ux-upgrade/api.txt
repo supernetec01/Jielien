@@ -1,0 +1,64 @@
+
+> jielien-baby-store@3.0.0 test
+> node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs tests/commerce.test.mjs tests/commerce-upgrade.test.mjs tests/admin-visibility.test.mjs tests/ui-upgrade.test.mjs
+
+✔ profile edits persist; email changes require the current password and no privileged or phone fields are writable (2609.479976ms)
+✔ password change rejects wrong/weak/unchanged input and invalidates all existing sessions (2804.692559ms)
+✔ login overlapping a password change cannot retain an old-password session (2115.909954ms)
+✔ address deletion enforces ownership and promotes a remaining default in the same transaction (809.014661ms)
+✔ profile audit records only changed field names and inactive accounts cannot mutate settings (828.989583ms)
+✔ Admin entry is hidden for guests and customers (1.398806ms)
+✔ Admin entry is visible for staff with an actual workspace permission (0.344609ms)
+✔ Staff roles without Admin screen access do not get an entry (0.251859ms)
+✔ The storefront hides its Admin link before authentication (13.408474ms)
+✔ Malformed roles or permissions fail closed (0.422296ms)
+✔ catalog and quote use authoritative prices and shipping, not submitted totals (348.320201ms)
+✔ coupons enforce thresholds and recompute totals (239.754891ms)
+✔ orders persist server totals and reserve stock, retries remain idempotent (395.949948ms)
+✔ stock is atomic and out of stock cannot be quoted or ordered (244.561247ms)
+✔ rejects malformed items, quantities and invalid customer/payment (249.699614ms)
+✔ orders and stock survive a restart with a new app (436.443187ms)
+✔ order privacy requires correct token or exact order ID plus phone (282.729664ms)
+✔ lookup brute force is rate limited (213.668527ms)
+✔ request body size, JSON and content type are limited (257.515946ms)
+✔ static routing hides source, database and traversal paths; serves allowed frontend routes (255.272223ms)
+✔ backup preserves binary and never publishes failed or invalid output (161.699345ms)
+✔ backup bundle publishes database and immutable media checksums together (83.958585ms)
+✔ container media stream is checksummed, path constrained and requires a successful completion marker (286.645029ms)
+✔ local VietQR uses the NAPAS transfer TLV structure, integral amount and CRC-16 standard check vector (4.233025ms)
+✔ bank transfers remain disabled without valid receiving configuration and create no order or reservation (385.860201ms)
+✔ bank order snapshots receiving details and server-computed totals; retry reuses the same order after configuration changes (398.842332ms)
+✔ authorized service confirmation records one bank receipt and audit event, never auto-pays on creation or buyer-supplied status (215.089254ms)
+✔ cancelling an unpaid transfer releases stock and blocks later bank confirmation (289.5885ms)
+✔ published migrations remain immutable and populated LAN schema upgrades without altering legacy commerce data (486.889365ms)
+✔ catalog creates three real SKUs, publishes with media, handles concurrency and preserves stock transactions (1330.774247ms)
+✔ admin creates employee username; CMS revisions, permissions, publication, redirect and scheduled jobs are real (2036.752779ms)
+✔ CSV preview is read-only, commit is atomic/idempotent, exports escape formula injection; site settings and promotions persist (1013.875166ms)
+✔ returns are quantity bounded and inspected damaged items restock exactly once without changing payment (1057.481137ms)
+✔ legacy images, privileged payment separation and invalid inventory sources are protected (1693.509859ms)
+✔ public HTML metadata, canonical, sitemap and offers reflect only active real data in explicit HTTPS configuration (895.388104ms)
+✔ SKU option combinations, shipping fields, draft preview and historical URL ownership are enforced (1004.731977ms)
+✔ restoring a reviewed revision creates a new draft without changing the public revision (906.599816ms)
+✔ CMS rejection requires a reviewer and returns a reviewed draft without bypassing publication (916.487823ms)
+✔ admin bootstrap works without a TTY using configured credentials and adds username without resetting the existing account (2021.078832ms)
+✔ catalog and news pagination remain bounded for non-finite/fractional input and Vietnamese uppercase Đ is accent-normalized (886.053573ms)
+✔ storefront promotions are sourced from active unexpired coupons, not hardcoded advertisements (1012.98407ms)
+✔ versioned PostgreSQL migrations are repeatable and enforce actual foreign keys (205.606335ms)
+✔ catalog is a one-time seed: changed JSON does not overwrite prices or warehouse balances (210.763696ms)
+✔ legacy SQLite import preserves order snapshots, access, idempotency and available stock without re-decrementing (206.144035ms)
+✔ accounts hash passwords and session tokens; customer cannot bootstrap admin; expiry and revocation are enforced (1885.905746ms)
+✔ address ownership and one-default constraint hold for two customers (868.400953ms)
+✔ HTTP sessions use HttpOnly cookies, enforce CSRF and isolate account orders and addresses (932.577441ms)
+✔ admin changes are permission/CSRF checked, pricing is database-backed, reservations release or consume and audit persists (1015.99963ms)
+✔ coupon use limit is transactional under concurrent checkout requests (189.125913ms)
+✔ authenticated carts persist per user, validate SKU/stock and do not reserve inventory before checkout (840.299872ms)
+✔ staff API enforces role matrix, CSRF, last admin and session revocation (1475.841475ms)
+✔ upgrade settings validate contacts, retain versions, and daily report reconciles without multiplying order items (721.605389ms)
+ℹ tests 52
+ℹ suites 0
+ℹ pass 52
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17702.628667

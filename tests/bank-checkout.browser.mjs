@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { once } from "node:events";
 import { chromium } from "playwright-core";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createAuth } from "../lib/auth.mjs";
 
 // These receiving details exist only in disposable PostgreSQL test schemas.
@@ -44,6 +44,14 @@ async function contextFor(base, width = 390) {
   const context = await browser.newContext({
     viewport: { width, height: 900 },
     reducedMotion: "reduce",
+  });
+  // Simulate clients opening the site on an HTTP LAN IP: randomUUID is
+  // unavailable there although getRandomValues remains supported.
+  await context.addInitScript(() => {
+    Object.defineProperty(window.crypto, "randomUUID", {
+      configurable: true,
+      value: undefined,
+    });
   });
   // A QR image must load without sending receiving details to a third party.
   await context.route("**/*", async (route) => {
@@ -87,6 +95,7 @@ async function register(page, base, identity) {
   await page.locator('[data-auth-mode="register"]').click();
   await page.locator("#fullName").fill(identity.name);
   await page.locator("#phone").fill(identity.phone);
+  if (await page.locator(".checkout-extras").count()) await page.locator(".checkout-extras").evaluate(el=>el.open=true);
   await page.locator("#email").fill(identity.email);
   await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
@@ -103,11 +112,30 @@ async function checkout(page, base) {
   await page.locator('input[name="payment"][value="cod"]').waitFor();
   await page.locator("#name").fill("Người mua kiểm thử");
   await page.locator("#phone").fill("0912345678");
+  if (await page.locator(".checkout-extras").count()) await page.locator(".checkout-extras").evaluate(el=>el.open=true);
   await page.locator("#email").fill("bank-buyer@example.test");
   await page.locator("#province").fill("TP Hồ Chí Minh");
   await page.locator("#district").fill("Phường Bến Nghé");
   await page.locator("#address").fill("123 Đường Kiểm Thử");
   await page.locator('input[name="agreement"]').check();
+  // Regression for the actual checkout form (not only the storefront shell).
+  // Test compact/mobile, tablet and desktop without horizontal scrolling.
+  for (const width of [320, 375, 390, 768, 1024, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    const state = await page.evaluate(() => ({
+      actual: document.documentElement.scrollWidth,
+      viewport: window.innerWidth,
+      formVisible: !!document.querySelector("#checkout-form"),
+      error: document.querySelector(".server-error")?.textContent || "",
+    }));
+    assert.equal(state.formVisible, true, "Missing checkout form at " + width);
+    assert.equal(state.error, "", "Checkout failed at " + width + ": " + state.error);
+    assert.ok(
+      state.actual <= state.viewport + 1,
+      "Checkout horizontal overflow at " + width + ": " + JSON.stringify(state),
+    );
+  }
+
 }
 
 try {

@@ -1,6 +1,11 @@
 // Optional Docker integration test. Uses its own project, random host port,
 // temporary files, fake receiving account and disposable database volume.
-import {saveDump} from "../scripts/backup.mjs";
+import {
+  saveBackupBundle,
+  checksum,
+  exportMediaScript,
+} from "../scripts/backup.mjs";
+import sharp from "sharp";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
@@ -56,6 +61,13 @@ function docker(args, capture = false) {
     );
   });
 }
+// This stack uses an isolated project and directory. Demo data is explicitly test-only.
+const fixtureOverride = join(temporary, "fixture-data.yaml");
+await writeFile(
+  fixtureOverride,
+  'services:\n  app:\n    environment:\n      JIELIEN_DEMO_DATA: "true"\n',
+);
+compose.push("-f", fixtureOverride);
 let started = false;
 try {
   const certificate =
@@ -85,10 +97,10 @@ try {
   console.log(
     "PASS: isolated Compose configuration keeps database internal and HTTP session cookies usable.",
   );
-  env.JIELIEN_BIND_IP='0.0.0.0';
-  const lan=JSON.parse(await docker(['config','--format','json'],true));
-  assert.equal(lan.services.app.ports[0].host_ip,'0.0.0.0');
-  assert.equal(lan.services.db.ports,undefined);
+  env.JIELIEN_BIND_IP = "0.0.0.0";
+  const lan = JSON.parse(await docker(["config", "--format", "json"], true));
+  assert.equal(lan.services.app.ports[0].host_ip, "0.0.0.0");
+  assert.equal(lan.services.db.ports, undefined);
   delete env.JIELIEN_BIND_IP;
   started = true;
   await docker(["up", "--build", "-d", "--wait", "--wait-timeout", "120"]);
@@ -153,6 +165,69 @@ try {
   console.log(
     "PASS: Docker Node24/PostgreSQL17 supports registration, CSRF checkout and locally generated VietQR.",
   );
+  await docker([
+    "exec",
+    "-T",
+    "app",
+    "node",
+    "--input-type=module",
+    "-e",
+    `import {createPool} from './lib/database.mjs';import {createAuth} from './lib/auth.mjs';const p=createPool();try{await createAuth(p).ensureAdmin({username:'admin',name:'Docker Test Admin',email:'admin@example.test',phone:'0987654321',password:'Docker-Test-Admin-Pass-2026'});}finally{await p.end();}`,
+  ]);
+  const adminLogin = await fetch(base + "/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      identifier: "admin",
+      password: "Docker-Test-Admin-Pass-2026",
+    }),
+  });
+  assert.equal(adminLogin.status, 200);
+  const adminSession = await adminLogin.json(),
+    adminCookie = adminLogin.headers.get("set-cookie").split(";", 1)[0];
+  const adminHeaders = {
+    Cookie: adminCookie,
+    "X-CSRF-Token": adminSession.csrfToken,
+  };
+  const pixels = await sharp({
+    create: { width: 12, height: 12, channels: 3, background: "#86b529" },
+  })
+    .png()
+    .toBuffer();
+  const uploaded = await fetch(base + "/api/admin/media/uploads", {
+    method: "POST",
+    headers: {
+      ...adminHeaders,
+      "Content-Type": "image/png",
+      "X-Image-Alt": "Docker verified image",
+    },
+    body: pixels,
+  });
+  assert.equal(uploaded.status, 201);
+  const asset = (await uploaded.json()).asset;
+  const parent = (
+    await (
+      await fetch(base + "/api/admin/catalog/products/1", {
+        headers: adminHeaders,
+      })
+    ).json()
+  ).product;
+  const attached = await fetch(base + "/api/admin/catalog/products/1/media", {
+    method: "PUT",
+    headers: { ...adminHeaders, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      version: parent.version,
+      media: [
+        ...parent.media.map((m) => ({ existingMediaId: m.id })),
+        { assetId: asset.id },
+      ],
+    }),
+  });
+  assert.equal(attached.status, 200);
+  assert.equal((await fetch(base + asset.url)).status, 200);
+  console.log(
+    "PASS: Docker decodes uploaded image, keeps legacy gallery and stores media on host bind mount.",
+  );
   await docker(["down"]);
   await docker(["up", "-d", "--wait", "--wait-timeout", "120"]);
   base = await url();
@@ -169,18 +244,123 @@ try {
   console.log(
     "PASS: database volume retains session, order, price and one stock reservation across full stack recreation.",
   );
-  const dump=join(temporary,'check.dump');
-  await saveDump('docker',[...compose,'exec','-T','db','pg_dump','-U','jielien','-d','jielien','-Fc'],dump);
-  const container=await docker(['ps','-q','db'],true);
-  await new Promise((ok,fail)=>{const p=spawn('docker',['cp',dump,container+':/tmp/check.dump'],{stdio:'inherit',env});p.on('error',fail);p.on('exit',c=>c===0?ok():fail(Error('copy failed')));});
-  await docker(['exec','-T','db','pg_restore','--list','/tmp/check.dump'],true);
-  await docker(['exec','-T','db','createdb','-U','jielien','jielien_drill']);
-  await docker(['exec','-T','db','pg_restore','--exit-on-error','--no-owner','-U','jielien','-d','jielien_drill','/tmp/check.dump']);
-  const restored=await docker(['exec','-T','db','psql','-U','jielien','-d','jielien_drill','-tAc','SELECT count(*) FROM orders'],true);
-  assert.equal(restored,'1');
-  console.log('PASS: binary custom backup restored into independent drill database with order retained.');
+  assert.equal((await fetch(base + asset.url)).status, 200);
+  const bundle = await saveBackupBundle({
+    command: "docker",
+    args: [
+      ...compose,
+      "exec",
+      "-T",
+      "db",
+      "pg_dump",
+      "-U",
+      "jielien",
+      "-d",
+      "jielien",
+      "-Fc",
+    ],
+    directory: join(temporary, "backups"),
+    mediaCommand: "docker",
+    mediaArgs: [
+      ...compose,
+      "exec",
+      "-T",
+      "app",
+      "node",
+      "--input-type=module",
+      "-e",
+      exportMediaScript,
+    ],
+  });
+  const dump = join(bundle.directory, "database.dump");
+  assert.equal(await checksum(dump), bundle.database.sha256);
+  assert.equal(bundle.media.length, 1);
+  assert.equal(
+    await checksum(join(bundle.directory, "media", asset.storage_key)),
+    bundle.media[0].sha256,
+  );
+  const container = await docker(["ps", "-q", "db"], true);
+  await new Promise((ok, fail) => {
+    const p = spawn("docker", ["cp", dump, container + ":/tmp/check.dump"], {
+      stdio: "inherit",
+      env,
+    });
+    p.on("error", fail);
+    p.on("exit", (c) => (c === 0 ? ok() : fail(Error("copy failed"))));
+  });
+  await docker(
+    ["exec", "-T", "db", "pg_restore", "--list", "/tmp/check.dump"],
+    true,
+  );
+  await docker([
+    "exec",
+    "-T",
+    "db",
+    "createdb",
+    "-U",
+    "jielien",
+    "jielien_drill",
+  ]);
+  await docker([
+    "exec",
+    "-T",
+    "db",
+    "pg_restore",
+    "--exit-on-error",
+    "--no-owner",
+    "-U",
+    "jielien",
+    "-d",
+    "jielien_drill",
+    "/tmp/check.dump",
+  ]);
+  const restored = await docker(
+    [
+      "exec",
+      "-T",
+      "db",
+      "psql",
+      "-U",
+      "jielien",
+      "-d",
+      "jielien_drill",
+      "-tAc",
+      "SELECT count(*) FROM orders",
+    ],
+    true,
+  );
+  assert.equal(restored, "1");
+  const restoredAssets = await docker(
+    [
+      "exec",
+      "-T",
+      "db",
+      "psql",
+      "-U",
+      "jielien",
+      "-d",
+      "jielien_drill",
+      "-tAc",
+      "SELECT count(*) FROM media_assets",
+    ],
+    true,
+  );
+  assert.equal(restoredAssets, "1");
+  console.log(
+    "PASS: binary backup restored into independent drill database with order/media metadata retained; media SHA-256 verified.",
+  );
 } finally {
-  if (started)
+  if (started) {
+    // Only this test's temporary bind mount, after backup validation. Never live media.
+    await docker([
+      "exec",
+      "-T",
+      "app",
+      "node",
+      "-e",
+      "require('fs').rmSync('/app/data/media',{recursive:true,force:true})",
+    ]).catch(() => {});
     await docker(["down", "--remove-orphans"]).catch(() => {});
+  }
   await rm(temporary, { recursive: true, force: true });
 }

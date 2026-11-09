@@ -4,7 +4,7 @@ import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { once } from "node:events";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
 
 const products = [

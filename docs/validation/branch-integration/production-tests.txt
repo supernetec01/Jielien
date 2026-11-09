@@ -1,0 +1,13 @@
+✔ backup preserves binary and never publishes failed or invalid output (154.321522ms)
+✔ backup bundle publishes database and immutable media checksums together (97.892133ms)
+✔ container media stream is checksummed, path constrained and requires a successful completion marker (457.744051ms)
+✔ production backups explicitly select the production stack, local backup defaults stay unchanged (0.645174ms)
+✔ public deployment configuration rejects unsafe or incomplete prerequisites without exposing credentials (2.490892ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 812.236426
