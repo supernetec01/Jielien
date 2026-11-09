@@ -1,5 +1,7 @@
 # Jielien riêng: bàn giao tích hợp và điều kiện mở bán
 
+Trạng thái cập nhật tập trung: [CHUC_NANG_CHUA_TRIEN_KHAI.md](CHUC_NANG_CHUA_TRIEN_KHAI.md). Bản `main` hợp nhất ngày 09/11/2026 đã có đăng ký không OTP, khôi phục mật khẩu và hồ sơ khách trong Admin; các số test bên dưới là bằng chứng của đợt tích hợp trước, không phải lượt chạy mới.
+
 ## Phạm vi đã chốt
 
 Chủ shop chọn **website Jielien riêng trước**, chưa cần Shopee/TikTok Shop. Có thể khởi đầu với COD và chuyển khoản đối soát thủ công. Tích hợp sàn, carrier webhook, ví điện tử, email tự động không được giả đã hoạt động.
@@ -37,20 +39,20 @@ Các kiểm tra trên giảm rủi ro, **không đảm bảo không bao giờ c�
 | Bắt buộc | Quy tắc phí ship/ngưỡng miễn ship, thời gian chuẩn bị, cách tiếp nhận và xử lý đơn | Hiện giữ phí 25.000đ, miễn từ 499.000đ. Nếu khác phải cấu hình/code và test lại server, không sửa riêng dòng chữ |
 | Bắt buộc | Nhân viên nào bán hàng/kho/kế toán/admin; người nhận cảnh báo và xử lý sự cố | Tạo tài khoản riêng, quyền tối thiểu. Không có admin mặc định; password nhập an toàn tại máy chủ |
 | Nếu dùng chuyển khoản | BANK_BIN, BANK_NAME, BANK_ACCOUNT_NUMBER, BANK_ACCOUNT_NAME | Cấu hình môi trường máy chủ. Không cần mật khẩu Internet Banking; chuyển khoản vẫn đối soát thủ công |
-| Nếu dùng email/quên mật khẩu | Dịch vụ SMTP, tên miền gửi, thông tin cấu hình | Qua môi trường bảo mật; còn cần code outbox/reset token như backlog C1 |
+| Nếu dùng tự khôi phục qua email | Tài khoản Resend, tên miền gửi đã xác thực, `RESEND_API_KEY`, `PASSWORD_RESET_FROM_EMAIL` | Code outbox/token một lần đã có; cấp key qua môi trường bảo mật và thử gửi thật. Xem REGISTRATION.md; không cần SMS/SMTP cho adapter này |
 | Nếu muốn tự tạo vận đơn | Hãng vận chuyển, địa chỉ lấy hàng, sandbox/API theo hợp đồng | Tích hợp adapter và test; chưa có thì nhân viên tạo vận đơn ngoài hệ thống |
 
 Bạn có thể nhập thông tin công khai trực tiếp trong Admin; không cần nhắn tất cả trong chat. Secret/API key chỉ qua kênh cấu hình bảo mật. Với COD trước, không cần chờ chọn cổng ví điện tử hoặc sàn.
 
 ## Phần code còn lại, không nên nhầm là “chờ bạn”
 
-Địa chỉ chuẩn tỉnh/phường-xã + ward và dữ liệu có nguồn; email/quên mật khẩu; in/bulk/phân trang đơn server; lịch sử/xuất tồn; đánh giá có kiểm duyệt; lô/hạn dùng/FEFO; báo cáo lợi nhuận theo giá vốn và các mục còn lại trong `UPGRADE_DELIVERY.md` vẫn chưa hoàn thành. Đây là công việc phát triển riêng, không tự hết thiếu sót khi bạn cung cấp hotline. Website nhận đơn COD không bắt buộc phải có tất cả tính năng nâng cao, nhưng với hàng có hạn dùng phải có quy trình kiểm kê/kiểm hạn thủ công rõ ràng cho đến khi có module lô.
+Danh sách địa chỉ hành chính chuẩn và luồng chọn/đối chiếu; email báo đơn; in/bulk/phân trang đơn server; lịch sử/xuất tồn; đánh giá có kiểm duyệt; lô/hạn dùng/FEFO; báo cáo lợi nhuận theo giá vốn vẫn cần phát triển tiếp. Cột mã tỉnh/phường đã có trong migration 001; không sửa migration 013 của banner để thêm địa chỉ. Quên mật khẩu đã có code, còn cần cấu hình và thử email thật. Chi tiết và thông tin chủ cửa hàng cần cung cấp được quản lý tại `CHUC_NANG_CHUA_TRIEN_KHAI.md`. Website COD không bắt buộc phải có mọi tính năng nâng cao, nhưng hàng có hạn dùng cần quy trình kiểm hạn thủ công cho đến khi có module lô.
 
 ## Cấu hình production mới
 
 `compose.production.yaml` là stack riêng, không ghi đè stack local. Chỉ gateway Caddy publish 80/443; app 3001 và PostgreSQL chỉ trong mạng Docker. Cookie Secure và NODE_ENV production bật, catalog demo tự seed tắt; indexing mặc định tắt đến khi nội dung đã duyệt.
 
-Tại máy chủ, tạo `.env.production` bằng công cụ bảo mật, không commit. Các khóa tối thiểu: SITE_DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD. Password PostgreSQL tối thiểu 24 ký tự URL-safe ngẫu nhiên. Các BANK_* tùy chọn phải đủ bốn trường nếu bật. Giữ mật khẩu ổn định sau khi volume được tạo; đổi file env không tự đổi password trong database đã có.
+Tại máy chủ, tạo `.env.production` bằng công cụ bảo mật, không commit. Các khóa tối thiểu cho preflight hiện tại: SITE_DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD, RESEND_API_KEY, PASSWORD_RESET_FROM_EMAIL. Compose production tạo PUBLIC_BASE_URL từ SITE_DOMAIN. Password PostgreSQL tối thiểu 24 ký tự URL-safe ngẫu nhiên. Các BANK_* tùy chọn phải đủ bốn trường nếu bật. Giữ mật khẩu ổn định sau khi volume được tạo; đổi file env không tự đổi password trong database đã có.
 
 Kiểm tra trước khi triển khai:
 

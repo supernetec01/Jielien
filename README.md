@@ -2,6 +2,7 @@
 
 Bản demo hợp nhất trên nhánh `main`, với giao diện cửa hàng và Admin theo bộ thiết kế Jielien. Chưa triển khai công khai. Có catalog cha/SKU/media, tài khoản nhân viên do admin tạo, CMS duyệt/xuất bản và SEO HTML, CSV, phiếu kho/đổi trả, backup database + media.
 
+- **[File theo dõi tập trung: chức năng chưa triển khai, còn thiếu gì và bạn cần cung cấp thông tin nào](docs/CHUC_NANG_CHUA_TRIEN_KHAI.md)** — cập nhật theo bản `main` hợp nhất ngày 09/11/2026; ưu tiên đọc trước các backlog/QA cũ.
 - [Frontend V3: phạm vi F1–F8, API, migration và chạy bản PR](docs/frontend-v3/README.md)
 - [Giao diện Admin và cải tiến sử dụng theo phản hồi](docs/ADMIN_USABILITY.md)
 - [Chạy nhanh bản demo mới trên Windows](docs/DEMO_QUICKSTART.md)

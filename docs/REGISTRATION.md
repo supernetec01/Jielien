@@ -52,8 +52,8 @@ Trong thư mục repo, giữ/commit thay đổi local trước khi pull nếu c�
 
 ```powershell
 git fetch origin
-git switch feature/jielien-commerce-cms
-git pull --ff-only origin feature/jielien-commerce-cms
+git switch main
+git pull --ff-only origin main
 npm.cmd run local:start
 ```
 

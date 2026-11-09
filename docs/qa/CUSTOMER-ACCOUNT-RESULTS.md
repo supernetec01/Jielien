@@ -1,5 +1,7 @@
 # Bàn giao luồng tài khoản khách hàng — 2026-11-09
 
+Đây là hồ sơ đợt triển khai trên nhánh feature. Sau đó đã hợp nhất vào `main`; từ nay cập nhật bằng `git pull --ff-only origin main`. Trạng thái công việc còn lại xem [file theo dõi tập trung](../CHUC_NANG_CHUA_TRIEN_KHAI.md).
+
 ## Hành vi đã hoàn thành
 
 1. Đăng ký tạo customer và phiên đăng nhập ngay, không OTP hoặc dịch vụ SMS/email. Họ tên, số điện thoại Việt Nam và mật khẩu bắt buộc; email tùy chọn. Không tự gán quyền nhân viên hoặc đánh dấu thông tin liên hệ đã xác minh.
