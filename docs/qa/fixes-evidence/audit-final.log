@@ -1,0 +1,16 @@
+✔ shared login quota reserves concurrent failures, releases successes and expires exactly (243.156816ms)
+✔ IP burst budget still applies to successful logins (152.476215ms)
+✔ 16 valid HTTP logins succeed while wrong credentials are throttled with Retry-After (12685.928062ms)
+✔ CMS rejects malformed collections atomically and accepts valid references (1069.124514ms)
+✔ public signup returns identical generic responses, no session until proof, and cannot replace existing credentials (2205.289113ms)
+✔ OTP enforces expiry, attempts, cooldown, recipient binding and atomic single consumption (1797.028815ms)
+✔ delivery outbox retries provider failures without duplicate concurrent sends and clears sensitive payload (507.530298ms)
+✔ missing provider disables signup uniformly, and insecure provider configurations are rejected (174.200862ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19241.623119
