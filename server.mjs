@@ -9,6 +9,7 @@ import { createStore } from "./db/store.mjs";
 import { createAuth } from "./lib/auth.mjs";
 import { createLoginLimiter } from "./lib/login-limiter.mjs";
 import { createRegistration, registrationDelivery as configuredRegistrationDelivery } from "./lib/registration.mjs";
+import { registrationDemoEnabled, requireDemoLocalHost } from "./lib/registration-demo.mjs";
 import { createCartService } from "./lib/cart.mjs";
 import {createCommerce} from "./lib/commerce-routes.mjs";
 import {createSeo,seoConfig} from "./lib/seo.mjs";
@@ -248,9 +249,13 @@ export async function createApp({
   mediaDirectory,
   seoConfiguration,
   loginLimitOptions,
-  registrationDelivery = configuredRegistrationDelivery(),
+  registrationDelivery,
   registrationClock,
+  registrationEnvironment = process.env,
 } = {}) {
+  const registrationDemo=registrationDemoEnabled(registrationEnvironment);
+  if(registrationDelivery===undefined)registrationDelivery=registrationDemo?null:configuredRegistrationDelivery(registrationEnvironment);
+  if(registrationDemo&&registrationDelivery)throw Error('Demo mode cannot use a real verification delivery adapter.');
   const pool = externalPool || createPool();
   let store;
   try {
@@ -263,11 +268,11 @@ export async function createApp({
   const indexing=seoConfig(seoConfiguration||process.env);
   const seo=createSeo({pool,store,cms:commerce.cms,config:indexing,publicCatalog:commerce.publicCatalog,ops:commerce.ops});
   const publisher=setInterval(()=>commerce.cms.runDue().catch(e=>console.error("CMS scheduler:",e.code||e.name)),30000); publisher.unref();
-  const auth = createAuth(pool),
+  const auth = createAuth(pool,{allowDemoAccounts:registrationDemo}),
     carts = createCartService(pool),
     rates = new Map();
   const loginLimiter = await createLoginLimiter(pool,loginLimitOptions);
-  const registration=await createRegistration(pool,auth,{deliver:registrationDelivery,clock:registrationClock});
+  const registration=await createRegistration(pool,auth,{deliver:registrationDelivery,clock:registrationClock,demo:registrationDemo});
   let deliveryJob=Promise.resolve();
   let deliveryBusy=false;
   const flushRegistrations=()=>{
@@ -366,6 +371,7 @@ export async function createApp({
           const isRegister=path.endsWith('register');
           if(isRegister)rateLimit(req,'register',30);
           if(isRegister){
+            if(registrationDemo)requireDemoLocalHost(req);
             const result=await registration.begin(body);
             json(res,202,result);
             void flushRegistrations();
@@ -383,6 +389,7 @@ export async function createApp({
         }
         if(req.method==='POST'&&path==='/api/auth/register/verify'){
           sameOrigin(req);
+          if(registrationDemo)requireDemoLocalHost(req);
           rateLimit(req,'registration-verify',30);
           const result=await registration.verify(await readBody(req));
           res.setHeader('Set-Cookie',sessionCookie(req,result.token));
@@ -729,7 +736,8 @@ if (
   if (!Number.isInteger(port) || port < 1 || port > 65535)
     throw new Error("PORT must be an integer from 1 to 65535.");
   const app = await createApp();
-  app.listen(port, "0.0.0.0", () =>
+  const bind=registrationDemoEnabled(process.env)&&process.env.AUTH_DEMO_CONTAINER_LOCAL!=='true'?'127.0.0.1':'0.0.0.0';
+  app.listen(port, bind, () =>
     console.log(`Jielien PostgreSQL storefront listening on port ${port}`),
   );
   for (const signal of ["SIGTERM", "SIGINT"])

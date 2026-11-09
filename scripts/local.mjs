@@ -59,6 +59,8 @@ function validateLocal(source) {
   const bind = values.JIELIEN_BIND_IP || "127.0.0.1";
   const port = values.JIELIEN_PORT || "3001";
   if (!isIPv4(bind)) throw new Error("JIELIEN_BIND_IP phải là địa chỉ IPv4 hợp lệ.");
+  if(values.AUTH_VERIFICATION_MODE==='demo'&&(bind!=='127.0.0.1'||values.PUBLIC_BASE_URL||values.AUTH_VERIFICATION_WEBHOOK_URL||values.AUTH_VERIFICATION_WEBHOOK_TOKEN))
+    throw new Error('Đăng ký demo chỉ dùng localhost (JIELIEN_BIND_IP=127.0.0.1), không bật URL public hoặc provider thật.');
   if (!/^\d+$/.test(port) || Number(port)<1 || Number(port)>65535 || Number(port)===3000)
     throw new Error("JIELIEN_PORT phải từ 1 đến 65535 và không dùng cổng 3000.");
   return values;

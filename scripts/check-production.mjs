@@ -24,6 +24,8 @@ export function validateProductionConfig(env) {
     errors.push("JIELIEN_DEMO_DATA: phải tắt trước khi mở bán.");
   if (env.DEMO_MODE === "true")
     errors.push("DEMO_MODE: phải tắt trước khi mở bán.");
+  if(env.AUTH_VERIFICATION_MODE && env.AUTH_VERIFICATION_MODE!=='provider')
+    errors.push('AUTH_VERIFICATION_MODE: production chỉ được dùng provider.');
   if (env.COOKIE_SECURE === "false")
     errors.push("COOKIE_SECURE: không được tắt ở production.");
   if (env.NODE_ENV && env.NODE_ENV !== "production")

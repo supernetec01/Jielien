@@ -12,6 +12,7 @@ test("public deployment configuration rejects unsafe or incomplete prerequisites
   assert.deepEqual(validateProductionConfig(valid), []);
   for (const patch of [
     { SITE_DOMAIN: "http://localhost:3001" },
+    { AUTH_VERIFICATION_MODE: 'demo' },
     { AUTH_VERIFICATION_WEBHOOK_URL: '' },
     { AUTH_VERIFICATION_WEBHOOK_TOKEN: '' },
     { AUTH_VERIFICATION_WEBHOOK_URL: 'http://verification.example.org/send' },

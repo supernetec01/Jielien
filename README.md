@@ -121,6 +121,8 @@ Backup PostgreSQL bằng `pg_dump`, khôi phục vào database khác để kiể
 
 ## Đăng ký có xác minh
 
+**Thử trên localhost chưa có SMS/email:** thêm `AUTH_VERIFICATION_MODE=demo` vào `.env.local`, giữ `JIELIEN_BIND_IP=127.0.0.1`, rồi chạy `npm run local:start`. Mã demo sẽ hiện trên trang đăng ký; tài khoản được gắn nhãn demo và không dùng được trong chế độ provider. Xem hướng dẫn chi tiết và điều kiện chặn production trong [REGISTRATION.md](docs/REGISTRATION.md).
+
 Đăng ký public nay cần mã xác minh số điện thoại và thêm mã email nếu cung cấp email; không còn tự cấp phiên ngay sau submit. Tài khoản cũ tiếp tục đăng nhập như trước. Cấu hình `AUTH_VERIFICATION_WEBHOOK_URL` và `AUTH_VERIFICATION_WEBHOOK_TOKEN` qua môi trường an toàn để kết nối bridge SMS/email; thiếu cấu hình thì đăng ký trả 503, không bỏ qua xác minh. Xem [hướng dẫn tích hợp và giới hạn](docs/REGISTRATION.md) và [kết quả sửa 4 bug QA](docs/qa/FIX-RESULTS.md).
 
 ## Kiểm thử

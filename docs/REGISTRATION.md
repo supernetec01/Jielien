@@ -13,7 +13,35 @@
 
 Compose local/production đã truyền hai biến vào app. Nếu dùng native Node, cấp vào môi trường tiến trình. Khởi động lại/rebuild app sau khi cập nhật source/cấu hình. `npm run production:check` kiểm tra đầu vào; không chứng minh provider gửi/nhận thành công.
 
-**Thiếu cấu hình:** đăng ký trả 503 giống nhau cho mọi định danh; không tạo pending/user hay phiên. Đăng nhập tài khoản cũ và guest checkout vẫn hoạt động. Không có OTP mặc định, endpoint xem OTP hoặc chế độ bỏ qua xác minh. Trước khi bật cho người dùng cần kiểm thử bridge/provider sandbox rồi staging end-to-end.
+**Chế độ provider thiếu cấu hình:** đăng ký trả 503 giống nhau cho mọi định danh; không tạo pending/user hay phiên. Đăng nhập tài khoản cũ và guest checkout vẫn hoạt động. Không có OTP mặc định hoặc endpoint xem OTP của provider. Trước khi bật cho người dùng cần kiểm thử bridge/provider sandbox rồi staging end-to-end.
+
+## Thử đăng ký trên localhost, không cần SMS/email
+
+Chế độ demo là tùy chọn riêng, không tự bật khi provider lỗi. Với Docker Desktop, mở `.env.local`, thêm/chỉnh:
+
+```dotenv
+AUTH_VERIFICATION_MODE=demo
+JIELIEN_BIND_IP=127.0.0.1
+```
+
+Giữ nguyên mật khẩu database, URL database và volume. `PUBLIC_BASE_URL`/các biến webhook để trống trong chế độ này; không đặt URL/token giả. Không tạo dòng trùng tên trong file. Sau đó chạy PowerShell:
+
+```powershell
+git fetch origin
+git switch feature/jielien-commerce-cms
+git pull --ff-only origin feature/jielien-commerce-cms
+npm.cmd run local:start
+```
+
+Mở `http://localhost:3001/tai-khoan?mode=register`, điền thông tin demo rồi submit. Trang kế tiếp hiển thị nhãn **CHẾ ĐỘ DEMO LOCALHOST**, mã SMS thử nghiệm và mã email thử nghiệm nếu có email. Nhập đúng các mã đang hiển thị để tạo tài khoản; không dùng mã cố định. Mã vẫn hết hạn, giới hạn lần thử, chống dùng lại và có cooldown gửi lại như luồng thật. Không có tin nhắn nào được gửi hoặc đưa vào outbox.
+
+Tài khoản tạo theo cách này được đánh dấu `is_demo=true`, không ghi nhận số/email đã xác minh thật. Chỉ ứng dụng đang ở chế độ demo mới chấp nhận đăng nhập/phiên của các tài khoản đó; chuyển về provider thì các tài khoản và phiên demo bị từ chối, kể cả khi dùng chung database. Tài khoản cũ không phải demo vẫn hoạt động. Dùng số/email thử riêng; tài khoản demo không được tự chuyển thành tài khoản thật chỉ bằng đổi cấu hình.
+
+Backend từ chối demo nếu NODE_ENV không phải development, bind được cấu hình khác 127.0.0.1, có URL public/indexing hoặc có provider thật. Các request đăng ký demo chỉ chấp nhận Host localhost/127.0.0.1/::1 và vẫn kiểm tra Origin. Local helper từ chối bind LAN; compose production luôn dùng provider; production:check cũng từ chối chế độ demo.
+
+Nếu chạy Node native thay Docker: cấp `NODE_ENV=development` và `AUTH_VERIFICATION_MODE=demo` trong môi trường; `npm start` mặc định bind 127.0.0.1 trong chế độ demo. Các cờ `AUTH_DEMO_LOCAL_BIND`/`AUTH_DEMO_CONTAINER_LOCAL` do compose local truyền để kiểm tra published bind; không dùng chúng để mở demo ra LAN/public. Không có xác minh quyền sở hữu thật trong chế độ demo.
+
+Để quay về dùng thật, đặt `AUTH_VERIFICATION_MODE=provider`, cấu hình bridge bên dưới rồi rebuild/khởi động lại. Tài khoản/phiên demo không thể dùng trong provider mode. Không reset database hay xóa lịch sử migration để đổi chế độ.
 
 ## Contract bridge
 
