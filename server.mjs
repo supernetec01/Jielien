@@ -8,6 +8,7 @@ import { createPool } from "./lib/database.mjs";
 import { createStore } from "./db/store.mjs";
 import { createAuth } from "./lib/auth.mjs";
 import { createLoginLimiter } from "./lib/login-limiter.mjs";
+import { createRegistration, registrationDelivery as configuredRegistrationDelivery } from "./lib/registration.mjs";
 import { createCartService } from "./lib/cart.mjs";
 import {createCommerce} from "./lib/commerce-routes.mjs";
 import {createSeo,seoConfig} from "./lib/seo.mjs";
@@ -247,6 +248,8 @@ export async function createApp({
   mediaDirectory,
   seoConfiguration,
   loginLimitOptions,
+  registrationDelivery = configuredRegistrationDelivery(),
+  registrationClock,
 } = {}) {
   const pool = externalPool || createPool();
   let store;
@@ -264,6 +267,16 @@ export async function createApp({
     carts = createCartService(pool),
     rates = new Map();
   const loginLimiter = await createLoginLimiter(pool,loginLimitOptions);
+  const registration=await createRegistration(pool,auth,{deliver:registrationDelivery,clock:registrationClock});
+  let deliveryJob=Promise.resolve();
+  let deliveryBusy=false;
+  const flushRegistrations=()=>{
+    if(deliveryBusy)return deliveryJob;
+    deliveryBusy=true;
+    deliveryJob=registration.flush().catch(e=>console.error('Registration worker:',e.code||e.name)).finally(()=>{deliveryBusy=false;});
+    return deliveryJob;
+  };
+  const registrationTimer=setInterval(flushRegistrations,5000);registrationTimer.unref();
   function rateLimit(req, kind, max) {
     const now = Date.now(),
       key = kind + ":" + req.socket.remoteAddress;
@@ -351,18 +364,29 @@ export async function createApp({
           sameOrigin(req);
           const body = await readBody(req);
           const isRegister=path.endsWith('register');
-          if(isRegister)rateLimit(req,'register',5);
-          const lease=isRegister?null:await loginLimiter.reserve(req.socket.remoteAddress,body.identifier);
-          const result = path.endsWith("register")
-            ? await auth.register(body)
-            : await auth.login(body);
+          if(isRegister)rateLimit(req,'register',30);
+          if(isRegister){
+            const result=await registration.begin(body);
+            json(res,202,result);
+            void flushRegistrations();
+            return;
+          }
+          const lease=await loginLimiter.reserve(req.socket.remoteAddress,body.identifier);
+          const result = await auth.login(body);
           if(lease)await loginLimiter.success(lease);
           res.setHeader("Set-Cookie", sessionCookie(req, result.token));
-          return json(res, path.endsWith("register") ? 201 : 200, {
+          return json(res, 200, {
             user: result.user,
             csrfToken: result.csrfToken,
             expiresAt: result.expiresAt,
           });
+        }
+        if(req.method==='POST'&&path==='/api/auth/register/verify'){
+          sameOrigin(req);
+          rateLimit(req,'registration-verify',30);
+          const result=await registration.verify(await readBody(req));
+          res.setHeader('Set-Cookie',sessionCookie(req,result.token));
+          return json(res,201,{user:result.user,csrfToken:result.csrfToken,expiresAt:result.expiresAt});
         }
         if (req.method === "POST" && path === "/api/auth/logout") {
           requireCsrf(req, session);
@@ -687,10 +711,12 @@ export async function createApp({
       });
     }
   });
-  server.on("close",()=>clearInterval(publisher));
+  server.flushRegistrationOutbox=flushRegistrations;
+  server.registrationIdle=()=>deliveryJob;
+  server.on("close",()=>{clearInterval(publisher);clearInterval(registrationTimer);});
   if (!externalPool)
     server.on("close", () => {
-      pool.end().catch(() => {});
+      deliveryJob.finally(()=>pool.end()).catch(() => {});
     });
   return server;
 }
@@ -708,7 +734,7 @@ if (
   );
   for (const signal of ["SIGTERM", "SIGINT"])
     process.once(signal, () => {
-      app.close(() => process.exit(0));
+      app.close(async () => {await app.registrationIdle();process.exit(0);});
       app.closeIdleConnections();
     });
 }

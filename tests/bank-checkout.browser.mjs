@@ -1,3 +1,4 @@
+import {verifySignupPage} from './support/registration.mjs';
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { chromium } from "playwright-core";
@@ -99,6 +100,7 @@ async function register(page, base, identity) {
   await page.locator("#email").fill(identity.email);
   await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
+  await verifySignupPage(page,servers.find(s=>String(s.address().port)===new URL(base).port));
   await page.locator('[data-view="orders"]').waitFor();
 }
 

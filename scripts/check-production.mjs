@@ -28,6 +28,12 @@ export function validateProductionConfig(env) {
     errors.push("COOKIE_SECURE: không được tắt ở production.");
   if (env.NODE_ENV && env.NODE_ENV !== "production")
     errors.push("NODE_ENV: dùng production cho website công khai.");
+  try {
+    const delivery=new URL(env.AUTH_VERIFICATION_WEBHOOK_URL);
+    if(delivery.protocol!=='https:'||delivery.username||delivery.password||delivery.hash||!env.AUTH_VERIFICATION_WEBHOOK_TOKEN)throw Error();
+  } catch {
+    errors.push('AUTH_VERIFICATION_WEBHOOK_*: cần bridge HTTPS và bearer token để mở đăng ký có xác minh SMS/email.');
+  }
   const bank = [
     "BANK_BIN",
     "BANK_NAME",

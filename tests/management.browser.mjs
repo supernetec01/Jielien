@@ -1,3 +1,4 @@
+import {verifySignupPage} from './support/registration.mjs';
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { chromium } from "playwright-core";
@@ -40,6 +41,7 @@ try {
   await page.locator("#email").fill("buyer@example.test");
   await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
+  await verifySignupPage(page,app);
   await page.locator('[data-view="addresses"]').waitFor();
   const cookies = await customerContext.cookies();
   assert.equal(

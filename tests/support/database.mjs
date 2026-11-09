@@ -39,4 +39,5 @@ export async function closeServer(server) {
   await new Promise((resolve, reject) =>
     server.close((error) => (error ? reject(error) : resolve())),
   );
+  await server.registrationIdle?.();
 }

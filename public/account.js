@@ -34,6 +34,36 @@ let viewVersion = 0;
 let notificationTimer;
 let authBusy = false;
 let addressRows = [];
+let pendingSignup = null;
+let signupChallenge = null;
+let resendAt = 0;
+let resendTimer;
+let resendBusy = false;
+
+function renderVerification(result) {
+  signupChallenge = result.challengeId;
+  resendAt = Date.now() + result.resendAfter * 1000;
+  root.innerHTML = `<section class="panel auth-form-panel"><h1>Xác minh số điện thoại</h1><p>${escape(result.message)}</p><p>${result.emailVerificationRequired?"Nhập thêm mã được gửi tới email bạn đã cung cấp. ":""}Mã có hiệu lực trong 5 phút. Nếu bạn đã có tài khoản, hãy quay lại đăng nhập.</p><form id="verification-form" data-challenge="${escape(result.challengeId)}"><div class="field"><label for="verification-code">Mã xác minh 6 chữ số</label><input id="verification-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></div>${result.emailVerificationRequired?'<div class="field"><label for="verification-email-code">Mã xác minh email 6 chữ số</label><input id="verification-email-code" name="emailCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></div>':""}<div id="verification-error" class="form-error" role="alert"></div><button class="primary" id="verify-submit">Xác minh và tạo tài khoản</button></form><button type="button" class="secondary" id="resend-signup" disabled>Gửi lại mã</button> <button type="button" class="secondary" id="cancel-signup">Quay lại đăng nhập</button></section>`;
+  clearInterval(resendTimer);
+  const tick = () => {
+    const button = $("#resend-signup");
+    if (!button) { clearInterval(resendTimer); return; }
+    const left = Math.max(0, Math.ceil((resendAt-Date.now())/1000));
+    button.disabled = resendBusy || left > 0;
+    button.textContent = left ? `Gửi lại mã (${left}s)` : "Gửi lại mã";
+  };
+  tick(); resendTimer = setInterval(tick,1000);
+  $("#verification-code").focus();
+}
+
+async function completeAuth(result) {
+  pendingSignup = null; signupChallenge = null; clearInterval(resendTimer);
+  user = result.user; csrfToken = result.csrfToken || "";
+  const redirect = safeRedirect();
+  if (redirect) { location.assign(redirect); return; }
+  accountShell(); await renderView("profile");
+  notify("Đăng nhập thành công.");
+}
 
 async function api(path, { method = "GET", body } = {}) {
   const headers = {};
@@ -176,20 +206,12 @@ async function submitAuth(form) {
       method: "POST",
       body: data,
     });
-    user = result.user;
-    csrfToken = result.csrfToken || "";
-    const redirect = safeRedirect();
-    if (redirect) {
-      location.assign(redirect);
+    if (authMode === "register") {
+      pendingSignup = data;
+      renderVerification(result);
       return;
     }
-    accountShell();
-    await renderView("profile");
-    notify(
-      authMode === "register"
-        ? "Đã tạo tài khoản cho mẹ."
-        : "Chào mừng mẹ quay lại.",
-    );
+    await completeAuth(result);
   } catch (error) {
     if ($("#auth-error")) $("#auth-error").textContent = error.message;
   } finally {
@@ -220,6 +242,17 @@ async function openOrder(id) {
 }
 root.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (event.target.id === "verification-form") {
+    const form = event.target,button=$("#verify-submit");
+    if(button.disabled || !form.reportValidity())return;
+    button.disabled=true;$("#verification-error").textContent="";
+    try {
+      const result=await api('/api/auth/register/verify',{method:'POST',body:{challengeId:signupChallenge,code:form.elements.code.value,emailCode:form.elements.emailCode?.value}});
+      await completeAuth(result);
+    } catch(error) { if($("#verification-error"))$("#verification-error").textContent=error.message; }
+    finally { if(button.isConnected)button.disabled=false; }
+    return;
+  }
   if (["profile-form", "password-form"].includes(event.target.id)) {
     const form = event.target;
     if (!form.reportValidity()) return;
@@ -294,6 +327,18 @@ root.addEventListener("submit", async (event) => {
     } finally {
       if (button.isConnected) button.disabled = false;
     }
+  }
+});
+root.addEventListener('click',async event=>{
+  if(event.target.id==='cancel-signup'){
+    pendingSignup=null;signupChallenge=null;clearInterval(resendTimer);authMode='login';renderAuth(true);
+  }
+  if(event.target.id==='resend-signup'&&pendingSignup&&!resendBusy&&Date.now()>=resendAt){
+    resendBusy=true;
+    const button=event.target;button.disabled=true;
+    try{renderVerification(await api('/api/auth/register',{method:'POST',body:pendingSignup}));}
+    catch(error){if($("#verification-error"))$("#verification-error").textContent=error.message;}
+    finally{resendBusy=false;if(button.isConnected)button.disabled=false;}
   }
 });
 root.addEventListener("click", async (event) => {

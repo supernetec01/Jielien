@@ -119,6 +119,10 @@ Với đơn cũ chưa giao, tồn thực có mới bằng tồn khả dụng SQL
 
 Backup PostgreSQL bằng `pg_dump`, khôi phục vào database khác để kiểm tra trước khi thay bản vận hành. Không copy thư mục data PG đang chạy như một bản backup logic. Tên/tokens/địa chỉ khách không được đưa vào log, Git hoặc báo cáo test.
 
+## Đăng ký có xác minh
+
+Đăng ký public nay cần mã xác minh số điện thoại và thêm mã email nếu cung cấp email; không còn tự cấp phiên ngay sau submit. Tài khoản cũ tiếp tục đăng nhập như trước. Cấu hình `AUTH_VERIFICATION_WEBHOOK_URL` và `AUTH_VERIFICATION_WEBHOOK_TOKEN` qua môi trường an toàn để kết nối bridge SMS/email; thiếu cấu hình thì đăng ký trả 503, không bỏ qua xác minh. Xem [hướng dẫn tích hợp và giới hạn](docs/REGISTRATION.md) và [kết quả sửa 4 bug QA](docs/qa/FIX-RESULTS.md).
+
 ## Kiểm thử
 
 ```sh

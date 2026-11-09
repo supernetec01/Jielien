@@ -1,3 +1,4 @@
+import {verifySignupPage} from './support/registration.mjs';
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { chromium } from "playwright-core";
@@ -38,6 +39,7 @@ try {
   await page.locator("#email").fill("account@example.test");
   await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
+  await verifySignupPage(page,app);
   await page.locator("#profile-form").waitFor();
   const previousSession = (await context.cookies()).find(
     (cookie) => cookie.name === "jielien_session",
