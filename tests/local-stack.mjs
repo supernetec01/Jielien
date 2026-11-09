@@ -125,7 +125,7 @@ try {
       password: "Test-Only-Docker-Password-2026",
     }),
   });
-  assert.equal(register.status, 201);
+  assert.equal(register.status,201,'customer registration does not require an OTP provider');
   const session = await register.json();
   const cookie = register.headers.get("set-cookie").split(";", 1)[0];
   assert.ok(register.headers.get("set-cookie").includes("HttpOnly"));
@@ -163,7 +163,7 @@ try {
   assert.equal(order.transfer.accountNumber, "0000000000");
   assert.ok(order.transfer.qrDataUrl.startsWith("data:image/svg+xml;base64,"));
   console.log(
-    "PASS: Docker Node24/PostgreSQL17 supports registration, CSRF checkout and locally generated VietQR.",
+    "PASS: Docker Node24/PostgreSQL17 supports no-OTP registration, CSRF checkout and locally generated VietQR.",
   );
   await docker([
     "exec",

@@ -31,6 +31,8 @@ services:
       COOKIE_SECURE: 'true'
       PUBLIC_BASE_URL: https://${SITE_DOMAIN:?Set the public domain}
       SEO_INDEXING_ENABLED: ${SEO_INDEXING_ENABLED:-false}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      PASSWORD_RESET_FROM_EMAIL: ${PASSWORD_RESET_FROM_EMAIL:-}
       JIELIEN_DEMO_DATA: 'false'
       DEMO_MODE: 'false'
       BANK_BIN: ${BANK_BIN:-}

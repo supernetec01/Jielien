@@ -5,11 +5,15 @@ const valid = {
   SITE_DOMAIN: "shop.example.org",
   ACME_EMAIL: "operator@example.org",
   POSTGRES_PASSWORD: "a".repeat(32),
+  RESEND_API_KEY:'fixture-only-not-a-real-secret',
+  PASSWORD_RESET_FROM_EMAIL:'no-reply@example.org',
 };
 test("public deployment configuration rejects unsafe or incomplete prerequisites without exposing credentials", () => {
   assert.deepEqual(validateProductionConfig(valid), []);
   for (const patch of [
     { SITE_DOMAIN: "http://localhost:3001" },
+    { RESEND_API_KEY: "" },
+    { PASSWORD_RESET_FROM_EMAIL: "" },
     { SITE_DOMAIN: "shop.example.test" },
     { SITE_DOMAIN: "example.org/path" },
     { POSTGRES_PASSWORD: "short" },

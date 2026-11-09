@@ -1,0 +1,8 @@
+
+> jielien-baby-store@3.0.0 test:registration-demo
+> node tests/registration-demo.browser.mjs
+
+PASS: localhost signup without a provider displays clearly labelled demo codes at five viewport widths; no messages are queued
+PASS: entering the displayed codes creates a labelled demo customer
+PASS: the demo customer can log out and log back in locally
+PASS: signup without email needs only the displayed SMS demo code; no JavaScript errors

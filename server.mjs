@@ -7,6 +7,8 @@ import { timingSafeEqual } from "node:crypto";
 import { createPool } from "./lib/database.mjs";
 import { createStore } from "./db/store.mjs";
 import { createAuth } from "./lib/auth.mjs";
+import { createLoginLimiter } from "./lib/login-limiter.mjs";
+import { createPasswordRecovery, recoveryDelivery as configuredRecoveryDelivery } from "./lib/password-recovery.mjs";
 import { createCartService } from "./lib/cart.mjs";
 import {createCommerce} from "./lib/commerce-routes.mjs";
 import {createSeo,seoConfig} from "./lib/seo.mjs";
@@ -245,6 +247,9 @@ export async function createApp({
   bankConfig,
   mediaDirectory,
   seoConfiguration,
+  loginLimitOptions,
+  passwordRecoveryDelivery,
+  recoveryClock,
 } = {}) {
   const pool = externalPool || createPool();
   let store;
@@ -261,6 +266,16 @@ export async function createApp({
   const auth = createAuth(pool),
     carts = createCartService(pool),
     rates = new Map();
+  const loginLimiter = await createLoginLimiter(pool,loginLimitOptions);
+  const recovery=await createPasswordRecovery(pool,auth,{delivery:passwordRecoveryDelivery===undefined?configuredRecoveryDelivery():passwordRecoveryDelivery,clock:recoveryClock});
+  let deliveryJob=Promise.resolve(),deliveryBusy=false;
+  const flushRecovery=()=>{
+    if(deliveryBusy)return deliveryJob;
+    deliveryBusy=true;
+    deliveryJob=recovery.flush().catch(e=>console.error('Recovery worker:',e.code||e.name)).finally(()=>{deliveryBusy=false;});
+    return deliveryJob;
+  };
+  const recoveryTimer=setInterval(flushRecovery,5000);recoveryTimer.unref();
   function rateLimit(req, kind, max) {
     const now = Date.now(),
       key = kind + ":" + req.socket.remoteAddress;
@@ -346,21 +361,31 @@ export async function createApp({
           (path === "/api/auth/register" || path === "/api/auth/login")
         ) {
           sameOrigin(req);
-          rateLimit(
-            req,
-            path.endsWith("register") ? "register" : "login",
-            path.endsWith("register") ? 5 : 15,
-          );
           const body = await readBody(req);
-          const result = path.endsWith("register")
-            ? await auth.register(body)
-            : await auth.login(body);
+          const isRegister=path.endsWith('register');
+          if(isRegister)rateLimit(req,'register',30);
+          if(isRegister){
+            const result=await auth.register(body);
+            res.setHeader('Set-Cookie',sessionCookie(req,result.token));
+            return json(res,201,{user:result.user,csrfToken:result.csrfToken,expiresAt:result.expiresAt});
+          }
+          const lease=await loginLimiter.reserve(req.socket.remoteAddress,body.identifier);
+          const result = await auth.login(body);
+          if(lease)await loginLimiter.success(lease);
           res.setHeader("Set-Cookie", sessionCookie(req, result.token));
-          return json(res, path.endsWith("register") ? 201 : 200, {
+          return json(res, 200, {
             user: result.user,
             csrfToken: result.csrfToken,
             expiresAt: result.expiresAt,
           });
+        }
+        if(req.method==='POST'&&path==='/api/auth/password/forgot'){
+          sameOrigin(req);rateLimit(req,'password-forgot',5);
+          const result=await recovery.forgot(await readBody(req));json(res,202,result);void flushRecovery();return;
+        }
+        if(req.method==='POST'&&path==='/api/auth/password/reset'){
+          sameOrigin(req);rateLimit(req,'password-reset',10);
+          await recovery.reset(await readBody(req));res.setHeader('Set-Cookie',sessionCookie(req,'',true));res.writeHead(204);return res.end();
         }
         if (req.method === "POST" && path === "/api/auth/logout") {
           requireCsrf(req, session);
@@ -543,6 +568,16 @@ export async function createApp({
             requirePermission(session,"users.manage");
             return json(res,200,await auth.listUsers());
           }
+          const supportMatch=path.match(/^\/api\/admin\/customers\/(\d+)\/recovery$/);
+          if(req.method==='POST'&&supportMatch){
+            requirePermission(session,'users.manage');
+            return json(res,201,await recovery.support(user.id,Number(supportMatch[1]),await readBody(req)));
+          }
+          const customerMatch=path.match(/^\/api\/admin\/customers\/(\d+)$/);
+          if(req.method==='GET'&&customerMatch){
+            requirePermission(session,'users.manage');
+            return json(res,200,await auth.customerDetail(user.id,Number(customerMatch[1]),{page:url.searchParams.get('page')||1}));
+          }
           const staffMatch=path.match(/^\/api\/admin\/users\/(\d+)$/);
           if (req.method === "PATCH" && staffMatch) {
             requirePermission(session,"users.manage");
@@ -678,16 +713,19 @@ export async function createApp({
         error.status <= 599;
       if (!exposed)
         console.error("Request failed:", error.code || error.name || "unknown");
+      if(error.status===429&&Number.isInteger(error.retryAfter))res.setHeader('Retry-After',String(error.retryAfter));
       json(res, exposed ? error.status : 500, {
         error: exposed ? error.error || "request_error" : "internal_error",
         message: exposed ? error.message : "Có lỗi xảy ra. Vui lòng thử lại.",
       });
     }
   });
-  server.on("close",()=>clearInterval(publisher));
+  server.flushRecoveryOutbox=flushRecovery;
+  server.recoveryIdle=()=>deliveryJob;
+  server.on("close",()=>{clearInterval(publisher);clearInterval(recoveryTimer);});
   if (!externalPool)
     server.on("close", () => {
-      pool.end().catch(() => {});
+      deliveryJob.finally(()=>pool.end()).catch(() => {});
     });
   return server;
 }
@@ -700,12 +738,13 @@ if (
   if (!Number.isInteger(port) || port < 1 || port > 65535)
     throw new Error("PORT must be an integer from 1 to 65535.");
   const app = await createApp();
-  app.listen(port, "0.0.0.0", () =>
+  const bind="0.0.0.0";
+  app.listen(port, bind, () =>
     console.log(`Jielien PostgreSQL storefront listening on port ${port}`),
   );
   for (const signal of ["SIGTERM", "SIGINT"])
     process.once(signal, () => {
-      app.close(() => process.exit(0));
+      app.close(async () => {await app.recoveryIdle();process.exit(0);});
       app.closeIdleConnections();
     });
 }

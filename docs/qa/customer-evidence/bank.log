@@ -1,0 +1,12 @@
+
+> jielien-baby-store@3.0.0 test:bank
+> node tests/bank-checkout.browser.mjs
+
+PASS 1: bank checkout renders a local VietQR for the server amount and receiving snapshot
+PASS 2: customer refresh and a forged paid request cannot confirm bank receipt
+PASS 3: missing permission and another customer's session or an invalid token deny order access
+PASS 4: admin confirmation records server amount exactly once, including repeat requests
+PASS 5: customer refresh removes the paid QR and account history shows bank settlement correctly
+PASS 6: a definitive bank-unavailable response preserves an editable checkout and permits one COD order
+PASS 7: unconfigured bank checkout is disabled without fabricated details or external QR requests
+Bank checkout browser complete: 7 checks passed.

@@ -1,0 +1,16 @@
+
+> jielien-baby-store@3.0.0 test:management
+> node tests/management.browser.mjs
+
+PASS 1: customer registration via responsive form creates HttpOnly session
+PASS 2: saved default address accepts Vietnamese location labels
+PASS 3: account cart synchronizes to PostgreSQL and reloads without doubling
+PASS 4: authenticated checkout uses saved address and attaches order to user
+PASS 5: own order history works and customer is denied management UI
+PASS 6: admin edits SKU price through permission/CSRF-protected UI
+PASS 7: stale SKU UI receives conflict and reloads current data
+PASS 8: admin searches accounts and grants staff role through confirmed UI
+PASS 9: order state transitions, immutable old price and explicit COD collection work through UI
+PASS 10: inventory adjustment and audit history are usable
+PASS 11: logout revokes cookie, management mobile layouts fit and no JavaScript errors
+Management browser complete: 11 checks passed.

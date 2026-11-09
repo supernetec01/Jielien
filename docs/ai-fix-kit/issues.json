@@ -1,0 +1,466 @@
+{
+  "schema_version": 1,
+  "language": "vi",
+  "created_date": "2026-11-09",
+  "source_baseline": "972b54a",
+  "qa_baseline": "4fda65d41e88097b3e8ea89c7f2232a949af724f",
+  "evidence_is_historical": true,
+  "proposed_order": [
+    "BUG-02",
+    "BUG-03",
+    "BUG-04",
+    "QA-TOOL-01",
+    "QA-TOOL-02",
+    "UPG-01",
+    "UPG-02",
+    "BUG-01",
+    "UPG-03",
+    "UPG-04",
+    "UPG-05",
+    "UPG-06",
+    "UPG-07",
+    "UPG-08",
+    "UPG-09",
+    "UPG-10",
+    "UPG-11"
+  ],
+  "issues": [
+    {
+      "id": "BUG-02",
+      "type": "bug",
+      "status": "Open",
+      "title": "CMS tagIds sai kiểu gây HTTP 500",
+      "priority": "Medium",
+      "depends_on": [],
+      "source_files": [
+        "lib/cms.mjs",
+        "lib/commerce-common.mjs",
+        "tests/commerce.test.mjs"
+      ],
+      "acceptance": [
+        "Dữ liệu sai trả 400, không TypeError",
+        "Valid request vẫn thành công",
+        "Không ghi bài/revision/links/audit khi request lỗi",
+        "RBAC/CSRF không thay đổi"
+      ],
+      "preparation": [],
+      "spec": "BUGS.md",
+      "evidence": [
+        "qa/evidence/probe-results.json",
+        "qa/evidence/probe.log"
+      ]
+    },
+    {
+      "id": "BUG-03",
+      "type": "bug",
+      "status": "Open",
+      "title": "Tên công ty đã lưu không hiển thị storefront",
+      "priority": "Medium",
+      "depends_on": [],
+      "source_files": [
+        "lib/operations.mjs",
+        "public/app.js",
+        "public/index.html",
+        "lib/seo.mjs"
+      ],
+      "acceptance": [
+        "Admin lưu → public API → DOM sau reload đúng",
+        "Allowlist keys và fallback",
+        "Nội dung được escape, scheme liên kết an toàn",
+        "Site API lỗi không làm hỏng checkout"
+      ],
+      "preparation": [],
+      "spec": "BUGS.md",
+      "evidence": [
+        "qa/evidence/probe-results.json",
+        "qa/evidence/probe.log"
+      ]
+    },
+    {
+      "id": "BUG-04",
+      "type": "bug",
+      "status": "Open",
+      "title": "Login thành công bị tính vào quota chung IP",
+      "priority": "High",
+      "depends_on": [],
+      "source_files": [
+        "server.mjs",
+        "lib/auth.mjs"
+      ],
+      "acceptance": [
+        "16 login đúng trong burst budget hoạt động",
+        "Chặn sai liên tục, TTL/Retry-After chính xác",
+        "2 user chung IP không khóa nhau vì success",
+        "Chống spoof proxy IP; storage atomic multi-instance"
+      ],
+      "preparation": [
+        "Redis nếu multi-instance",
+        "Chốt burst/failure quota và trusted proxy CIDR"
+      ],
+      "spec": "BUGS.md",
+      "evidence": [
+        "qa/evidence/probe-results.json",
+        "qa/evidence/probe.log"
+      ]
+    },
+    {
+      "id": "UPG-01",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "Challenge và xác minh quyền sở hữu email/số",
+      "priority": "High",
+      "depends_on": [],
+      "source_files": [
+        "lib/auth.mjs",
+        "server.mjs",
+        "public/account.js",
+        "db/migrations/"
+      ],
+      "acceptance": [
+        "Token/OTP đúng user recipient purpose expiry",
+        "Consume atomic một lần và resend vô hiệu mã cũ",
+        "Legacy không bị đánh dấu verified giả"
+      ],
+      "preparation": [
+        "Chính sách định danh bắt buộc và chuyển đổi legacy"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "UPG-02",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "Provider email/SMS và transactional outbox",
+      "priority": "High",
+      "depends_on": [],
+      "source_files": [
+        "lib/",
+        "scripts/",
+        "db/migrations/",
+        ".env.example"
+      ],
+      "acceptance": [
+        "Mock chỉ local, production không bypass verify",
+        "Outbox retry/lease/dead-letter/idempotency",
+        "Log/metric không lộ secret",
+        "Provider lỗi có quan sát và giới hạn gửi"
+      ],
+      "preparation": [
+        "Provider sandbox",
+        "Email domain DNS SPF/DKIM/DMARC",
+        "Sender/brandname nếu SMS",
+        "Worker, secrets qua cấu hình an toàn"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "BUG-01",
+      "type": "bug",
+      "status": "Open",
+      "title": "Public registration tiết lộ tài khoản tồn tại",
+      "priority": "High",
+      "depends_on": [
+        "UPG-01",
+        "UPG-02"
+      ],
+      "source_files": [
+        "lib/auth.mjs",
+        "server.mjs",
+        "public/account.js",
+        "db/migrations/",
+        "tests/phase1.test.mjs"
+      ],
+      "acceptance": [
+        "Mới/trùng cùng status body cookie; không session sớm",
+        "Không ghi đè credentials account cũ",
+        "Verify một lần, replay/purpose/recipient/race bị chặn",
+        "Fixture/test public signup cập nhật theo contract mới"
+      ],
+      "preparation": [
+        "Chốt kênh phone-only account và policy legacy"
+      ],
+      "spec": "BUGS.md",
+      "evidence": [
+        "qa/evidence/probe-results.json",
+        "qa/evidence/probe.log"
+      ]
+    },
+    {
+      "id": "UPG-03",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "Quên/reset mật khẩu",
+      "priority": "High",
+      "depends_on": [
+        "UPG-01",
+        "UPG-02"
+      ],
+      "source_files": [
+        "lib/",
+        "server.mjs",
+        "public/",
+        "tests/"
+      ],
+      "acceptance": [
+        "Generic forgot response",
+        "Token hết hạn/dùng lại bị chặn",
+        "Reset revoke tất cả session và challenge cũ",
+        "Yêu cầu forgot không revoke phiên đang dùng"
+      ],
+      "preparation": [
+        "Xem UPGRADE-PLAN.md; xác nhận hạ tầng/provider/nghiệp vụ tương ứng trước production"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "UPG-04",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "Danh sách phiên và logout-all",
+      "priority": "High",
+      "depends_on": [],
+      "source_files": [
+        "lib/",
+        "server.mjs",
+        "public/",
+        "tests/"
+      ],
+      "acceptance": [
+        "Owner-only session metadata",
+        "Không lộ token/CSRF",
+        "Reauth và revoke thực sự có hiệu lực"
+      ],
+      "preparation": [
+        "Xem UPGRADE-PLAN.md; xác nhận hạ tầng/provider/nghiệp vụ tương ứng trước production"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "UPG-05",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "Admin TOTP và backup code",
+      "priority": "High",
+      "depends_on": [
+        "UPG-03",
+        "UPG-04"
+      ],
+      "source_files": [
+        "lib/",
+        "server.mjs",
+        "public/",
+        "tests/"
+      ],
+      "acceptance": [
+        "Pre-auth không có quyền admin",
+        "Secret mã hóa; OTP chống replay",
+        "Recovery code consume một lần",
+        "Không enforcement trước có enrollment/recovery"
+      ],
+      "preparation": [
+        "Xem UPGRADE-PLAN.md; xác nhận hạ tầng/provider/nghiệp vụ tương ứng trước production"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "UPG-06",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "SMS OTP đầy đủ",
+      "priority": "High",
+      "depends_on": [
+        "UPG-01",
+        "UPG-02"
+      ],
+      "source_files": [
+        "lib/",
+        "server.mjs",
+        "public/",
+        "tests/"
+      ],
+      "acceptance": [
+        "Resend cooldown và quota",
+        "Wrong/expiry/replay/purpose/recipient bị chặn",
+        "Sandbox integration và cost cap"
+      ],
+      "preparation": [
+        "Xem UPGRADE-PLAN.md; xác nhận hạ tầng/provider/nghiệp vụ tương ứng trước production"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "UPG-07",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "Social login",
+      "priority": "Low",
+      "depends_on": [
+        "UPG-01"
+      ],
+      "source_files": [
+        "lib/",
+        "server.mjs",
+        "public/",
+        "tests/"
+      ],
+      "acceptance": [
+        "OIDC state/nonce/PKCE/issuer/audience",
+        "Không auto-link email chưa verified",
+        "Link/unlink reauth, không mất mọi login method"
+      ],
+      "preparation": [
+        "Xem UPGRADE-PLAN.md; xác nhận hạ tầng/provider/nghiệp vụ tương ứng trước production"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "UPG-08",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "Đổi số điện thoại",
+      "priority": "Low",
+      "depends_on": [
+        "UPG-01",
+        "UPG-06"
+      ],
+      "source_files": [
+        "lib/",
+        "server.mjs",
+        "public/",
+        "tests/"
+      ],
+      "acceptance": [
+        "Reauth + verify số mới",
+        "Atomic unique check; không chiếm số đã tồn tại",
+        "Thông báo kênh cũ"
+      ],
+      "preparation": [
+        "Xem UPGRADE-PLAN.md; xác nhận hạ tầng/provider/nghiệp vụ tương ứng trước production"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "UPG-09",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "Xóa tài khoản",
+      "priority": "Low",
+      "depends_on": [],
+      "source_files": [
+        "lib/",
+        "server.mjs",
+        "public/",
+        "tests/"
+      ],
+      "acceptance": [
+        "Retention và ẩn danh được chốt",
+        "Reauth/revoke sessions/audit",
+        "Không cascade xóa chứng từ bắt buộc"
+      ],
+      "preparation": [
+        "Xem UPGRADE-PLAN.md; xác nhận hạ tầng/provider/nghiệp vụ tương ứng trước production"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "UPG-10",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "Hoàn tiền độc lập hoàn hàng",
+      "priority": "Low",
+      "depends_on": [],
+      "source_files": [
+        "lib/",
+        "server.mjs",
+        "public/",
+        "tests/"
+      ],
+      "acceptance": [
+        "Finance permission",
+        "Không vượt số tiền đã thu trừ đã hoàn",
+        "Idempotency và race",
+        "Không coi tăng tồn là đã trả tiền"
+      ],
+      "preparation": [
+        "Xem UPGRADE-PLAN.md; xác nhận hạ tầng/provider/nghiệp vụ tương ứng trước production"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "UPG-11",
+      "type": "feature",
+      "status": "Proposed",
+      "title": "Avatar customer",
+      "priority": "Low",
+      "depends_on": [],
+      "source_files": [
+        "lib/",
+        "server.mjs",
+        "public/",
+        "tests/"
+      ],
+      "acceptance": [
+        "Ownership",
+        "Decode/re-encode ảnh và giới hạn byte/pixel",
+        "Chặn file giả/script"
+      ],
+      "preparation": [
+        "Xem UPGRADE-PLAN.md; xác nhận hạ tầng/provider/nghiệp vụ tương ứng trước production"
+      ],
+      "spec": "UPGRADE-PLAN.md",
+      "evidence": []
+    },
+    {
+      "id": "QA-TOOL-01",
+      "type": "qa_tooling",
+      "status": "Proposed",
+      "title": "Chuyển probe thành gate có assertion độc lập",
+      "priority": "High",
+      "depends_on": [],
+      "source_files": [
+        "tests/qa-audit.mjs"
+      ],
+      "acceptance": [
+        "Case Fail có exit code khác 0",
+        "Không coi status !=409 là chống enumeration",
+        "Fixtures độc lập, không phụ thuộc thứ tự login",
+        "Browser timeout rõ, không nuốt lỗi mạng"
+      ],
+      "preparation": [],
+      "spec": "BUGS.md",
+      "evidence": []
+    },
+    {
+      "id": "QA-TOOL-02",
+      "type": "qa_tooling",
+      "status": "Proposed",
+      "title": "Xác minh contract page=1.5 và sửa test QA16",
+      "priority": "Medium",
+      "depends_on": [],
+      "source_files": [
+        "lib/cms.mjs",
+        "lib/seo.mjs",
+        "tests/qa-audit.mjs"
+      ],
+      "acceptance": [
+        "Chốt page nguyên hoặc normalize rõ",
+        "Dữ liệu >12 bài: không thiếu/trùng giữa trang",
+        "Lẻ/âm/NaN/giới hạn có assertion",
+        "Chỉ mở bug sản phẩm mới sau khi tái hiện sai nghiệp vụ"
+      ],
+      "preparation": [],
+      "spec": "BUGS.md",
+      "evidence": []
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+QA01 PASS Đăng ký Unicode và email dấu + 201
+QA02 PASS Cookie HttpOnly và SameSite "jielien_session=[REDACTED]; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800"
+QA03 PASS Email trùng không phân biệt hoa thường 409
+QA04 FAIL Đăng ký không tiết lộ tài khoản tồn tại {"status":409,"data":{"error":"account_exists","message":"Email hoặc số điện thoại đã được sử dụng."}}
+QA05 PASS Chặn mật khẩu ngắn 400
+QA06 PASS Chặn mật khẩu quá 72 byte 400
+QA07 PASS Chuẩn hóa số +84 201
+QA08 PASS Đăng nhập email viết thường 200
+QA09 PASS Thông báo login sai đồng nhất {"wrong":{"error":"invalid_credentials","message":"Thông tin đăng nhập không chính xác."},"absent":{"error":"invalid_credentials","message":"Thông tin đăng nhập không chính xác."}}
+QA10 PASS Chặn cross-origin login 403
+QA11 PASS User không đọc được danh sách quản trị 403
+QA12 PASS Chặn CSRF hồ sơ 403
+QA13 PASS JSON null giỏ hàng trả lỗi đầu vào {"status":400,"data":{"error":"invalid_json","message":"Dữ liệu JSON không hợp lệ."}}
+QA14 PASS JSON null catalog trả lỗi đầu vào {"status":400,"data":{"error":"invalid_json","message":"Dữ liệu JSON không hợp lệ."}}
+Request failed: TypeError
+QA15 FAIL tagIds sai kiểu trả lỗi đầu vào {"status":500,"data":{"error":"internal_error","message":"Có lỗi xảy ra. Vui lòng thử lại."}}
+QA16 PASS Phân trang tin tức số lẻ được xử lý {"status":200,"data":{"items":[],"page":1.5}}
+QA17 PASS Lưu cấu hình công ty 200
+QA18 FAIL Tên công ty đã lưu hiển thị trang chủ {"apiSaved":true,"homeContains":false}
+QA19 PASS Đăng xuất thành công 204
+QA20 PASS Session đã logout bị thu hồi 401
+QA21 PASS Đổi mật khẩu admin 204
+QA22 PASS Thu hồi phiên admin sau đổi mật khẩu 401
+QA23 FAIL Không khóa đăng nhập hợp lệ theo tổng request IP [200,200,200,200,200,200,200,200,200,200,200,200,429]

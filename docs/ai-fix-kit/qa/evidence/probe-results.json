@@ -1,0 +1,219 @@
+[
+  {
+    "id": "QA01",
+    "title": "Đăng ký Unicode và email dấu +",
+    "expected": 201,
+    "actual": 201,
+    "status": "Pass"
+  },
+  {
+    "id": "QA02",
+    "title": "Cookie HttpOnly và SameSite",
+    "expected": true,
+    "actual": "jielien_session=[REDACTED]; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800",
+    "status": "Pass"
+  },
+  {
+    "id": "QA03",
+    "title": "Email trùng không phân biệt hoa thường",
+    "expected": 409,
+    "actual": 409,
+    "status": "Pass"
+  },
+  {
+    "id": "QA04",
+    "title": "Đăng ký không tiết lộ tài khoản tồn tại",
+    "expected": "Thông báo không phân biệt tồn tại",
+    "actual": {
+      "status": 409,
+      "data": {
+        "error": "account_exists",
+        "message": "Email hoặc số điện thoại đã được sử dụng."
+      }
+    },
+    "status": "Fail"
+  },
+  {
+    "id": "QA05",
+    "title": "Chặn mật khẩu ngắn",
+    "expected": 400,
+    "actual": 400,
+    "status": "Pass"
+  },
+  {
+    "id": "QA06",
+    "title": "Chặn mật khẩu quá 72 byte",
+    "expected": 400,
+    "actual": 400,
+    "status": "Pass"
+  },
+  {
+    "id": "QA07",
+    "title": "Chuẩn hóa số +84",
+    "expected": 201,
+    "actual": 201,
+    "status": "Pass"
+  },
+  {
+    "id": "QA08",
+    "title": "Đăng nhập email viết thường",
+    "expected": 200,
+    "actual": 200,
+    "status": "Pass"
+  },
+  {
+    "id": "QA09",
+    "title": "Thông báo login sai đồng nhất",
+    "expected": true,
+    "actual": {
+      "wrong": {
+        "error": "invalid_credentials",
+        "message": "Thông tin đăng nhập không chính xác."
+      },
+      "absent": {
+        "error": "invalid_credentials",
+        "message": "Thông tin đăng nhập không chính xác."
+      }
+    },
+    "status": "Pass"
+  },
+  {
+    "id": "QA10",
+    "title": "Chặn cross-origin login",
+    "expected": 403,
+    "actual": 403,
+    "status": "Pass"
+  },
+  {
+    "id": "QA11",
+    "title": "User không đọc được danh sách quản trị",
+    "expected": 403,
+    "actual": 403,
+    "status": "Pass"
+  },
+  {
+    "id": "QA12",
+    "title": "Chặn CSRF hồ sơ",
+    "expected": 403,
+    "actual": 403,
+    "status": "Pass"
+  },
+  {
+    "id": "QA13",
+    "title": "JSON null giỏ hàng trả lỗi đầu vào",
+    "expected": 400,
+    "actual": {
+      "status": 400,
+      "data": {
+        "error": "invalid_json",
+        "message": "Dữ liệu JSON không hợp lệ."
+      }
+    },
+    "status": "Pass"
+  },
+  {
+    "id": "QA14",
+    "title": "JSON null catalog trả lỗi đầu vào",
+    "expected": 400,
+    "actual": {
+      "status": 400,
+      "data": {
+        "error": "invalid_json",
+        "message": "Dữ liệu JSON không hợp lệ."
+      }
+    },
+    "status": "Pass"
+  },
+  {
+    "id": "QA15",
+    "title": "tagIds sai kiểu trả lỗi đầu vào",
+    "expected": 400,
+    "actual": {
+      "status": 500,
+      "data": {
+        "error": "internal_error",
+        "message": "Có lỗi xảy ra. Vui lòng thử lại."
+      }
+    },
+    "status": "Fail"
+  },
+  {
+    "id": "QA16",
+    "title": "Phân trang tin tức số lẻ được xử lý",
+    "expected": "200 chuẩn hóa hoặc 400",
+    "actual": {
+      "status": 200,
+      "data": {
+        "items": [],
+        "page": 1.5
+      }
+    },
+    "status": "Pass"
+  },
+  {
+    "id": "QA17",
+    "title": "Lưu cấu hình công ty",
+    "expected": 200,
+    "actual": 200,
+    "status": "Pass"
+  },
+  {
+    "id": "QA18",
+    "title": "Tên công ty đã lưu hiển thị trang chủ",
+    "expected": true,
+    "actual": {
+      "apiSaved": true,
+      "homeContains": false
+    },
+    "status": "Fail"
+  },
+  {
+    "id": "QA19",
+    "title": "Đăng xuất thành công",
+    "expected": 204,
+    "actual": 204,
+    "status": "Pass"
+  },
+  {
+    "id": "QA20",
+    "title": "Session đã logout bị thu hồi",
+    "expected": 401,
+    "actual": 401,
+    "status": "Pass"
+  },
+  {
+    "id": "QA21",
+    "title": "Đổi mật khẩu admin",
+    "expected": 204,
+    "actual": 204,
+    "status": "Pass"
+  },
+  {
+    "id": "QA22",
+    "title": "Thu hồi phiên admin sau đổi mật khẩu",
+    "expected": 401,
+    "actual": 401,
+    "status": "Pass"
+  },
+  {
+    "id": "QA23",
+    "title": "Không khóa đăng nhập hợp lệ theo tổng request IP",
+    "expected": "Tất cả 200",
+    "actual": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      429
+    ],
+    "status": "Fail"
+  }
+]

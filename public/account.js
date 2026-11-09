@@ -34,7 +34,18 @@ let viewVersion = 0;
 let notificationTimer;
 let authBusy = false;
 let addressRows = [];
-
+let recoveryMode=['forgot','reset'].includes(new URLSearchParams(location.search).get('mode'))?new URLSearchParams(location.search).get('mode'):null;
+let resetToken=recoveryMode==='reset'?new URLSearchParams(location.hash.slice(1)).get('token'):null;
+if(resetToken)history.replaceState(null,'',location.pathname+'?mode=reset');
+async function completeAuth(result) {
+  authMode='login';user=result.user;csrfToken=result.csrfToken||'';
+  const redirect=safeRedirect();if(redirect){location.assign(redirect);return;}
+  accountShell();await renderView('profile');notify('Đăng nhập thành công.');
+}
+function renderRecovery(){
+  const reset=recoveryMode==='reset';
+  root.innerHTML=`<section class="panel auth-form-panel"><h1>${reset?'Đặt lại mật khẩu':'Quên mật khẩu'}</h1><p>${reset?'Chọn mật khẩu mới. Sau khi hoàn tất, mọi phiên cũ sẽ được đăng xuất.':'Nhập số điện thoại hoặc email. Link khôi phục chỉ được gửi tới email đã lưu; tài khoản chỉ có số điện thoại cần cửa hàng xác minh và hỗ trợ.'}</p>${reset&&!resetToken?'<p class="form-error" role="alert">Thiếu mã khôi phục. Hãy mở lại link trong email hoặc yêu cầu link mới.</p>':`<form id="recovery-form">${reset?'<div class="field"><label for="reset-password">Mật khẩu mới</label><input id="reset-password" name="newPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div><div class="field"><label for="reset-confirmation">Nhập lại mật khẩu</label><input id="reset-confirmation" name="confirmation" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div>':'<div class="field"><label for="recovery-identifier">Số điện thoại hoặc email</label><input id="recovery-identifier" name="identifier" autocomplete="username" required maxlength="200"></div>'}<div id="recovery-error" class="form-error" role="alert"></div><button class="primary">${reset?'Lưu mật khẩu mới':'Yêu cầu link khôi phục'}</button><p id="recovery-message" role="status"></p></form>`}<button type="button" class="secondary" id="back-to-login">Quay lại đăng nhập</button>${reset?'<button type="button" class="secondary" id="forgot-password">Yêu cầu link mới</button>':''}</section>`;
+}
 async function api(path, { method = "GET", body } = {}) {
   const headers = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -83,7 +94,7 @@ function safeRedirect() {
     : null;
 }
 function authMarkup() {
-  return `<section class="auth-layout"><div class="auth-intro"><span class="eyebrow">JIELIEN INTERNATIONAL</span><h1>Mỗi lần ghé,<br>thêm một chút<br>yêu thương.</h1><p>Đăng nhập để quản lý địa chỉ nhận hàng<br>và theo dõi những đơn hàng của bạn.</p><div class="auth-heart" aria-hidden="true">♡</div><div class="intro-list">✓ Lưu địa chỉ cho những lần mua sau<br>✓ Xem lịch sử và trạng thái đơn hàng<br>✓ Thông tin cá nhân được quản lý trong tài khoản</div></div><div class="auth-form-panel"><div class="tabs" role="tablist" aria-label="Đăng nhập hoặc đăng ký"><button class="${authMode === "login" ? "active" : ""}" id="auth-login-tab" data-auth-mode="login" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "login"}" tabindex="${authMode === "login" ? 0 : -1}">Đăng nhập</button><button class="${authMode === "register" ? "active" : ""}" id="auth-register-tab" data-auth-mode="register" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "register"}" tabindex="${authMode === "register" ? 0 : -1}">Tạo tài khoản</button></div><div id="auth-panel" role="tabpanel" aria-labelledby="auth-${authMode}-tab"><form id="auth-form">${authMode === "register" ? '<div class="field"><label for="fullName">Họ và tên <span class="required">*</span></label><input id="fullName" name="fullName" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên của bạn"></div><div class="field"><label for="phone">Số điện thoại <span class="required">*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" placeholder="Email của mẹ"></div>' : '<div class="field"><label for="identifier">Tên đăng nhập, số điện thoại hoặc email</label><input id="identifier" name="identifier" autocomplete="username" required maxlength="200" placeholder="Tên đăng nhập / số điện thoại / email"></div>'}<div class="field"><label for="password">Mật khẩu <span class="required">*</span></label><input id="password" name="password" type="password" autocomplete="${authMode === "register" ? "new-password" : "current-password"}" required minlength="${authMode === "register" ? 10 : 1}" maxlength="72" placeholder="${authMode === "register" ? "Tối thiểu 10 ký tự" : "Mật khẩu của mẹ"}">${authMode === "register" ? "<small>Tối thiểu 10 ký tự, tối đa 72 byte UTF-8; chữ có dấu có thể chiếm nhiều byte.</small>" : ""}</div><label class="check-label"><input type="checkbox" id="show-password"> Hiển thị mật khẩu</label><div id="auth-error" class="form-error" role="alert"></div><button class="primary" id="auth-submit">${authMode === "register" ? "Tạo tài khoản →" : "Đăng nhập →"}</button></form><p class="form-note">${authMode === "register" ? "Khi đăng ký, mẹ đồng ý với " : "Thông tin tài khoản được bảo vệ theo "}<a href="/chinh-sach/bao-mat">chính sách thông tin cá nhân</a>. Không dùng mật khẩu của dịch vụ khác cho tài khoản thử nghiệm.</p></div></div></section>`;
+  return `<section class="auth-layout"><div class="auth-intro"><span class="eyebrow">JIELIEN INTERNATIONAL</span><h1>Mỗi lần ghé,<br>thêm một chút<br>yêu thương.</h1><p>Đăng nhập để quản lý địa chỉ nhận hàng<br>và theo dõi những đơn hàng của bạn.</p><div class="auth-heart" aria-hidden="true">♡</div><div class="intro-list">✓ Lưu địa chỉ cho những lần mua sau<br>✓ Xem lịch sử và trạng thái đơn hàng<br>✓ Thông tin cá nhân được quản lý trong tài khoản</div></div><div class="auth-form-panel"><div class="tabs" role="tablist" aria-label="Đăng nhập hoặc đăng ký"><button class="${authMode === "login" ? "active" : ""}" id="auth-login-tab" data-auth-mode="login" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "login"}" tabindex="${authMode === "login" ? 0 : -1}">Đăng nhập</button><button class="${authMode === "register" ? "active" : ""}" id="auth-register-tab" data-auth-mode="register" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "register"}" tabindex="${authMode === "register" ? 0 : -1}">Tạo tài khoản</button></div><div id="auth-panel" role="tabpanel" aria-labelledby="auth-${authMode}-tab"><form id="auth-form">${authMode === "register" ? '<div class="field"><label for="fullName">Họ và tên <span class="required">*</span></label><input id="fullName" name="fullName" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên của bạn"></div><div class="field"><label for="phone">Số điện thoại <span class="required">*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" placeholder="Email của bạn"><small>Dùng email bạn kiểm soát để nhận link khôi phục mật khẩu.</small></div>' : '<div class="field"><label for="identifier">Tên đăng nhập, số điện thoại hoặc email</label><input id="identifier" name="identifier" autocomplete="username" required maxlength="200" placeholder="Tên đăng nhập / số điện thoại / email"></div>'}<div class="field"><label for="password">Mật khẩu <span class="required">*</span></label><input id="password" name="password" type="password" autocomplete="${authMode === "register" ? "new-password" : "current-password"}" required minlength="${authMode === "register" ? 10 : 1}" maxlength="72" placeholder="${authMode === "register" ? "Tối thiểu 10 ký tự" : "Mật khẩu của mẹ"}">${authMode === "register" ? "<small>Tối thiểu 10 ký tự, tối đa 72 byte UTF-8; chữ có dấu có thể chiếm nhiều byte.</small>" : ""}</div><label class="check-label"><input type="checkbox" id="show-password"> Hiển thị mật khẩu</label><div id="auth-error" class="form-error" role="alert"></div><button class="primary" id="auth-submit">${authMode === "register" ? "Tạo tài khoản →" : "Đăng nhập →"}</button></form>${authMode==='login'?'<button type="button" class="secondary" id="forgot-password">Quên mật khẩu?</button>':''}<p class="form-note">${authMode === "register" ? "Khi đăng ký, mẹ đồng ý với " : "Thông tin tài khoản được bảo vệ theo "}<a href="/chinh-sach/bao-mat">chính sách thông tin cá nhân</a>. Không dùng mật khẩu của dịch vụ khác cho tài khoản thử nghiệm.</p></div></div></section>`;
 }
 function renderAuth(focus = false) {
   root.innerHTML = authMarkup();
@@ -91,7 +102,7 @@ function renderAuth(focus = false) {
 }
 function accountShell() {
   const canManage = canAccessAdmin(user);
-  root.innerHTML = `<div class="account-banner"><div><h1>Chào ${escape(user.fullName || user.full_name || "mẹ")} ♡</h1><p>Mọi thông tin mua sắm của mẹ, ở cùng một nơi.</p></div><div class="actions">${canManage ? '<a href="/quan-tri" class="secondary">Quản trị cửa hàng ↗</a>' : ""}<button class="secondary" id="logout">Đăng xuất</button></div></div><div class="account-layout"><nav class="panel side-nav" aria-label="Mục tài khoản"><button data-view="profile" class="active">◎ Thông tin tài khoản</button><button data-view="orders">▤ Đơn hàng của mẹ</button><button data-view="addresses">⌂ Địa chỉ nhận hàng</button><button data-view="security">♢ Đổi mật khẩu</button></nav><section id="account-content" class="panel" tabindex="-1" aria-live="polite"></section></div>`;
+  root.innerHTML = `<div class="account-banner"><div>${user.isDemo?'<p role="status">TÀI KHOẢN DEMO LOCALHOST · Số/email chưa được xác minh thật.</p>':""}<h1>Chào ${escape(user.fullName || user.full_name || "mẹ")} ♡</h1><p>Mọi thông tin mua sắm của mẹ, ở cùng một nơi.</p></div><div class="actions">${canManage ? '<a href="/quan-tri" class="secondary">Quản trị cửa hàng ↗</a>' : ""}<button class="secondary" id="logout">Đăng xuất</button></div></div><div class="account-layout"><nav class="panel side-nav" aria-label="Mục tài khoản"><button data-view="profile" class="active">◎ Thông tin tài khoản</button><button data-view="orders">▤ Đơn hàng của mẹ</button><button data-view="addresses">⌂ Địa chỉ nhận hàng</button><button data-view="security">♢ Đổi mật khẩu</button></nav><section id="account-content" class="panel" tabindex="-1" aria-live="polite"></section></div>`;
 }
 function profileMarkup() {
   return `<div class="content-header"><div><h2>Thông tin tài khoản</h2><p>Mẹ có thể cập nhật thông tin liên hệ tại đây.</p></div></div><form id="profile-form"><div class="fields"><div class="field"><label for="profile-name">Họ và tên</label><input id="profile-name" name="fullName" required minlength="2" maxlength="100" value="${escape(user.fullName)}" autocomplete="name"></div><div class="field"><label for="profile-phone">Số điện thoại đăng nhập</label><input id="profile-phone" readonly value="${escape(user.phone)}"><small>Số điện thoại đăng nhập hiện được giữ nguyên.</small></div><div class="field full"><label for="profile-email">Email</label><input id="profile-email" name="email" type="email" maxlength="200" value="${escape(user.email || "")}" autocomplete="email"></div><div class="field full"><label for="profile-password">Mật khẩu hiện tại khi đổi email</label><input id="profile-password" name="currentPassword" type="password" autocomplete="current-password"><small>Chỉ cần nhập khi thay đổi hoặc xóa email.</small></div></div><div id="profile-error" class="form-error" role="alert"></div><button class="primary">Lưu thông tin</button></form>`;
@@ -176,20 +187,7 @@ async function submitAuth(form) {
       method: "POST",
       body: data,
     });
-    user = result.user;
-    csrfToken = result.csrfToken || "";
-    const redirect = safeRedirect();
-    if (redirect) {
-      location.assign(redirect);
-      return;
-    }
-    accountShell();
-    await renderView("profile");
-    notify(
-      authMode === "register"
-        ? "Đã tạo tài khoản cho mẹ."
-        : "Chào mừng mẹ quay lại.",
-    );
+    await completeAuth(result);
   } catch (error) {
     if ($("#auth-error")) $("#auth-error").textContent = error.message;
   } finally {
@@ -220,6 +218,22 @@ async function openOrder(id) {
 }
 root.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if(event.target.id==='recovery-form'){
+    const form=event.target,button=form.querySelector('button'),error=$('#recovery-error');
+    if(button.disabled||!form.reportValidity())return;
+    const data=Object.fromEntries(new FormData(form));error.textContent='';
+    if(recoveryMode==='reset'&&(data.newPassword!==data.confirmation||new TextEncoder().encode(data.newPassword).byteLength>72)){error.textContent='Mật khẩu nhập lại phải khớp; tối đa 72 byte UTF-8.';return;}
+    button.disabled=true;
+    try{
+      if(recoveryMode==='reset'){
+        await api('/api/auth/password/reset',{method:'POST',body:{token:resetToken,newPassword:data.newPassword}});
+        resetToken=null;recoveryMode=null;user=null;csrfToken='';authMode='login';history.replaceState(null,'',location.pathname);renderAuth();notify('Đã đặt lại mật khẩu. Vui lòng đăng nhập lại.');
+      }else{
+        const result=await api('/api/auth/password/forgot',{method:'POST',body:{identifier:data.identifier}});$('#recovery-message').textContent=result.message;
+      }
+    }catch(e){if(error.isConnected)error.textContent=e.message;}finally{if(button.isConnected)button.disabled=false;}
+    return;
+  }
   if (["profile-form", "password-form"].includes(event.target.id)) {
     const form = event.target;
     if (!form.reportValidity()) return;
@@ -295,6 +309,10 @@ root.addEventListener("submit", async (event) => {
       if (button.isConnected) button.disabled = false;
     }
   }
+});
+root.addEventListener('click',event=>{
+  if(event.target.id==='forgot-password'){recoveryMode='forgot';resetToken=null;renderRecovery();}
+  if(event.target.id==='back-to-login'){recoveryMode=null;resetToken=null;authMode='login';history.replaceState(null,'',location.pathname);renderAuth(true);}
 });
 root.addEventListener("click", async (event) => {
   const edit = event.target.closest("[data-edit-address]");
@@ -394,6 +412,7 @@ $("#order-dialog").addEventListener("click", (event) => {
   if (event.target.closest("[data-close-dialog]")) $("#order-dialog").close();
 });
 async function init() {
+  if(recoveryMode){renderRecovery();return;}
   root.innerHTML =
     '<div class="loading" role="status">Đang kiểm tra phiên đăng nhập…</div>';
   try {

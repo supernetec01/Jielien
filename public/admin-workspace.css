@@ -2069,3 +2069,10 @@
   font-size: 14px;
   flex: 1;
 }
+
+/* Customer profiles use the existing workspace and mobile table patterns. */
+.customer-profile { overflow-wrap: anywhere; }
+.customer-profile .detail-split > div { min-width: 0; }
+.customer-addresses { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
+.customer-profile input { max-width: 100%; min-width: 0; }
+.customer-profile .content-header { display: flex; flex-wrap: wrap; gap: 12px; align-items: start; }

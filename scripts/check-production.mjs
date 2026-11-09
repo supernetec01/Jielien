@@ -28,6 +28,10 @@ export function validateProductionConfig(env) {
     errors.push("COOKIE_SECURE: không được tắt ở production.");
   if (env.NODE_ENV && env.NODE_ENV !== "production")
     errors.push("NODE_ENV: dùng production cho website công khai.");
+  if (!env.RESEND_API_KEY || !env.PASSWORD_RESET_FROM_EMAIL)
+    errors.push(
+      "Email recovery: cần RESEND_API_KEY và PASSWORD_RESET_FROM_EMAIL để gửi link khôi phục mật khẩu.",
+    );
   const bank = [
     "BANK_BIN",
     "BANK_NAME",

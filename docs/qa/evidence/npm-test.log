@@ -1,0 +1,43 @@
+
+> jielien-baby-store@3.0.0 test
+> node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs
+
+✔ profile edits persist; email changes require the current password and no privileged or phone fields are writable (2337.439602ms)
+✔ password change rejects wrong/weak/unchanged input and invalidates all existing sessions (2619.45787ms)
+✔ login overlapping a password change cannot retain an old-password session (1627.805893ms)
+✔ address deletion enforces ownership and promotes a remaining default in the same transaction (828.364788ms)
+✔ profile audit records only changed field names and inactive accounts cannot mutate settings (871.755103ms)
+✔ catalog and quote use authoritative prices and shipping, not submitted totals (225.476981ms)
+✔ coupons enforce thresholds and recompute totals (214.028296ms)
+✔ orders persist server totals and reserve stock, retries remain idempotent (194.480448ms)
+✔ stock is atomic and out of stock cannot be quoted or ordered (179.173095ms)
+✔ rejects malformed items, quantities and invalid customer/payment (168.722388ms)
+✔ orders and stock survive a restart with a new app (180.817166ms)
+✔ order privacy requires correct token or exact order ID plus phone (147.979951ms)
+✔ lookup brute force is rate limited (158.069349ms)
+✔ request body size, JSON and content type are limited (182.70612ms)
+✔ static routing hides source, database and traversal paths; serves allowed frontend routes (207.087873ms)
+✔ backup preserves binary and never publishes failed or invalid output (92.807752ms)
+✔ local VietQR uses the NAPAS transfer TLV structure, integral amount and CRC-16 standard check vector (2.149166ms)
+✔ bank transfers remain disabled without valid receiving configuration and create no order or reservation (190.222405ms)
+✔ bank order snapshots receiving details and server-computed totals; retry reuses the same order after configuration changes (174.747387ms)
+✔ authorized service confirmation records one bank receipt and audit event, never auto-pays on creation or buyer-supplied status (179.682265ms)
+✔ cancelling an unpaid transfer releases stock and blocks later bank confirmation (169.702496ms)
+✔ versioned PostgreSQL migrations are repeatable and enforce actual foreign keys (168.541223ms)
+✔ catalog is a one-time seed: changed JSON does not overwrite prices or warehouse balances (160.278236ms)
+✔ legacy SQLite import preserves order snapshots, access, idempotency and available stock without re-decrementing (204.77613ms)
+✔ accounts hash passwords and session tokens; customer cannot bootstrap admin; expiry and revocation are enforced (1696.811606ms)
+✔ address ownership and one-default constraint hold for two customers (753.484791ms)
+✔ HTTP sessions use HttpOnly cookies, enforce CSRF and isolate account orders and addresses (957.307749ms)
+✔ admin changes are permission/CSRF checked, pricing is database-backed, reservations release or consume and audit persists (1083.653325ms)
+✔ coupon use limit is transactional under concurrent checkout requests (673.365677ms)
+✔ authenticated carts persist per user, validate SKU/stock and do not reserve inventory before checkout (1840.243095ms)
+✔ staff API enforces role matrix, CSRF, last admin and session revocation (2780.507654ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22219.042589

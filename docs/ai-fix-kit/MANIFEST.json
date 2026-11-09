@@ -1,0 +1,103 @@
+{
+  "format": 1,
+  "source_baseline": "972b54a",
+  "qa_baseline": "4fda65d41e88097b3e8ea89c7f2232a949af724f",
+  "note": "SHA-256 applies to every payload file except MANIFEST.json itself; archive SHA-256 is in sibling .sha256 file.",
+  "files": [
+    {
+      "path": "ACCEPTANCE.md",
+      "bytes": 6561,
+      "sha256": "54e3f68a2442f26d287e2679ff063cabefc4258d93c6ce33187858b0e41d32ba"
+    },
+    {
+      "path": "AI-PROMPT.md",
+      "bytes": 3985,
+      "sha256": "63099528b5f01bbdd4124d26e36d47be3370e6ce5f93e3061623f31d02178920"
+    },
+    {
+      "path": "BUGS.md",
+      "bytes": 9776,
+      "sha256": "140666fc0caea2bbb787e9a11dc0bf0433f7507be12f690f425df90413918004"
+    },
+    {
+      "path": "START-HERE.md",
+      "bytes": 3644,
+      "sha256": "6895d777cdfe33d3239464715b13e0562dd28983917013c322c6162f62207585"
+    },
+    {
+      "path": "UPGRADE-PLAN.md",
+      "bytes": 9353,
+      "sha256": "5e1fe2afa93a822f301be73f7bbf94c265d7f7ea8c6f8805058a66aa0798e86d"
+    },
+    {
+      "path": "issues.json",
+      "bytes": 12759,
+      "sha256": "2375a6805e146fc201dc50f52cd9d2e73ae41f6c5247103cb09faa49a43e7c38"
+    },
+    {
+      "path": "qa/QA-REPORT.md",
+      "bytes": 15526,
+      "sha256": "cba6abdc9c470c02f6f906411ed52ccfeed057da35b54f2515b8e96ae66c03f3"
+    },
+    {
+      "path": "qa/Test-cases.csv",
+      "bytes": 13874,
+      "sha256": "c007bb759c3e076f839218c2c0be3164eb27b1a0b36db265991f2430e76a137a"
+    },
+    {
+      "path": "qa/evidence/account.log",
+      "bytes": 808,
+      "sha256": "7a571843fea0f6768a9e686b244205b9eb43c13381e099eac86a35fb9cf6eb5d"
+    },
+    {
+      "path": "qa/evidence/bank.log",
+      "bytes": 702,
+      "sha256": "630e623a45ce66532d015ea8e090d9bc47e1151e82c776d5a954fbde61c9fc6e"
+    },
+    {
+      "path": "qa/evidence/browser.log",
+      "bytes": 1120,
+      "sha256": "b1a89f2c88ceb47bbb354b8a1ad3718508bd76c9cdd44d4154684ba8b42aec98"
+    },
+    {
+      "path": "qa/evidence/commerce-browser.log",
+      "bytes": 624,
+      "sha256": "ce03bb81691fdd9d5a8eae038ce8dc5172f9b3c3a827443cf8352f93246b9360"
+    },
+    {
+      "path": "qa/evidence/company-footer.png",
+      "bytes": 32653,
+      "sha256": "8b1109bd783bbcbdd496494948653875746bab5293206d6ad2499a33b6b0605f"
+    },
+    {
+      "path": "qa/evidence/extra-tests.log",
+      "bytes": 1014,
+      "sha256": "057fddb1881a35c8e1e707875569cf53a840360d0b1c479b655b6a172d4ae77d"
+    },
+    {
+      "path": "qa/evidence/management.log",
+      "bytes": 859,
+      "sha256": "caf67f60321b5a2bc0d75e7229c85265bf7afec431d853d69c35b9d932c027df"
+    },
+    {
+      "path": "qa/evidence/npm-test.log",
+      "bytes": 3527,
+      "sha256": "616177fbedc779f210b10ed5be041d73c13744bc48d284f762be2bc0bb14c6a5"
+    },
+    {
+      "path": "qa/evidence/probe-results.json",
+      "bytes": 4577,
+      "sha256": "fc0b12afcf8ff273481cb25e9397196261e8e737524d5309e7afb092efdfd736"
+    },
+    {
+      "path": "qa/evidence/probe.log",
+      "bytes": 2015,
+      "sha256": "7e03e4ac89feb11de9ae9a7250ef38d48c51daf54e6983e3b6ec798505e2e28d"
+    },
+    {
+      "path": "reproduction/qa-audit.mjs",
+      "bytes": 6452,
+      "sha256": "ffdee663109c8eb9d891b9954b596004abb50cdb296f8506944dd90dbc9c562f"
+    }
+  ]
+}
