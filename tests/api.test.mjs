@@ -311,6 +311,8 @@ test("static routing hides source, database and traversal paths; serves allowed 
     "/.git/config",
     "/%2e%2e%2fserver.mjs",
     "/not-a-real-page",
+    "/san-pham/example",
+    "/danh-muc/sua",
   ]) {
     const r = await fetch(base() + path);
     assert.ok([403, 404].includes(r.status), `${path} must not be public`);
@@ -318,8 +320,6 @@ test("static routing hides source, database and traversal paths; serves allowed 
   for (const path of [
     "/",
     "/san-pham",
-    "/san-pham/example",
-    "/danh-muc/sua",
     "/gio-hang",
     "/thanh-toan",
     "/don-hang/JL1",

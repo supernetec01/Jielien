@@ -141,6 +141,7 @@ async function audit(
 const variantSQL = `SELECT v.*,p.description,p.content_blocks,p.name AS product_name,b.name AS brand,
  COALESCE((SELECT c.name FROM product_categories pc JOIN categories c ON c.id=pc.category_id WHERE pc.product_id=p.id AND c.status='active' ORDER BY c.sort_order,c.id LIMIT 1),'Sản phẩm') AS category,
  COALESCE((SELECT m.url FROM product_media m WHERE m.product_id=p.id AND (m.variant_id=v.id OR m.variant_id IS NULL) ORDER BY m.variant_id NULLS LAST,m.sort_order,m.id LIMIT 1),'') AS image,
+ COALESCE((SELECT json_agg(json_build_object('url',m.url,'alt',m.alt_text) ORDER BY m.sort_order,m.id) FROM product_media m WHERE m.product_id=p.id AND (m.variant_id=v.id OR m.variant_id IS NULL)),'[]') AS gallery,
  COALESCE((SELECT json_agg(s.spec_value ORDER BY s.sort_order,s.id) FROM product_specs s WHERE s.product_id=p.id AND s.spec_name='feature'),'[]') AS features,
  COALESCE((SELECT SUM(ib.on_hand-ib.reserved) FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id WHERE ib.variant_id=v.id AND w.type='normal' AND w.status='active'),0) AS available
  FROM product_variants v JOIN products p ON p.id=v.product_id LEFT JOIN brands b ON b.id=p.brand_id`;
@@ -158,6 +159,7 @@ function adaptProduct(p) {
     brand: p.brand || "Jielien",
     category: p.category,
     type: p.type,
+    gallery:p.gallery||[],
     image: p.image,
     price: number(p.price),
     oldPrice: number(p.original_price ?? p.price),
@@ -228,7 +230,8 @@ async function calculate(client, items, couponValue, lockCoupon = false) {
     return {
       id,
       name: p.name,
-      image: p.image,
+      gallery:p.gallery||[],
+    image: p.image,
       price: p.price,
       quantity,
       lineTotal: p.price * quantity,

@@ -16,6 +16,7 @@ const normalize = (value) =>
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D")
     .toLowerCase();
+let newsItems=[],siteData={};
 const categories = [
   ["Sữa cho bé", "milk-green"],
   ["Bỉm & tã", "diaper-pink"],
@@ -166,7 +167,7 @@ const heroes = [
     text: "Cùng mẹ chăm chút từng khoảnh khắc,<br>cho hành trình khôn lớn của con.",
     image: "/family.svg",
     link: "/san-pham",
-    background: "#fce4eb",
+    background: "#F2F7E6",
   },
   {
     eyebrow: "ÊM ÁI TỪ NHỮNG NGÀY ĐẦU",
@@ -186,6 +187,8 @@ const heroes = [
   },
 ];
 function heroMarkup() {
+  const banner=siteData.banners?.[0];
+  if(banner) return `<div class="hero"><div class="hero-content"><h1>${escape(banner.title)}</h1><a href="${escape(banner.target_path)}" class="primary">Khám phá →</a></div><div class="hero-art"><img src="${escape(banner.url)}" alt="${escape(banner.alt_text)}"></div></div>`;
   const h = heroes[heroIndex];
   return `<div class="hero" style="background:${h.background}"><div class="hero-content"><div class="eyebrow">${h.eyebrow}</div><h1>${h.title}</h1><p>${h.text}</p><a href="${escape(h.link)}" data-link class="primary">Khám phá cho bé →</a><div class="hero-note">Chọn kỹ cho con · An tâm cho mẹ</div></div><div class="hero-art"><img src="${h.image}" alt="Minh họa sản phẩm và thế giới của bé"></div><div class="banner-controls" aria-label="Chọn banner">${heroes.map((_, i) => `<button class="${i === heroIndex ? "active" : ""}" data-hero="${i}" aria-label="Banner ${i + 1}" aria-pressed="${i === heroIndex}"></button>`).join("")}</div></div>`;
 }
@@ -223,34 +226,7 @@ function home() {
       )
       .join("")}</div></section>
     ${section("Nâng niu bé yêu mỗi ngày", "Từ giấc ngủ êm đến giờ chơi thật vui.", products.filter((p) => ["Chăm sóc bé", "Đồ dùng cho bé", "Đồ chơi"].includes(p.category)).slice(0, 5))}
-    <section class="panel"><div class="section-heading"><div><h2>Góc nhỏ của mẹ</h2><p>Đồng hành cùng mẹ trong từng chặng đường.</p></div></div><div class="journal-grid">${[
-      [
-        "ngu-ngon",
-        "☀",
-        "Một giấc ngủ êm,<br>một ngày thật vui.",
-        "CHĂM SÓC BÉ",
-        "Tạo thói quen ngủ nhẹ nhàng cho bé",
-      ],
-      [
-        "an-dam",
-        "♧",
-        "Bữa đầu đời,<br>vạn điều mới mẻ.",
-        "DINH DƯỠNG",
-        "Cùng mẹ chuẩn bị hành trình ăn dặm",
-      ],
-      [
-        "cham-soc-me",
-        "♡",
-        "Mẹ cũng cần<br>được chăm chút.",
-        "GÓC CỦA MẸ",
-        "Dành một khoảng nhỏ cho chính mẹ",
-      ],
-    ]
-      .map(
-        ([slug, icon, art, tag, title]) =>
-          `<article><a class="story-art" href="/bai-viet/${slug}" data-link>${icon}<b>${art}</b></a><small>${tag}</small><h3><a href="/bai-viet/${slug}" data-link>${title}</a></h3><a href="/bai-viet/${slug}" data-link>Đọc cùng Jielien →</a></article>`,
-      )
-      .join("")}</div></section>`;
+    <section class="panel"><div class="section-heading"><h2>Tin tức & Cẩm nang</h2><a href="/tin-tuc">Tất cả bài viết →</a></div><div class="news-grid">${newsItems.map(a=>`<article class="news-card"><a href="/tin-tuc/${escape(a.slug)}"><img src="${escape(a.coverUrl)}" alt="${escape(a.coverAlt)}"><h3>${escape(a.title)}</h3></a><p>${escape(a.excerpt)}</p></article>`).join('')||'<p>Chưa có bài viết được xuất bản.</p>'}</div></section>`;
 }
 function listing() {
   const params = catalogParams();
@@ -321,8 +297,8 @@ function details(slug) {
   document.title = p.name + " | Jielien";
   const variants = products
     .filter((item) => item.productId === p.productId && item.id !== p.id)
-    .slice(0, 3);
-  return `${breadcrumbs([[p.category, href({ category: p.category })], [p.name]])}<section class="panel detail-top"><div><div class="gallery-main"><span class="product-discount">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span><img id="detail-image" src="${escape(p.image)}" alt="${escape(p.name)} — hình sản phẩm minh họa"></div><div class="gallery-thumbs"><button aria-label="Ảnh sản phẩm chính"><img src="${escape(p.image)}" alt=""></button></div><p class="detail-label">Hình SVG minh họa. Thông tin và thương hiệu trong bản thử nghiệm.</p></div><div class="detail-info"><div class="product-brand">${escape(p.brand)}</div><h1>${escape(p.name)}</h1><div class="detail-meta"><span>Mã SKU: ${escape(p.sku || String(p.id))}</span><span class="in-stock">${p.stock ? `✓ Còn ${p.stock} sản phẩm` : "Tạm hết hàng"}</span></div><div class="detail-pricing"><strong>${money(p.price)}</strong><del>${money(p.oldPrice)}</del><small>Giá minh họa, đã gồm thuế giả định trong dữ liệu mẫu.</small></div><ul class="features">${p.features.map((f) => `<li>${escape(f)}</li>`).join("")}</ul><div class="variant-label">Lựa chọn đang xem: <b>${escape(p.weight)}</b></div><div class="variants"><a class="active" href="${productLink(p)}" data-link>${escape(p.weight)}</a>${variants.map((v) => `<a href="${productLink(v)}" data-link>${escape(v.name.replace(v.brand, ""))}</a>`).join("")}</div><div class="variant-label">Số lượng</div>${quantityControl(p.id, 1, true)}<div class="buy-row"><button class="secondary" data-detail-add="${p.id}" ${!p.stock ? "disabled" : ""}>+ Thêm vào giỏ</button><button class="primary" data-buy="${p.id}" ${!p.stock ? "disabled" : ""}>Mua ngay →</button></div><div class="delivery-note">♧ Miễn phí giao hàng từ 499.000đ. Phí tiêu chuẩn 25.000đ.</div><div class="delivery-note">♢ Mã <b>MEBE50</b>: giảm 50.000đ cho đơn từ 500.000đ.</div></div></section>
+;
+  return `${breadcrumbs([[p.category, href({ category: p.category })], [p.name]])}<section class="panel detail-top"><div><div class="gallery-main"><span class="product-discount">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span><img id="detail-image" src="${escape(p.image)}" alt="${escape(p.name)} — hình sản phẩm minh họa"></div><div class="gallery-thumbs">${(p.gallery?.length?p.gallery:[{url:p.image,alt:p.name}]).map((m,i)=>`<button data-gallery="${escape(m.url)}" data-alt="${escape(m.alt||p.name)}" aria-label="Ảnh sản phẩm ${i+1}"><img src="${escape(m.url)}" alt="${escape(m.alt||p.name)}"></button>`).join('')}</div><p class="detail-label">Kiểm tra quy cách và thông tin sản phẩm trước khi đặt hàng.</p></div><div class="detail-info"><div class="product-brand">${escape(p.brand)}</div><h1>${escape(p.name)}</h1><div class="detail-meta"><span>Mã SKU: ${escape(p.sku || String(p.id))}</span><span class="in-stock">${p.stock ? `✓ Còn ${p.stock} sản phẩm` : "Tạm hết hàng"}</span></div><div class="detail-pricing"><strong>${money(p.price)}</strong><del>${money(p.oldPrice)}</del><small>Giá theo phân loại SKU. Tổng thanh toán được máy chủ xác nhận.</small></div><ul class="features">${p.features.map((f) => `<li>${escape(f)}</li>`).join("")}</ul><div class="variant-label">Lựa chọn đang xem: <b>${escape(p.weight)}</b></div><div class="variants"><a class="active" href="${productLink(p)}" data-link>${escape(p.weight)}</a>${variants.map((v) => `<a href="${productLink(v)}" data-link>${escape(v.name.replace(v.brand, ""))}</a>`).join("")}</div><div class="variant-label">Số lượng</div>${quantityControl(p.id, 1, true)}<div class="buy-row"><button class="secondary" data-detail-add="${p.id}" ${!p.stock ? "disabled" : ""}>+ Thêm vào giỏ</button><button class="primary" data-buy="${p.id}" ${!p.stock ? "disabled" : ""}>Mua ngay →</button></div><div class="delivery-note">♧ Miễn phí giao hàng từ 499.000đ. Phí tiêu chuẩn 25.000đ.</div><div class="delivery-note">♢ Mã <b>MEBE50</b>: giảm 50.000đ cho đơn từ 500.000đ.</div></div></section>
   <section class="panel"><div class="tabs" role="tablist" aria-label="Thông tin sản phẩm"><button class="active" role="tab" id="tab-description" aria-selected="true" aria-controls="detail-tab-content" data-tab="description">Mô tả sản phẩm</button><button role="tab" id="tab-specs" aria-selected="false" aria-controls="detail-tab-content" data-tab="specs">Thông số</button><button role="tab" id="tab-notes" aria-selected="false" aria-controls="detail-tab-content" data-tab="notes">Lưu ý sử dụng</button></div><div class="tab-content" id="detail-tab-content" role="tabpanel" aria-labelledby="tab-description" data-product="${p.id}">${detailTab(p, "description")}</div></section>
   ${section(
     "Mẹ có thể quan tâm",
@@ -582,6 +558,7 @@ async function render({ scroll = true } = {}) {
     let html;
     if (path === "/") html = home();
     else if (path === "/san-pham" || path === "/danh-muc") html = listing();
+    else if(path.startsWith('/danh-muc/')) {const data=await api('/api/categories');const c=data.categories.find(c=>c.slug===path.split('/')[2]);if(c){history.replaceState({},'', '/san-pham?category='+encodeURIComponent(c.name));html=listing();}else html=notFound();}
     else if (path.startsWith("/san-pham/"))
       html = details(path.slice("/san-pham/".length));
     else if (path === "/gio-hang") html = await cartPage(version);
@@ -818,6 +795,7 @@ async function submitOrder(event) {
     persistCart();
     try {
       ({ products } = await api("/api/products"));
+    try{newsItems=(await api('/api/news')).items.slice(0,3);siteData=await api('/api/site');}catch{/* Catalog and checkout remain available when optional content cannot load. */}
     } catch {}
     submitting = false;
     navigate("/don-hang/" + encodeURIComponent(order.id));
@@ -892,6 +870,7 @@ document.addEventListener("click", async (event) => {
     navigate(link.href);
     return;
   }
+  const gallery=event.target.closest('[data-gallery]');if(gallery){$('#detail-image').src=gallery.dataset.gallery;$('#detail-image').alt=gallery.dataset.alt;return;}
   const add = event.target.closest("[data-add]");
   if (add) {
     addToCart(Number(add.dataset.add));
@@ -1054,6 +1033,7 @@ document.addEventListener("click", async (event) => {
   if (event.target.closest("#refresh-cart")) {
     try {
       ({ products } = await api("/api/products"));
+    try{newsItems=(await api('/api/news')).items.slice(0,3);siteData=await api('/api/site');}catch{/* Catalog and checkout remain available when optional content cannot load. */}
       for (const [id, q] of Object.entries(cart)) {
         const p = products.find((p) => p.id === Number(id));
         if (!p?.stock) delete cart[id];
@@ -1197,6 +1177,7 @@ function hydrateCart() {
 async function init() {
   try {
     ({ products } = await api("/api/products"));
+    try{newsItems=(await api('/api/news')).items.slice(0,3);siteData=await api('/api/site');}catch{/* Catalog and checkout remain available when optional content cannot load. */}
     hydrateCart();
     try {
       const session = await api("/api/auth/me");

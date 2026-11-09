@@ -1,3 +1,4 @@
+import {createCommerceEditors} from "/commerce-admin.js";
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const escape = (value) =>
@@ -33,6 +34,16 @@ const transitions = {
   cancelled: [],
 };
 const sections = [
+  {id:'catalog-editor',label:'Sản phẩm cha & SKU',permission:'catalog.read'},
+  {id:'taxonomy-editor',label:'Danh mục & Thuộc tính',permission:'catalog.read'},
+  {id:'media-editor',label:'Thư viện ảnh',permission:'media.read'},
+  {id:'cms-editor',label:'Tin tức & SEO',permission:'content.read'},
+  {id:'documents-editor',label:'Phiếu kho',permission:'inventory.read'},
+  {id:'reports-editor',label:'Báo cáo',permission:'reports.read'},
+  {id:'settings-editor',label:'Cấu hình công ty',permission:'settings.read'},
+  {id:'banners-editor',label:'Banner trang chủ',permission:'settings.read'},
+  {id:'import-editor',label:'CSV sản phẩm',permission:'catalog.read'},
+  {id:'coupons-editor',label:'Mã giảm giá',permission:'promotions.manage'},
   {id:"users",label:"Tài khoản & Phân quyền",permission:"users.manage"},
   { id: "dashboard", label: "◫ Tổng quan", permission: "dashboard.read" },
   { id: "products", label: "▦ Sản phẩm & SKU", permission: "catalog.read" },
@@ -58,15 +69,15 @@ let staffRows = [], staffRoles = [];
 let dialogType = "";
 let dialogItem = null;
 let mutationBusy = false;
-async function api(path, { method = "GET", body } = {}) {
-  const headers = {};
+async function api(path, { method = "GET", body, rawBody, extraHeaders = {} } = {}) {
+  const headers = {...extraHeaders};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (method !== "GET" && csrfToken) headers["X-CSRF-Token"] = csrfToken;
   const response = await fetch(path, {
     method,
     headers,
     credentials: "same-origin",
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    ...(rawBody ? {body:rawBody} : body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   if (response.status === 204) return {};
   let data;
@@ -252,10 +263,10 @@ async function renderView(view, { focus = true } = {}) {
   content.innerHTML =
     '<div class="panel loading">Đang tải dữ liệu cửa hàng…</div>';
   try {
-    let html;
+    let html=await editors.render(view);
     if (view === "users") {
       const data=await api('/api/admin/users'); staffRows=data.users; staffRoles=data.roles;
-      html=`<section class="panel"><h1>Tài khoản & Phân quyền</h1><input id="staff-search" type="search" placeholder="Tìm tên / email / điện thoại"><div id="staff-list">${staffTable(staffRows)}</div></section>`;
+      html=`<section class="panel"><h1>Tài khoản & Phân quyền</h1><button id="new-staff">Tạo nhân viên</button><input id="staff-search" type="search" placeholder="Tìm tên / email / điện thoại"><div id="staff-list">${staffTable(staffRows)}</div></section>`;
     }
     if (view === "dashboard") {
       const { stats = {} } = await api("/api/admin/dashboard");
@@ -393,6 +404,7 @@ async function mutation(form) {
   mutationBusy = true;
   button.disabled = true;
   try {
+    if(dialogType==='create-staff') await api('/api/admin/users',{method:'POST',body:{...data,roles:[data.role]}});
     if(dialogType==='staff') await api('/api/admin/users/'+dialogItem.id,{method:'PATCH',body:{roles:new FormData(form).getAll('roles'),status:data.status}});
     if (dialogType === "variant")
       await api("/api/admin/variants/" + encodeURIComponent(dialogItem.id), {
@@ -450,6 +462,9 @@ async function mutation(form) {
   }
 }
 root.addEventListener("click", (event) => {
+  if(event.target.closest('#new-staff')) {
+    showDialog('Tạo tài khoản nhân viên',`<form id="create-staff-form" class="editor-form"><label>Họ tên<input name="fullName" required minlength="2"></label><label>Tên đăng nhập<input name="username" required minlength="3" autocomplete="off"></label><label>Điện thoại Việt Nam<input name="phone" required></label><label>Email (tùy chọn)<input name="email" type="email"></label><label>Mật khẩu riêng (ít nhất 10 ký tự)<input name="password" type="password" required minlength="10" autocomplete="new-password"></label><label>Vai trò<select name="role">${staffRoles.filter(r=>!['customer','admin'].includes(r)).map(r=>`<option value="${escape(r)}">${escape(r)}</option>`).join('')}</select></label><div class="form-error" role="alert"></div><button class="primary">Tạo nhân viên</button></form>`,'create-staff',null); return;
+  }
   const staff=event.target.closest('[data-staff]');
   if(staff) {
     const item=staffRows.find(u=>Number(u.id)===Number(staff.dataset.staff));
@@ -551,4 +566,5 @@ async function init() {
 root.addEventListener("click", (event) => {
   if (event.target.closest("#retry-init")) init();
 });
+const editors=createCommerceEditors({root,api,has,escape,notify});
 init();
