@@ -877,6 +877,32 @@
 .admin-workspace .section-caption {
   font-size: 11px;
 }
+/* Desktop workspace uses the full viewport; navigation attaches to the left edge. */
+@media (min-width: 901px) {
+  .admin-workspace {
+    --admin-header-height: 77px;
+  }
+  .admin-workspace .management-wrap {
+    max-width: none;
+  }
+  .admin-workspace .management-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .admin-workspace .admin-main.management-wrap {
+    margin: 0;
+    padding: 0;
+  }
+  .admin-workspace .admin-sidebar {
+    top: var(--admin-header-height);
+    height: calc(100dvh - var(--admin-header-height));
+    border-radius: 0;
+  }
+  .admin-workspace .workspace-main {
+    padding: 24px 28px 40px 0;
+  }
+}
 @media (max-width: 1200px) {
   .admin-workspace .admin-layout {
     grid-template-columns: 224px minmax(0, 1fr);

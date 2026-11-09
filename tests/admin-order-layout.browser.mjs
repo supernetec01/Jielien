@@ -67,6 +67,15 @@ try {
         bounds.y + bounds.height <= (width === 1920 ? 948 : 1000),
         `sidebar fits viewport ${width}`,
       );
+      assert.ok(
+        Math.abs(bounds.x) <= 1,
+        "desktop sidebar touches the left viewport edge",
+      );
+      const header = await page.locator(".management-header").boundingBox();
+      assert.ok(
+        Math.abs(bounds.y - (header.y + header.height)) <= 1,
+        "sidebar starts immediately below header",
+      );
       const before = await page.locator(".workspace-brand").boundingBox();
       await page
         .locator(".side-nav")
@@ -82,7 +91,13 @@ try {
     }
     await page.locator("[data-admin-order]").first().click();
     await page.locator('#admin-dialog[open][data-kind="order"]').waitFor();
-    assert.equal(await page.locator("#admin-dialog-content").evaluate(el=>el.scrollTop),0,"opening/reopening starts at customer information");
+    assert.equal(
+      await page
+        .locator("#admin-dialog-content")
+        .evaluate((el) => el.scrollTop),
+      0,
+      "opening/reopening starts at customer information",
+    );
     const box = await page.locator("#admin-dialog").boundingBox();
     assert.ok(box.x >= 0 && box.width <= width);
     if (width >= 1440) assert.ok(box.width >= 1100);
