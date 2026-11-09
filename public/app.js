@@ -1,3 +1,4 @@
+import { icon } from "/ui-icons.js";
 import { canAccessAdmin } from "/admin-access.js";
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
@@ -17,9 +18,11 @@ const normalize = (value) =>
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D")
     .toLowerCase();
+let categoryRows = [],
+  brandRows = [];
 let newsItems = [],
   siteData = {};
-const categories = [
+let categories = [
   ["Sữa cho bé", "milk-green"],
   ["Bỉm & tã", "diaper-pink"],
   ["Ăn dặm", "cereal"],
@@ -103,7 +106,7 @@ async function api(path, options = {}) {
   try {
     body = await response.json();
   } catch {
-    throw new Error("Máy chủ chưa phản hồi đúng định dạng. Vui lòng thử lại.");
+    throw new Error("Chưa nhận được phản hồi. Vui lòng thử lại.");
   }
   if (!response.ok) {
     const error = new Error(
@@ -141,18 +144,18 @@ function breadcrumbs(items) {
   return `<nav class="breadcrumbs" aria-label="Đường dẫn"><a href="/" data-link>Trang chủ</a>${items.map(([label, url]) => `<span aria-hidden="true">›</span>${url ? `<a href="${escape(url)}" data-link>${escape(label)}</a>` : `<span aria-current="page">${escape(label)}</span>`}`).join("")}</nav>`;
 }
 function empty(title, text, link = "/san-pham", label = "Khám phá sản phẩm") {
-  return `<div class="empty"><span class="empty-icon" aria-hidden="true">♡</span><h2>${escape(title)}</h2><p>${escape(text)}</p>${link ? `<a href="${escape(link)}" data-link class="primary">${escape(label)} →</a>` : ""}</div>`;
+  return `<div class="empty"><span class="empty-icon" aria-hidden="true">${icon("cart")}</span><h2>${escape(title)}</h2><p>${escape(text)}</p>${link ? `<a href="${escape(link)}" data-link class="primary">${escape(label)} →</a>` : ""}</div>`;
 }
 function card(product) {
   const saved = favorites.includes(product.id);
   return `<article class="product-card">
     <span class="product-discount">-${Math.round((1 - product.price / product.oldPrice) * 100)}%</span>
-    <button class="wish-button ${saved ? "active" : ""}" data-wish="${product.id}" aria-label="${saved ? "Bỏ yêu thích" : "Yêu thích"} ${escape(product.name)}" aria-pressed="${saved}">${saved ? "♥" : "♡"}</button>
-    <a href="${productLink(product)}" data-link class="product-photo"><img src="${escape(product.image)}" alt="${escape(product.name)} — ảnh minh họa" loading="lazy"></a>
+    <button class="wish-button ${saved ? "active" : ""}" data-wish="${product.id}" aria-label="${saved ? "Bỏ yêu thích" : "Yêu thích"} ${escape(product.name)}" aria-pressed="${saved}">${icon(saved ? "heart-filled" : "heart")}</button>
+    <a href="${productLink(product)}" data-link class="product-photo"><img src="${escape(product.image)}" alt="${escape(product.name)}" width="320" height="320" loading="lazy"></a>
     <div class="product-brand">${escape(product.brand)}</div>
     <h3><a href="${productLink(product)}" data-link>${escape(product.name)}</a></h3>
     <div class="product-price">${money(product.price)}</div><div class="old-price">${money(product.oldPrice)}</div>
-    <div class="product-tags"><span>${escape(product.age)}</span><span>${product.stock > 0 ? "Còn hàng" : "Hết hàng"}</span></div>
+    <div class="product-tags"><span>${escape(product.age)}</span>${product.stock <= 5 ? `<span class="stock-notice">${product.stock > 0 ? "Sắp hết" : "Hết hàng"}</span>` : ""}</div>
     <div class="product-actions"><button class="add-button" data-add="${product.id}" ${product.stock <= 0 ? "disabled" : ""}>${product.stock > 0 ? "+ Thêm vào giỏ" : "Tạm hết hàng"}</button></div>
   </article>`;
 }
@@ -186,16 +189,21 @@ const heroes = [
   },
 ];
 function heroMarkup() {
-  const banner = siteData.banners?.[0];
-  if (banner)
-    return `<div class="hero"><div class="hero-content"><h1>${escape(banner.title)}</h1><a href="${escape(banner.target_path)}" class="primary">Khám phá →</a></div><div class="hero-art"><img src="${escape(banner.url)}" alt="${escape(banner.alt_text)}"></div></div>`;
-  const h = heroes[heroIndex];
-  return `<div class="hero"><div class="hero-content"><div class="eyebrow">${h.eyebrow}</div><h1>${h.title}</h1><p>${h.text}</p><a href="${escape(h.link)}" data-link class="primary">Khám phá cho bé →</a><div class="hero-note">Chọn kỹ cho con · An tâm cho mẹ</div></div><div class="hero-art"><img src="${h.image}" alt="Minh họa sản phẩm và thế giới của bé"></div><div class="banner-controls" aria-label="Chọn banner">${heroes.map((_, i) => `<button class="${i === heroIndex ? "active" : ""}" data-hero="${i}" aria-label="Banner ${i + 1}" aria-pressed="${i === heroIndex}"></button>`).join("")}</div></div>`;
+  const banners = siteData.banners || [],
+    count = banners.length || heroes.length;
+  heroIndex = heroIndex % count;
+  const banner = banners[heroIndex],
+    h = heroes[heroIndex];
+  const controls =
+    count > 1
+      ? `<div class="banner-controls" aria-label="Chọn banner"><button type="button" data-banner-step="-1" aria-label="Banner trước">${icon("arrow", { className: "previous-arrow" })}</button>${Array.from({ length: count }, (_, i) => `<button class="${i === heroIndex ? "active" : ""}" data-hero="${i}" aria-label="Banner ${i + 1}" aria-pressed="${i === heroIndex}"></button>`).join("")}<button type="button" data-banner-step="1" aria-label="Banner tiếp theo">${icon("arrow")}</button><button type="button" data-banner-pause aria-pressed="${bannerPaused}">${bannerPaused ? "Phát banner" : "Tạm dừng"}</button></div>`
+      : "";
+  return `<div class="hero"><div class="hero-content"><div class="eyebrow">${banner ? "JIELIEN INTERNATIONAL" : h.eyebrow}</div><h1>${banner ? escape(banner.title) : h.title}</h1>${banner ? "" : `<p>${h.text}</p>`}<a href="${escape(banner ? banner.target_path : h.link)}" ${banner ? "" : "data-link"} class="primary">Khám phá cho bé ${icon("arrow")}</a><div class="hero-note">Chọn cho bé · Chăm chút gia đình</div></div><div class="hero-art"><img src="${escape(banner ? banner.url : h.image)}" alt="${escape(banner ? banner.alt_text : "Sản phẩm và thế giới của bé")}" width="560" height="420" ${heroIndex === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}></div>${controls}</div>`;
 }
 function couponMarkup() {
   const coupons = siteData.coupons || [];
   return coupons.length
-    ? `<div class="coupon-strip">${coupons.map((c) => `<div class="coupon"><b>${c.discount_type === "shipping" ? "MIỄN PHÍ SHIP" : c.discount_type === "percentage" ? "GIẢM " + c.discount_value + "%" : "GIẢM " + money(Math.min(c.discount_value, c.maximum_discount ?? c.discount_value))}</b><span>${c.minimum_order ? "Đơn từ " + money(c.minimum_order) : "Theo điều kiện máy chủ"}</span><button data-copy="${escape(c.code)}">${escape(c.code)} ▣</button></div>`).join("")}</div>`
+    ? `<div class="coupon-strip">${coupons.map((c) => `<div class="coupon"><b>${c.discount_type === "shipping" ? "MIỄN PHÍ SHIP" : c.discount_type === "percentage" ? "GIẢM " + c.discount_value + "%" : "GIẢM " + money(Math.min(c.discount_value, c.maximum_discount ?? c.discount_value))}</b><span>${c.minimum_order ? "Đơn từ " + money(c.minimum_order) : "Theo điều kiện của mã"}</span><button data-copy="${escape(c.code)}">${escape(c.code)} ${icon("copy")}</button></div>`).join("")}</div>`
     : "";
 }
 function home() {
@@ -204,12 +212,16 @@ function home() {
     .sort((a, b) => 1 - b.price / b.oldPrice - (1 - a.price / a.oldPrice))
     .slice(0, 5);
   return `${identity ? `<div class="account-invitation"><span>Xin chào, <b>${escape(identity.fullName)}</b></span><a href="/tai-khoan">Đơn hàng & tài khoản →</a></div>` : `<div class="account-invitation"><span>Lưu địa chỉ, giỏ hàng và theo dõi đơn của mẹ</span><div><a href="/tai-khoan">Đăng nhập</a><a href="/tai-khoan?mode=register">Đăng ký tài khoản →</a></div></div>`}<section class="hero-layout" aria-label="Khám phá Jielien"><div id="hero-container">${heroMarkup()}</div><div class="hero-posters"><a class="hero-poster" href="${escape(href({ category: "Sữa cho bé" }))}" data-link><small>DINH DƯỠNG MỖI NGÀY</small><h2>Lựa chọn tốt.<br>Khởi đầu vui.</h2><span>Khám phá sản phẩm →</span><img src="/assets/milk-gold.svg" alt=""></a><a class="hero-poster" href="${escape(href({ category: "Chăm sóc bé" }))}" data-link><small>CHĂM CHÚT GIA ĐÌNH</small><h2>Điều nhỏ bé.<br>Yêu thương lớn.</h2><span>Xem bộ sản phẩm →</span><img src="/assets/baby-care.svg" alt=""></a></div></section>
-    <div class="store-promise" aria-label="Mua sắm tại Jielien"><div><span aria-hidden="true">◇</span><p><b>Lựa chọn rõ ràng</b><small>Thông tin và quy cách sản phẩm</small></p></div><div><span aria-hidden="true">▤</span><p><b>Theo dõi đơn hàng</b><small>Tra cứu trạng thái trực tuyến</small></p></div><div><span aria-hidden="true">♡</span><p><b>Mua sắm thuận tiện</b><small>Lưu sản phẩm bạn yêu thích</small></p></div><div><span aria-hidden="true">♙</span><p><b>Tài khoản của bạn</b><small>Lưu địa chỉ và lịch sử mua hàng</small></p></div></div>
-    <section class="panel"><div class="section-heading"><div><h2>Khám phá danh mục</h2><p>Tìm sản phẩm phù hợp cho bạn và gia đình.</p></div></div><div class="category-tiles">${categories.map(([name, img]) => `<a class="category-tile" href="${escape(href({ category: name }))}" data-link><span><img src="/assets/${img}.svg" alt=""></span>${name}</a>`).join("")}</div></section>
-    <section class="flash-sale"><div class="section-heading"><div><h2><span>ϟ</span> Sản phẩm nổi bật</h2><div class="sale-note">Khám phá sản phẩm và giá bán hiện tại</div></div><a href="/san-pham?sort=discount" data-link>Xem tất cả →</a></div>${couponMarkup()}${productGrid(sale)}</section>
+    <div class="store-promise" aria-label="Mua sắm tại Jielien"><div>${icon("shield")}<p><b>Lựa chọn rõ ràng</b><small>Thông tin và quy cách sản phẩm</small></p></div><div>${icon("receipt")}<p><b>Theo dõi đơn hàng</b><small>Tra cứu trạng thái trực tuyến</small></p></div><div>${icon("heart")}<p><b>Mua sắm thuận tiện</b><small>Lưu sản phẩm bạn yêu thích</small></p></div><div>${icon("user")}<p><b>Tài khoản của bạn</b><small>Lưu địa chỉ và lịch sử mua hàng</small></p></div></div>
+    <section class="panel"><div class="section-heading"><div><h2>Khám phá danh mục</h2><p>Tìm sản phẩm phù hợp cho bạn và gia đình.</p></div></div><div class="category-tiles">${categories.map(([name, img]) => `<a class="category-tile" href="${escape(href({ category: name }))}" data-link><span><img src="/assets/${img}.svg" alt=""></span>${escape(name)}</a>`).join("")}</div></section>
+    <section class="flash-sale"><div class="section-heading"><div><h2>${icon("bolt")} Sản phẩm nổi bật</h2><div class="sale-note">Khám phá sản phẩm và giá bán hiện tại</div></div><a href="/san-pham?sort=discount" data-link>Xem tất cả →</a></div>${couponMarkup()}${productGrid(sale)}</section>
     ${section("Sữa & dinh dưỡng cho bé", "Chọn sản phẩm phù hợp với độ tuổi và nhu cầu của con.", products.filter((p) => p.category === "Sữa cho bé" || p.category === "Ăn dặm").slice(0, 5), href({ category: "Sữa cho bé" }))}
     <section class="panel"><div class="section-heading"><h2>Thương hiệu trong bộ sưu tập</h2></div><div class="brand-row">${[
-      ...new Set(products.map((p) => p.brand)),
+      ...new Set(
+        brandRows.length
+          ? brandRows.map((b) => b.name)
+          : products.map((p) => p.brand),
+      ),
     ]
       .slice(0, 6)
       .map(
@@ -258,7 +270,7 @@ function listing(categoryName) {
   document.title = title + " | Jielien";
   const options = (values, selected, all) =>
     `<option value="">${all}</option>${values.map((value) => `<option value="${escape(value)}" ${value === selected ? "selected" : ""}>${escape(value)}</option>`).join("")}`;
-  return `${breadcrumbs([[title]])}<h1 class="page-title">${escape(title)}</h1><p class="page-subtitle">Tìm những điều phù hợp nhất cho mẹ và bé · ${total} sản phẩm minh họa</p>
+  return `${breadcrumbs([[title]])}<h1 class="page-title">${escape(title)}</h1><p class="page-subtitle">Tìm những điều phù hợp nhất cho mẹ và bé · ${total} sản phẩm</p>
   <div class="catalog-layout"><aside class="filter-panel ${filterOpen ? "open" : ""}" id="filter-panel" aria-label="Bộ lọc sản phẩm"><div class="filter-group"><h3>Danh mục</h3><select data-select-filter="category" aria-label="Lọc danh mục">${options(
     categories.map((c) => c[0]),
     params.category,
@@ -293,7 +305,7 @@ function details(slug) {
   const variants = products.filter(
     (item) => item.productId === p.productId && item.id !== p.id,
   );
-  return `${breadcrumbs([[p.category, href({ category: p.category })], [p.name]])}<section class="panel detail-top"><div><div class="gallery-main"><span class="product-discount">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span><img id="detail-image" src="${escape(p.image)}" alt="${escape(p.name)} — hình sản phẩm minh họa"></div><div class="gallery-thumbs">${(p.gallery?.length ? p.gallery : [{ url: p.image, alt: p.name }]).map((m, i) => `<button data-gallery="${escape(m.url)}" data-alt="${escape(m.alt || p.name)}" aria-label="Ảnh sản phẩm ${i + 1}"><img src="${escape(m.url)}" alt="${escape(m.alt || p.name)}"></button>`).join("")}</div><p class="detail-label">Kiểm tra quy cách và thông tin sản phẩm trước khi đặt hàng.</p></div><div class="detail-info"><div class="product-brand">${escape(p.brand)}</div><h1>${escape(p.name)}</h1><div class="detail-meta"><span>Mã SKU: ${escape(p.sku || String(p.id))}</span><span class="in-stock">${p.stock ? `✓ Còn ${p.stock} sản phẩm` : "Tạm hết hàng"}</span></div><div class="detail-pricing"><strong>${money(p.price)}</strong><del>${money(p.oldPrice)}</del><small>Giá theo phân loại SKU. Tổng thanh toán được máy chủ xác nhận.</small></div><ul class="features">${p.features.map((f) => `<li>${escape(f)}</li>`).join("")}</ul><div class="variant-label">Lựa chọn đang xem: <b>${escape(p.weight)}</b></div><div class="variants"><a class="active" href="${productLink(p)}" data-link>${escape(p.weight)}</a>${variants.map((v) => `<a href="${productLink(v)}" data-link>${escape(v.name.replace(v.brand, ""))}</a>`).join("")}</div><div class="variant-label">Số lượng</div>${quantityControl(p.id, 1, true)}<div class="buy-row"><button class="secondary" data-detail-add="${p.id}" ${!p.stock ? "disabled" : ""}>+ Thêm vào giỏ</button><button class="primary" data-buy="${p.id}" ${!p.stock ? "disabled" : ""}>Mua ngay →</button></div><div class="delivery-note">♧ Miễn phí giao hàng từ 499.000đ. Phí tiêu chuẩn 25.000đ.</div><div class="delivery-note">♢ Ưu đãi được máy chủ kiểm tra khi đặt hàng.</div></div></section>
+  return `${breadcrumbs([[p.category, href({ category: p.category })], [p.name]])}<section class="panel detail-top"><div><div class="gallery-main">${p.oldPrice > p.price ? `<span class="product-discount">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span>` : ""}<img id="detail-image" src="${escape(p.image)}" alt="${escape(p.name)}" width="600" height="600" fetchpriority="high"></div><div class="gallery-thumbs">${(p.gallery?.length ? p.gallery : [{ url: p.image, alt: p.name }]).map((m, i) => `<button data-gallery="${escape(m.url)}" data-alt="${escape(m.alt || p.name)}" aria-label="Ảnh sản phẩm ${i + 1}"><img src="${escape(m.url)}" alt="" width="64" height="64"></button>`).join("")}</div></div><div class="detail-info"><div class="product-brand">${escape(p.brand)}</div><h1>${escape(p.name)}</h1><div class="detail-meta"><span class="in-stock">${stockText(p)}</span></div><div class="detail-pricing"><strong>${money(p.price)}</strong>${p.oldPrice > p.price ? `<del>${money(p.oldPrice)}</del>` : ""}<small>Giá cho quy cách đang chọn</small></div><div class="variant-label">Quy cách: <b>${escape(p.weight)}</b></div><div class="variants" role="radiogroup" aria-label="Chọn quy cách">${[p, ...variants].map((v) => `<button type="button" role="radio" aria-checked="${v.id === p.id}" tabindex="${v.id === p.id ? 0 : -1}" class="${v.id === p.id ? "active" : ""}" data-variant="${v.id}">${escape(v.weight || v.name)}${v.stock ? "" : " · Hết hàng"}</button>`).join("")}</div><label class="variant-label" for="detail-quantity">Số lượng</label>${quantityControl(p.id, 1, true)}<div class="buy-row"><button class="secondary" data-detail-add="${p.id}" ${!p.stock ? "disabled" : ""}>${icon("cart")} Thêm vào giỏ</button><button class="primary" data-buy="${p.id}" ${!p.stock ? "disabled" : ""}>${p.stock ? "Mua ngay" : "Tạm hết hàng"} ${icon("arrow")}</button></div><div class="purchase-promises">${siteData.freeShippingThreshold ? `<p>${icon("truck")} Miễn phí giao hàng từ ${money(siteData.freeShippingThreshold)}</p>` : ""}<p>${icon("tag")} Nhập mã ưu đãi ở giỏ hàng</p><a href="/chinh-sach/doi-tra">${icon("return")} Xem chính sách đổi trả</a></div><ul class="features">${p.features.map((f) => `<li>${escape(f)}</li>`).join("")}</ul></div></section>
   <section class="panel"><div class="tabs" role="tablist" aria-label="Thông tin sản phẩm"><button class="active" role="tab" id="tab-description" aria-selected="true" aria-controls="detail-tab-content" data-tab="description">Mô tả sản phẩm</button><button role="tab" id="tab-specs" aria-selected="false" aria-controls="detail-tab-content" data-tab="specs">Thông số</button><button role="tab" id="tab-notes" aria-selected="false" aria-controls="detail-tab-content" data-tab="notes">Lưu ý sử dụng</button></div><div class="tab-content" id="detail-tab-content" role="tabpanel" aria-labelledby="tab-description" data-product="${p.id}">${detailTab(p, "description")}</div></section>
   ${section(
     "Mẹ có thể quan tâm",
@@ -315,7 +327,7 @@ function detailTab(p, tab) {
       ["Độ tuổi tham khảo", p.age],
       ["Quy cách", p.weight],
       ["Mã sản phẩm", "JL" + String(p.id).padStart(4, "0")],
-      ["Dữ liệu", "Minh họa phục vụ phát triển website"],
+      ...(siteData.demoMode ? [["Dữ liệu", "Danh mục mẫu để kiểm thử"]] : []),
     ]
       .map(
         ([key, value]) =>
@@ -323,12 +335,12 @@ function detailTab(p, tab) {
       )
       .join("")}</tbody></table>`;
   if (tab === "notes")
-    return "<h3>Mẹ đọc kỹ trước khi sử dụng</h3><p>Thông tin trong website là dữ liệu minh họa, không thay thế nhãn sản phẩm hoặc tư vấn y tế. Khi dùng sản phẩm thật, mẹ cần kiểm tra nguồn gốc, hạn sử dụng, độ tuổi và hướng dẫn từ nhà sản xuất. Bảo quản theo điều kiện ghi trên bao bì và hỏi chuyên gia y tế khi cần.</p>";
-  return `<h3>${escape(p.name)}</h3><p>${escape(p.description)}</p>${p.descriptionHtml || ""}<ul>${p.features.map((feature) => `<li>${escape(feature)}</li>`).join("")}</ul><p class="notice">Sản phẩm, thương hiệu và giá ở đây là dữ liệu thử nghiệm. Chưa có đánh giá người mua thực tế.</p>`;
+    return "<h3>Mẹ đọc kỹ trước khi sử dụng</h3><p>Thông tin sản phẩm không thay thế tư vấn y tế. Khi sử dụng, bạn cần kiểm tra nguồn gốc, hạn sử dụng, độ tuổi và hướng dẫn từ nhà sản xuất. Bảo quản theo điều kiện ghi trên bao bì và hỏi chuyên gia y tế khi cần.</p>";
+  return `<h3>${escape(p.name)}</h3><p>${escape(p.description)}</p>${p.descriptionHtml || ""}<ul>${p.features.map((feature) => `<li>${escape(feature)}</li>`).join("")}</ul>${siteData.demoMode ? '<p class="notice">Danh mục mẫu dùng để kiểm thử, chưa có đánh giá người mua.</p>' : ""}`;
 }
 function quantityControl(id, quantity, detail = false) {
   const p = products.find((p) => p.id === id);
-  return `<div class="quantity-control"><button type="button" data-quantity="-1" data-id="${id}" ${detail ? "data-detail" : ""} aria-label="Giảm số lượng">−</button><input type="number" required step="1" min="1" max="${Math.min(99, p?.stock || 1)}" value="${quantity}" aria-label="Số lượng ${escape(p?.name)}" ${detail ? 'id="detail-quantity"' : `data-cart-quantity="${id}"`}><button type="button" data-quantity="1" data-id="${id}" ${detail ? "data-detail" : ""} aria-label="Tăng số lượng">+</button></div>`;
+  return `<div class="quantity-control"><button type="button" data-quantity="-1" data-id="${id}" ${detail ? "data-detail" : ""} aria-label="Giảm số lượng">${icon("minus")}</button><input type="number" required step="1" min="1" max="${Math.min(99, p?.stock || 1)}" value="${quantity}" aria-label="Số lượng ${escape(p?.name)}" ${detail ? 'id="detail-quantity"' : `data-cart-quantity="${id}"`}><button type="button" data-quantity="1" data-id="${id}" ${detail ? "data-detail" : ""} aria-label="Tăng số lượng">${icon("plus")}</button></div>`;
 }
 function cartItems() {
   return Object.entries(cart).map(([id, quantity]) => ({
@@ -371,7 +383,7 @@ function addToCart(id, quantity = 1) {
   }
   cart[id] = (cart[id] || 0) + quantity;
   persistCart();
-  toast("Đã thêm vào giỏ hàng của mẹ ♡");
+  toast("Đã thêm vào giỏ hàng");
   return true;
 }
 async function fetchQuote() {
@@ -388,14 +400,14 @@ async function fetchQuote() {
 function summaryMarkup(q, checkout = false) {
   return `<aside class="panel summary"><h2>${checkout ? "Đơn hàng của mẹ" : "Thông tin thanh toán"}</h2>
   ${checkout ? `<div class="checkout-items">${q.items.map((item) => `<div class="checkout-mini"><img src="${escape(item.image)}" alt=""><div>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></div></div>`).join("")}</div>` : ""}
-  <div class="free-shipping">${q.shipping === 0 ? "✓ Đơn hàng được miễn phí giao hàng" : "Mua từ 499.000đ để được miễn phí giao hàng"}</div>
-  <form id="coupon-form" class="coupon-form"><input name="coupon" id="coupon" maxlength="30" placeholder="Mã ưu đãi (MEBE50)" aria-label="Mã ưu đãi" value="${escape(coupon)}"><button class="secondary">Áp dụng</button></form>
-  ${coupon ? `<button class="filter-chip" id="remove-coupon">${escape(coupon)} ×</button>` : '<div class="summary-note">MEBE50: giảm 50K từ 500K · FREESHIP: miễn ship từ 299K. Mỗi đơn áp dụng 1 mã.</div>'}
+  ${shippingMarkup(q)}
+  <form id="coupon-form" class="coupon-form"><input name="coupon" id="coupon" maxlength="30" placeholder="Nhập mã ưu đãi" aria-label="Mã ưu đãi" value="${escape(coupon)}"><button class="secondary">Áp dụng</button></form>
+  ${coupon ? `<button class="filter-chip" id="remove-coupon">${escape(coupon)} ×</button>` : `<div class="coupon-suggestions">${(siteData.coupons || []).map((c) => `<button type="button" data-coupon="${escape(c.code)}">${escape(c.code)}</button>`).join("")}</div>`}
   <div id="coupon-error" class="form-error" role="alert"></div>
   <div class="summary-line"><span>Tạm tính (${q.items.reduce((s, p) => s + p.quantity, 0)} sản phẩm)</span><b>${money(q.subtotal)}</b></div>
   <div class="summary-line discount"><span>Giảm giá</span><b>−${money(q.discount)}</b></div><div class="summary-line"><span>Phí giao hàng</span><b>${q.shipping ? money(q.shipping) : "Miễn phí"}</b></div><div class="summary-line total"><span>Tổng cộng</span><strong id="grand-total">${money(q.total)}</strong></div>
   ${checkout ? '<button class="primary" type="submit" form="checkout-form" id="place-order">Đặt hàng COD →</button>' : '<a href="/thanh-toan" data-link class="primary">Tiến hành đặt hàng →</a>'}
-  <p class="summary-note">${checkout ? "Với chuyển khoản, chỉ thanh toán sau khi kiểm tra ngân hàng, người nhận và mã đơn trên màn hình tiếp theo." : "Giá và ưu đãi được xác thực bởi máy chủ khi đặt hàng."}</p></aside>`;
+  <p class="summary-note">${checkout ? "Thanh toán theo phương thức đã chọn. Kiểm tra thông tin trước khi xác nhận." : "Kiểm tra sản phẩm và phí giao hàng trước khi đặt."}</p></aside>`;
 }
 async function cartPage(version) {
   document.title = "Giỏ hàng | Jielien";
@@ -449,7 +461,7 @@ async function checkoutPage(version) {
   }
   if (version !== renderVersion) return "";
   if (!checkoutKey) checkoutKey = crypto.randomUUID();
-  return `${breadcrumbs([["Giỏ hàng", "/gio-hang"], ["Đặt hàng"]])}<div class="checkout-steps"><span>1. Giỏ hàng</span><span>→</span><span class="active">2. Thông tin giao hàng</span><span>→</span><span>3. Hoàn tất</span></div><div class="checkout-account">${identity ? `Đang đặt hàng với tài khoản <b>${escape(identity.fullName)}</b>. Đơn sẽ được lưu vào lịch sử mua hàng.` : `Mẹ có thể đặt hàng không cần tài khoản hoặc <a href="/tai-khoan?redirect=/thanh-toan">đăng nhập</a> / <a href="/tai-khoan?mode=register&redirect=/thanh-toan">đăng ký</a> để lưu địa chỉ và đơn hàng.`}</div><div class="checkout-layout"><div><form id="checkout-form"><section class="panel form-section"><h2>Thông tin người nhận</h2><div class="fields"><div class="field"><label for="name">Họ và tên <span>*</span></label><input id="name" name="name" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên người nhận"></div><div class="field"><label for="phone">Số điện thoại <span>*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field full"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="150" placeholder="Email để ghi nhận trong đơn"></div></div></section><section class="panel form-section"><h2>Địa chỉ giao hàng</h2><div class="fields"><div class="field"><label for="province">Tỉnh / Thành phố <span>*</span></label><input id="province" name="province" autocomplete="address-level1" required minlength="2" maxlength="100" placeholder="Ví dụ: TP. Hồ Chí Minh"></div><div class="field"><label for="district">Quận / Huyện / Khu vực <span>*</span></label><input id="district" name="district" autocomplete="address-level2" required minlength="2" maxlength="100" placeholder="Khu vực giao hàng"></div><div class="field full"><label for="address">Địa chỉ chi tiết <span>*</span></label><input id="address" name="address" autocomplete="street-address" required minlength="8" maxlength="250" placeholder="Số nhà, tên đường, phường / xã"></div><div class="field full"><label for="note">Ghi chú cho đơn hàng</label><textarea id="note" name="note" maxlength="500" placeholder="Thông tin cần lưu ý khi giao hàng (nếu có)"></textarea></div></div></section><section class="panel form-section"><h2>Phương thức thanh toán</h2>${paymentOptions()}<label class="agreement"><input name="agreement" type="checkbox" required><span>Tôi đã kiểm tra thông tin và đồng ý với <a href="/chinh-sach/giao-hang" target="_blank" rel="noopener">điều kiện mua hàng</a> và <a href="/chinh-sach/bao-mat" target="_blank" rel="noopener">chính sách thông tin cá nhân</a>. Đây là đơn thử nghiệm, chưa được giao thực tế.</span></label><div id="checkout-error" class="form-error" role="alert"></div></section></form></div>${summaryMarkup(q, true)}</div>`;
+  return `${breadcrumbs([["Giỏ hàng", "/gio-hang"], ["Đặt hàng"]])}<div class="checkout-steps"><span>1. Giỏ hàng</span><span>→</span><span class="active">2. Thông tin giao hàng</span><span>→</span><span>3. Hoàn tất</span></div><div class="checkout-account">${identity ? `Đang đặt hàng với tài khoản <b>${escape(identity.fullName)}</b>. Đơn sẽ được lưu vào lịch sử mua hàng.` : `Mẹ có thể đặt hàng không cần tài khoản hoặc <a href="/tai-khoan?redirect=/thanh-toan">đăng nhập</a> / <a href="/tai-khoan?mode=register&redirect=/thanh-toan">đăng ký</a> để lưu địa chỉ và đơn hàng.`}</div><div class="checkout-layout"><div><form id="checkout-form"><section class="panel form-section"><h2>Thông tin người nhận</h2><div class="fields"><div class="field"><label for="name">Họ và tên <span>*</span></label><input id="name" name="name" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên người nhận"></div><div class="field"><label for="phone">Số điện thoại <span>*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field full"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="150" placeholder="Email để ghi nhận trong đơn"></div></div></section><section class="panel form-section"><h2>Địa chỉ giao hàng</h2><div class="fields"><div class="field"><label for="province">Tỉnh / Thành phố <span>*</span></label><input id="province" name="province" autocomplete="address-level1" required minlength="2" maxlength="100" placeholder="Ví dụ: TP. Hồ Chí Minh"></div><div class="field"><label for="district">Khu vực giao hàng <span>*</span></label><input id="district" name="district" autocomplete="address-level2" required minlength="2" maxlength="100" placeholder="Khu vực giao hàng"></div><div class="field full"><label for="address">Địa chỉ chi tiết <span>*</span></label><input id="address" name="address" autocomplete="street-address" required minlength="8" maxlength="250" placeholder="Số nhà, tên đường, phường / xã"></div><div class="field full"><label for="note">Ghi chú cho đơn hàng</label><textarea id="note" name="note" maxlength="500" placeholder="Thông tin cần lưu ý khi giao hàng (nếu có)"></textarea></div></div></section><section class="panel form-section"><h2>Phương thức thanh toán</h2>${paymentOptions()}<label class="agreement"><input name="agreement" type="checkbox" required><span>Tôi đã kiểm tra thông tin và đồng ý với <a href="/chinh-sach/giao-hang" target="_blank" rel="noopener">điều kiện mua hàng</a> và <a href="/chinh-sach/bao-mat" target="_blank" rel="noopener">chính sách thông tin cá nhân</a>.${siteData.demoMode ? " Đây là đơn thử nghiệm, chưa giao thực tế." : ""}</span></label><div id="checkout-error" class="form-error" role="alert"></div></section></form></div>${summaryMarkup(q, true)}</div>`;
 }
 async function orderPage(id) {
   let order = lastOrder?.id === id ? lastOrder : null;
@@ -497,19 +509,19 @@ function lookupPage() {
 const policies = {
   "gioi-thieu": [
     "Về Jielien",
-    "<p>Jielien là bản phát triển website thương mại điện tử dành cho mẹ và bé, xây dựng theo yêu cầu tham khảo mô hình AVAKids. Đây là website độc lập, không phải chi nhánh, đối tác hoặc kênh bán hàng chính thức của AVAKids.</p><h2>Những gì mẹ có thể trải nghiệm</h2><p>Tìm kiếm và lọc sản phẩm, xem thông tin chi tiết, lưu sản phẩm yêu thích, quản lý giỏ hàng, đặt đơn COD hoặc chuyển khoản VietQR và tra cứu đơn đã lưu.</p><h2>Dữ liệu minh họa</h2><p>Tên thương hiệu, sản phẩm, giá, ưu đãi và hình SVG là dữ liệu mẫu. Có đăng ký tài khoản, lưu địa chỉ và lịch sử đơn; có chuyển khoản VietQR khi được cấu hình, đối soát thủ công; chưa tích hợp giao hàng tự động. Không có đánh giá khách hàng hay số liệu bán hàng giả.</p>",
+    "<p>Khám phá các sản phẩm dành cho mẹ, bé và gia đình tại Jielien.</p>",
   ],
   "giao-hang": [
     "Giao hàng & thanh toán",
-    "<h2>Phí giao hàng trong bản thử nghiệm</h2><p>Phí tiêu chuẩn: 25.000đ/đơn. Miễn phí khi tổng sản phẩm trước giảm giá từ 499.000đ. Mã FREESHIP miễn phí vận chuyển từ 299.000đ; mã MEBE50 giảm 50.000đ từ 500.000đ. Mỗi đơn dùng một mã.</p><h2>Đặt hàng COD</h2><p>Người nhận điền họ tên, số điện thoại và địa chỉ. Máy chủ xác thực giá, tồn kho, mã giảm giá và lưu đơn cùng chi tiết sản phẩm bằng PostgreSQL. Việc gửi lại cùng một yêu cầu đặt hàng không tạo đơn trùng.</p><h2>Phạm vi vận hành</h2><p>Đây là môi trường thử nghiệm. Đơn chưa được chuyển tới kho hoặc đơn vị vận chuyển, Chuyển khoản VietQR hiển thị thông tin tài khoản đã cấu hình, số tiền và nội dung riêng cho từng đơn. Nhân viên đối soát và xác nhận sau khi nhận tiền; website chưa tự kết nối biến động số dư. Thời gian giao hàng chưa được cam kết. Đơn vị kinh doanh cần bổ sung quy trình vận hành trước khi mở bán.</p>",
+    "<p>Phí giao hàng và các phương thức khả dụng được hiển thị trước khi bạn xác nhận đặt hàng. Vui lòng liên hệ cửa hàng để xác nhận thời gian giao.</p>",
   ],
   "doi-tra": [
     "Chính sách đổi trả",
-    "<p>Website đang trong giai đoạn thử nghiệm; chưa nhận giao hàng hoặc xử lý đổi trả thực tế.</p><h2>Trước khi mở bán</h2><p>Đơn vị kinh doanh cần công bố thời hạn, điều kiện hàng nguyên vẹn, chứng từ mua hàng, trường hợp ngoại lệ và thời gian hoàn tiền cho từng nhóm sản phẩm.</p><p>Không gửi hàng hoặc thanh toán dựa trên dữ liệu minh họa của website này.</p>",
+    "<p>Cửa hàng đang cập nhật điều kiện đổi trả. Vui lòng liên hệ để được tư vấn trước khi đặt hàng.</p>",
   ],
   "bao-mat": [
     "Thông tin cá nhân",
-    "<h2>Dữ liệu được lưu khi đặt hàng</h2><p>Họ tên, số điện thoại, email tùy chọn, địa chỉ và ghi chú được lưu cùng đơn ở cơ sở dữ liệu PostgreSQL trên máy chủ. Không yêu cầu mật khẩu, số thẻ hay tài khoản ngân hàng.</p><h2>Dữ liệu trên trình duyệt</h2><p>Giỏ hàng và danh sách yêu thích được lưu trong localStorage để phục hồi sau khi tải lại. Thông tin người nhận không được lưu trong localStorage. Mã truy cập đơn được lưu trong sessionStorage của phiên trình duyệt. Mẹ có thể tra cứu bằng mã đơn và số điện thoại.</p><h2>Trong giai đoạn phát triển</h2><p>Nên dùng thông tin giả để kiểm thử. Máy chủ cung cấp quản trị có phân quyền và nhật ký thao tác; chưa có xóa dữ liệu tự phục vụ hoặc dịch vụ chăm sóc khách hàng. Trước khi nhận dữ liệu thật cần có HTTPS, phân quyền quản trị, sao lưu và quy trình bảo vệ dữ liệu.</p>",
+    "<p>Vui lòng liên hệ cửa hàng nếu cần hỗ trợ về thông tin đã cung cấp. Nội dung chính sách bảo mật đang được cập nhật.</p>",
   ],
 };
 const articles = {
@@ -527,7 +539,26 @@ const articles = {
   ],
 };
 function contentPage(slug, article = false) {
-  const data = (article ? articles : policies)[slug];
+  let data = (article ? articles : policies)[slug];
+  if (!article && data) {
+    const key = {
+      "gioi-thieu": "policy_about",
+      "giao-hang": "policy_shipping",
+      "doi-tra": "policy_returns",
+      "bao-mat": "policy_privacy",
+    }[slug];
+    const saved = (siteData.settings || []).find(
+      (s) => s.key === key,
+    )?.value_json;
+    if (saved)
+      data = [
+        data[0],
+        String(saved)
+          .split(/\n\s*\n/)
+          .map((p) => `<p>${escape(p).replace(/\n/g, "<br>")}</p>`)
+          .join(""),
+      ];
+  }
   if (!data) return notFound();
   document.title = data[0] + " | Jielien";
   return `${breadcrumbs([[article ? "Góc của mẹ" : "Thông tin cửa hàng"], [data[0]]])}<article class="panel content-page"><div class="eyebrow">${article ? "GÓC NHỎ CỦA MẸ" : "THÔNG TIN MINH BẠCH"}</div><h1>${data[0]}</h1>${data[1]}<a class="back-link" href="/" data-link>← Về trang chủ</a></article>`;
@@ -544,6 +575,8 @@ function notFound() {
 async function render({ scroll = true } = {}) {
   const version = ++renderVersion;
   closeMenu();
+  closeMiniCart();
+  $("#catalog-filter-dialog")?.close();
   $("#suggestions").hidden = true;
   const path = decodeURIComponent(location.pathname);
   const main = $("#main");
@@ -583,6 +616,7 @@ async function render({ scroll = true } = {}) {
       ),
     );
     bindPage();
+    enhancePage();
   } catch (error) {
     if (version === renderVersion)
       main.innerHTML = `<div class="server-error"><h2>Chưa tải được nội dung</h2><p>${escape(error.message)}</p><button class="primary" id="retry-render">Thử lại</button></div>`;
@@ -644,9 +678,10 @@ function bindPage() {
     changeFilters({ sort: event.target.value }),
   );
   $$("[data-select-filter]").forEach((select) =>
-    select.addEventListener("change", () =>
-      changeFilters({ [select.dataset.selectFilter]: select.value }),
-    ),
+    select.addEventListener("change", () => {
+      if (!select.closest("#catalog-filter-dialog"))
+        changeFilters({ [select.dataset.selectFilter]: select.value });
+    }),
   );
   $("#price-filter")?.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -659,9 +694,14 @@ function bindPage() {
       toast("Giá từ cần nhỏ hơn hoặc bằng giá đến.");
       return;
     }
-    changeFilters({ min: data.get("min"), max: data.get("max") });
+    if (event.target.closest("#catalog-filter-dialog")) applyCatalogFilters();
+    else changeFilters({ min: data.get("min"), max: data.get("max") });
   });
   $("#filter-toggle")?.addEventListener("click", () => {
+    if (innerWidth <= 850) {
+      openCatalogFilters();
+      return;
+    }
     filterOpen = !filterOpen;
     $("#filter-panel").classList.toggle("open", filterOpen);
     $("#filter-toggle").setAttribute("aria-expanded", String(filterOpen));
@@ -878,6 +918,10 @@ document.addEventListener("click", async (event) => {
     event.button === 0
   ) {
     event.preventDefault();
+    if (link.classList.contains("cart-link") && innerWidth > 700) {
+      openMiniCart();
+      return;
+    }
     navigate(link.href);
     return;
   }
@@ -889,7 +933,10 @@ document.addEventListener("click", async (event) => {
   }
   const add = event.target.closest("[data-add]");
   if (add) {
-    addToCart(Number(add.dataset.add));
+    if (addToCart(Number(add.dataset.add))) {
+      addedFeedback(add);
+      openMiniCart();
+    }
     return;
   }
   const wish = event.target.closest("[data-wish]");
@@ -903,7 +950,7 @@ document.addEventListener("click", async (event) => {
     else {
       wish.classList.toggle("active", favorites.includes(id));
       wish.setAttribute("aria-pressed", String(favorites.includes(id)));
-      wish.textContent = favorites.includes(id) ? "♥" : "♡";
+      wish.innerHTML = icon(favorites.includes(id) ? "heart-filled" : "heart");
       const p = products.find((p) => p.id === id);
       wish.setAttribute(
         "aria-label",
@@ -917,8 +964,13 @@ document.addEventListener("click", async (event) => {
     const id = Number(detailAdd.dataset.detailAdd || detailAdd.dataset.buy);
     const input = $("#detail-quantity");
     if (!input.reportValidity()) return;
-    if (addToCart(id, Number(input.value)) && detailAdd.dataset.buy)
-      navigate("/thanh-toan");
+    if (addToCart(id, Number(input.value))) {
+      if (detailAdd.dataset.buy) navigate("/thanh-toan");
+      else {
+        addedFeedback(detailAdd);
+        openMiniCart();
+      }
+    }
     return;
   }
   const quantity = event.target.closest("[data-quantity]");
@@ -1201,21 +1253,448 @@ function hydrateCart() {
     ? saved.filter((id) => products.some((p) => p.id === id))
     : [];
 }
+// UI lifecycle: services, prices and cart synchronization remain in the existing adapters.
+let purchaseObserver,
+  revealObserver,
+  bannerTimer,
+  bannerPaused = false;
+let miniVersion = 0,
+  miniTimer,
+  miniOpener;
+function applyCatalogFilters() {
+  const changes = {};
+  $$("#filter-panel [data-select-filter]").forEach(
+    (input) => (changes[input.dataset.selectFilter] = input.value),
+  );
+  const form = $("#price-filter");
+  if (form) {
+    const prices = new FormData(form);
+    changes.min = prices.get("min");
+    changes.max = prices.get("max");
+    if (
+      changes.min &&
+      changes.max &&
+      Number(changes.min) > Number(changes.max)
+    ) {
+      toast("Giá từ cần nhỏ hơn hoặc bằng giá đến.");
+      return;
+    }
+  }
+  $("#catalog-filter-dialog")?.close();
+  filterOpen = false;
+  changeFilters(changes);
+}
+function openCatalogFilters() {
+  const panel = $("#filter-panel");
+  if (!panel) return;
+  const anchor = document.createElement("span");
+  panel.before(anchor);
+  const dialog = document.createElement("dialog");
+  dialog.id = "catalog-filter-dialog";
+  dialog.setAttribute("aria-labelledby", "catalog-filter-title");
+  dialog.innerHTML = `<div class="drawer-heading"><h2 id="catalog-filter-title">Lọc sản phẩm</h2><button type="button" data-close-filter aria-label="Đóng bộ lọc">${icon("close")}</button></div><div class="filter-dialog-body"></div><div class="filter-dialog-actions"><button type="button" class="secondary" data-clear-filter>Xóa lọc</button><button type="button" class="primary" data-apply-filter>Áp dụng</button></div>`;
+  document.body.append(dialog);
+  dialog.querySelector(".filter-dialog-body").append(panel);
+  panel.classList.add("open");
+  dialog.addEventListener("close", () => {
+    anchor.replaceWith(panel);
+    panel.classList.remove("open");
+    dialog.remove();
+    $("#filter-toggle")?.setAttribute("aria-expanded", "false");
+    $("#filter-toggle")?.focus({ preventScroll: true });
+  });
+  dialog.addEventListener("click", (event) => {
+    if (event.target.closest("[data-close-filter]")) dialog.close();
+    if (event.target.closest("[data-apply-filter]")) applyCatalogFilters();
+    if (event.target.closest("[data-clear-filter]")) {
+      $$("#filter-panel select,#filter-panel input").forEach(
+        (input) => (input.value = ""),
+      );
+    }
+  });
+  $("#filter-toggle").setAttribute("aria-expanded", "true");
+  dialog.showModal();
+}
+function stockText(p) {
+  return p.stock <= 0
+    ? `${icon("alert")} Tạm hết hàng`
+    : p.stock <= 5
+      ? `${icon("alert")} Chỉ còn ${p.stock} sản phẩm`
+      : `${icon("check")} Còn hàng`;
+}
+function shippingMarkup(q) {
+  if (!q.freeShippingThreshold) return "";
+  const left = Math.max(0, q.freeShippingThreshold - q.subtotal);
+  return `<div class="free-shipping">${q.shipping === 0 ? `${icon("check")} Bạn được miễn phí giao hàng` : `Mua thêm <b>${money(left)}</b> để được miễn phí giao hàng`}<progress max="${q.freeShippingThreshold}" value="${Math.min(q.subtotal, q.freeShippingThreshold)}" aria-label="Tiến độ miễn phí giao hàng"></progress></div>`;
+}
+function addedFeedback(button) {
+  if (!button || button.disabled) return;
+  const old = button.innerHTML;
+  button.innerHTML = `${icon("check")} Đã thêm`;
+  setTimeout(() => {
+    if (button.isConnected) button.innerHTML = old;
+  }, 1200);
+  const badge = $("#cart-count");
+  badge.classList.remove("cart-bounce");
+  void badge.offsetWidth;
+  badge.classList.add("cart-bounce");
+}
+function miniDialog() {
+  if ($("#mini-cart")) return $("#mini-cart");
+  document.body.insertAdjacentHTML(
+    "beforeend",
+    `<dialog id="mini-cart" class="mini-cart" aria-labelledby="mini-title"><div class="drawer-heading"><div><span class="eyebrow">JIELIEN · MUA SẮM</span><h2 id="mini-title">Giỏ hàng của bạn</h2></div><button type="button" data-close-mini aria-label="Đóng giỏ hàng">${icon("close")}</button></div><div id="mini-content"></div></dialog>`,
+  );
+  const d = $("#mini-cart");
+  d.addEventListener("click", (event) => {
+    if (event.target === d || event.target.closest("[data-close-mini]")) {
+      closeMiniCart();
+      return;
+    }
+    const control = event.target.closest(
+      "[data-mini-change],[data-mini-remove]",
+    );
+    if (!control) return;
+    const id = Number(control.dataset.item),
+      p = products.find((p) => p.id === id);
+    if (control.hasAttribute("data-mini-remove")) delete cart[id];
+    else {
+      const next = (cart[id] || 0) + Number(control.dataset.miniChange);
+      if (next < 1) return;
+      if (next > Math.min(99, p?.stock || 0)) {
+        toast(`Chỉ còn ${p?.stock || 0} sản phẩm`);
+        return;
+      }
+      cart[id] = next;
+    }
+    persistCart();
+    scheduleMiniQuote();
+  });
+  d.addEventListener("cancel", () => {
+    miniVersion++;
+    clearTimeout(miniTimer);
+  });
+  d.addEventListener("close", () => {
+    miniOpener?.isConnected && miniOpener.focus({ preventScroll: true });
+  });
+  return d;
+}
+function closeMiniCart() {
+  clearTimeout(miniTimer);
+  miniVersion++;
+  $("#mini-cart")?.close();
+}
+function scheduleMiniQuote() {
+  clearTimeout(miniTimer);
+  miniVersion++;
+  $("#mini-content").setAttribute("aria-busy", "true");
+  miniTimer = setTimeout(updateMiniCart, 250);
+}
+async function updateMiniCart() {
+  const version = ++miniVersion,
+    box = $("#mini-content");
+  if (!box) return;
+  if (!cartItems().length) {
+    box.innerHTML = empty(
+      "Giỏ hàng đang trống",
+      "Chọn một món đồ phù hợp cho gia đình nhé.",
+    );
+    box.removeAttribute("aria-busy");
+    return;
+  }
+  try {
+    const q = await api("/api/quote", {
+      method: "POST",
+      body: JSON.stringify({ items: cartItems(), coupon }),
+    });
+    if (version !== miniVersion) return;
+    box.innerHTML = `<div class="mini-items">${q.items.map((item) => `<article class="mini-item"><img src="${escape(item.image)}" alt="" width="72" height="72"><div><a href="${productLink(products.find((p) => p.id === item.id))}" data-link>${escape(item.name)}</a><b>${money(item.price)}</b><div class="mini-quantity"><button data-mini-change="-1" data-item="${item.id}" aria-label="Giảm số lượng ${escape(item.name)}" ${item.quantity === 1 ? "disabled" : ""}>${icon("minus")}</button><span>${item.quantity}</span><button data-mini-change="1" data-item="${item.id}" aria-label="Tăng số lượng ${escape(item.name)}">${icon("plus")}</button><button data-mini-remove data-item="${item.id}" aria-label="Xóa ${escape(item.name)}">${icon("trash")}</button></div></div></article>`).join("")}</div>${shippingMarkup(q)}<div class="summary-line"><span>Tạm tính</span><b>${money(q.subtotal)}</b></div><div class="summary-line"><span>Phí giao hàng</span><b>${money(q.shipping)}</b></div><div class="summary-line total"><span>Tổng thanh toán</span><strong>${money(q.total)}</strong></div><div class="mini-actions"><a class="primary" href="/thanh-toan" data-link>Thanh toán ${icon("arrow")}</a><a class="secondary" href="/gio-hang" data-link>Xem giỏ hàng</a></div>`;
+  } catch (error) {
+    if (version === miniVersion)
+      box.innerHTML = `<p class="form-error" role="alert">${escape(error.message)}</p><a class="secondary" href="/gio-hang" data-link>Kiểm tra giỏ hàng</a>`;
+  } finally {
+    if (version === miniVersion) box.removeAttribute("aria-busy");
+  }
+}
+function openMiniCart() {
+  const d = miniDialog();
+  miniOpener = document.activeElement;
+  if (!d.open) d.showModal();
+  $("#mini-content").innerHTML =
+    '<div class="skeleton-block" role="status" aria-label="Đang cập nhật giỏ hàng"></div>';
+  updateMiniCart();
+}
+function renderCompany() {
+  const values = Object.fromEntries(
+    (siteData.settings || []).map((s) => [s.key, s.value_json]),
+  );
+  const phone = values.hotline || values.contactPhone;
+  const links = [];
+  if (phone && /^(?:0|\+84)[0-9 .()-]{8,16}$/.test(phone))
+    links.push(
+      `<a href="tel:${escape(phone.replace(/[ .()-]/g, ""))}">${icon("phone")} ${escape(phone)}</a>`,
+    );
+  for (const [key, label, hosts] of [
+    ["zalo", "Chat Zalo", ["zalo.me"]],
+    [
+      "messenger_url",
+      "Messenger",
+      ["m.me", "messenger.com", "www.messenger.com"],
+    ],
+  ]) {
+    try {
+      const u = new URL(values[key]);
+      if (
+        u.protocol === "https:" &&
+        hosts.includes(u.hostname) &&
+        !u.username &&
+        !u.password
+      )
+        links.push(
+          `<a href="${escape(u.href)}" target="_blank" rel="noopener noreferrer">${icon("chat")} ${label}</a>`,
+        );
+    } catch {}
+  }
+  const email = values.email_support || values.contactEmail;
+  if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    links.push(`<a href="mailto:${escape(email)}">${escape(email)}</a>`);
+  const contact = $("#company-contact");
+  if (contact)
+    contact.innerHTML =
+      (values.companyName
+        ? `<strong>${escape(values.companyName)}</strong>`
+        : "") +
+      links.join("") +
+      ["store_address", "working_hours"]
+        .map((k) => (values[k] ? `<span>${escape(values[k])}</span>` : ""))
+        .join("");
+  if (links.length) {
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<details class="contact-fab"><summary aria-label="Liên hệ tư vấn">${icon("chat")}<span>Tư vấn</span></summary><div>${links.join("")}</div></details>`,
+    );
+  }
+  const promo = $(".top-promo");
+  if (promo) {
+    promo.hidden = !siteData.freeShippingThreshold;
+    promo.textContent = siteData.freeShippingThreshold
+      ? `Miễn phí giao hàng cho đơn từ ${money(siteData.freeShippingThreshold)}`
+      : "";
+  }
+  $$("[data-demo]").forEach((el) => (el.hidden = !siteData.demoMode));
+}
+function enhancePage() {
+  purchaseObserver?.disconnect();
+  revealObserver?.disconnect();
+  clearInterval(bannerTimer);
+  $("#sticky-purchase")?.remove();
+  document.body.classList.toggle("checkout-page", !!$("#checkout-form"));
+  document.body.classList.toggle("product-page", !!$(".detail-top"));
+  const buy = $(".buy-row");
+  if (buy) {
+    const p = products.find(
+      (p) => p.slug === decodeURIComponent(location.pathname.split("/").at(-1)),
+    );
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<div id="sticky-purchase" hidden><div><b>${money(p.price)}</b><small>${escape(p.weight)}</small></div><button class="secondary" data-sticky-add="${p.id}" ${!p.stock ? "disabled" : ""} aria-label="Thêm vào giỏ">${icon("cart")}</button><button class="primary" data-sticky-buy="${p.id}" ${!p.stock ? "disabled" : ""}>${p.stock ? "Mua ngay" : "Tạm hết hàng"} ${icon("arrow")}</button></div>`,
+    );
+    purchaseObserver = new IntersectionObserver(
+      (entries) => {
+        $("#sticky-purchase").hidden = entries[0].isIntersecting;
+      },
+      { threshold: 0 },
+    );
+    purchaseObserver.observe(buy);
+  }
+  const form = $("#checkout-form");
+  if (form) {
+    const email = $("#email")?.closest(".field"),
+      note = $("#note")?.closest(".field");
+    if (email && note) {
+      const extras = document.createElement("details");
+      extras.className = "checkout-extras panel";
+      extras.innerHTML =
+        "<summary>Email và ghi chú <small>Không bắt buộc</small></summary>";
+      extras.append(email, note);
+      form.insertBefore(extras, form.lastElementChild);
+    }
+    const total = $("#grand-total"),
+      submit = $("#place-order");
+    if (total && submit) {
+      const bar = document.createElement("div");
+      bar.className = "checkout-submit-bar";
+      bar.innerHTML = `<div><small>Tổng thanh toán</small><b>${escape(total.textContent)}</b></div>`;
+      submit.before(bar);
+      bar.append(submit);
+    }
+    form.addEventListener(
+      "invalid",
+      (event) => {
+        const input = event.target;
+        input.closest("details")?.setAttribute("open", "");
+        input.setAttribute("aria-invalid", "true");
+        let error = $("#error-" + input.id);
+        if (!error && input.id) {
+          error = document.createElement("small");
+          error.id = "error-" + input.id;
+          error.className = "field-error";
+          error.setAttribute("role", "alert");
+          input.after(error);
+        }
+        if (error) {
+          error.textContent =
+            input.validity.patternMismatch && input.name === "phone"
+              ? "Nhập số điện thoại hợp lệ, ví dụ 09xxxxxxxx."
+              : input.validity.valueMissing
+                ? "Vui lòng điền thông tin này."
+                : input.validationMessage;
+          input.setAttribute("aria-describedby", error.id);
+        }
+      },
+      true,
+    );
+    form.addEventListener("input", (event) => {
+      if (event.target.validity?.valid) {
+        event.target.removeAttribute("aria-invalid");
+        const error = $("#error-" + event.target.id);
+        if (error) error.textContent = "";
+      }
+    });
+  }
+  if (location.pathname === "/") {
+    $$("#main > section").forEach((section) => {
+      if (section.getBoundingClientRect().top < innerHeight) return;
+      section.classList.add("reveal-ready");
+    });
+    revealObserver = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("revealed");
+            revealObserver.unobserve(e.target);
+          }
+        }),
+      { threshold: 0.05 },
+    );
+    $$(".reveal-ready").forEach((e) => revealObserver.observe(e));
+    bannerTimer = setInterval(() => {
+      const container = $("#hero-container");
+      if (
+        !container ||
+        bannerPaused ||
+        container.matches(":hover,:focus-within") ||
+        document.hidden ||
+        matchMedia("(prefers-reduced-motion: reduce)").matches
+      )
+        return;
+      const count = siteData.banners?.length || heroes.length;
+      if (count < 2) return;
+      heroIndex = (heroIndex + 1) % count;
+      container.innerHTML = heroMarkup();
+    }, 6000);
+  }
+}
+document.addEventListener("click", (event) => {
+  const variant = event.target.closest("[data-variant]");
+  if (variant) {
+    const p = products.find((p) => p.id === Number(variant.dataset.variant));
+    history.replaceState({}, "", productLink(p));
+    render({ scroll: false }).then(() =>
+      $(`[data-variant="${p.id}"]`)?.focus({ preventScroll: true }),
+    );
+    return;
+  }
+  const sticky = event.target.closest("[data-sticky-add],[data-sticky-buy]");
+  if (sticky) {
+    if (
+      addToCart(
+        Number(sticky.dataset.stickyAdd || sticky.dataset.stickyBuy),
+        Number($("#detail-quantity").value),
+      )
+    ) {
+      if (sticky.dataset.stickyBuy) navigate("/thanh-toan");
+      else openMiniCart();
+    }
+    return;
+  }
+  const code = event.target.closest("[data-coupon]");
+  if (code) {
+    $("#coupon").value = code.dataset.coupon;
+    $("#coupon-form").requestSubmit();
+  }
+  const step = event.target.closest("[data-banner-step]");
+  if (step) {
+    const count = siteData.banners?.length || heroes.length;
+    heroIndex = (heroIndex + Number(step.dataset.bannerStep) + count) % count;
+    $("#hero-container").innerHTML = heroMarkup();
+    $(
+      '#hero-container [data-banner-step=\"' + step.dataset.bannerStep + '\"]',
+    )?.focus();
+  }
+  const pause = event.target.closest("[data-banner-pause]");
+  if (pause) {
+    bannerPaused = !bannerPaused;
+    pause.setAttribute("aria-pressed", String(bannerPaused));
+    pause.textContent = bannerPaused ? "Phát banner" : "Tạm dừng";
+  }
+});
+document.addEventListener("keydown", (event) => {
+  const radio = event.target.closest("[data-variant]");
+  if (
+    !radio ||
+    !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
+  )
+    return;
+  event.preventDefault();
+  const buttons = $$("[data-variant]"),
+    i = buttons.indexOf(radio);
+  buttons[
+    (i +
+      (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1) +
+      buttons.length) %
+      buttons.length
+  ].click();
+});
+
 async function init() {
   try {
     ({ products } = await api("/api/products"));
     try {
       newsItems = (await api("/api/news")).items.slice(0, 3);
+    } catch {}
+    try {
       siteData = await api("/api/site");
-      const contact = $("#company-contact");
-      if (contact)
-        contact.textContent = (siteData.settings || [])
-          .map((s) => s.value_json)
-          .filter(Boolean)
-          .join(" · ");
     } catch {
-      /* Catalog and checkout remain available when optional content cannot load. */
+      /* Shopping remains available. */
     }
+    try {
+      categoryRows = (await api("/api/categories")).categories;
+      const images = new Map(categories);
+      categories = categoryRows.map((c) => [
+        c.name,
+        images.get(c.name) || "toy",
+      ]);
+      const nav = $(".nav-inner");
+      nav.querySelectorAll("a").forEach((a) => a.remove());
+      nav.insertAdjacentHTML(
+        "beforeend",
+        categoryRows
+          .filter((c) => !c.parent_id && !c.parentId)
+          .slice(0, 6)
+          .map(
+            (c) =>
+              `<a href="${escape(href({ category: c.name }))}" data-link>${escape(c.name)}</a>`,
+          )
+          .join("") + '<a href="/tin-tuc">Tin tức & Cẩm nang</a>',
+      );
+    } catch {
+      /* Retain the existing local fallback. */
+    }
+    try {
+      brandRows = (await api("/api/brands")).brands || [];
+    } catch {}
+    renderCompany();
     hydrateCart();
     try {
       const session = await api("/api/auth/me");
@@ -1270,7 +1749,7 @@ async function init() {
     $("#category-dropdown").innerHTML = categories
       .map(
         ([name, img]) =>
-          `<a href="${escape(href({ category: name }))}" data-link><img src="/assets/${img}.svg" alt="">${name}<span style="margin-left:auto">›</span></a>`,
+          `<a href="${escape(href({ category: name }))}" data-link><img src="/assets/${img}.svg" alt="">${escape(name)}<span style="margin-left:auto">›</span></a>`,
       )
       .join("");
     await render();
@@ -1281,3 +1760,17 @@ async function init() {
   }
 }
 init();
+
+document.addEventListener("keydown", (event) => {
+  if (
+    !event.target.closest("#suggestions") ||
+    !["ArrowDown", "ArrowUp"].includes(event.key)
+  )
+    return;
+  event.preventDefault();
+  const links = $$("#suggestions a"),
+    index = links.indexOf(event.target.closest("a"));
+  links[
+    (index + (event.key === "ArrowDown" ? 1 : -1) + links.length) % links.length
+  ]?.focus();
+});
