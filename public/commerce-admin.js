@@ -85,7 +85,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       )
       .join(
         "",
-      )}</div><div class="taxonomy-layout"><section class="panel"><div class="section-title"><h2>${names[kind]}</h2><span>${rows.length} mục</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Tên ${names[kind].toLowerCase()}</th><th>${kind === "attributes" ? "Giá trị" : "Trạng thái"}</th><th><span class="sr-only">Thao tác</span></th></tr></thead><tbody>${rows.map((x) => `<tr><td><b>${e(x.name)}</b><small class="row-description">${e(x.slug || x.code || "")}</small></td><td>${kind === "attributes" ? `<div class="value-chips">${(x.values || []).map((v) => `<span>${e(v.value)}</span>`).join("")}</div>` : stateBadge(x.status)}</td><td>${has("catalog.edit") ? `<button type="button" class="secondary" data-tax-edit="${kind}:${x.id}" aria-label="Sửa ${e(x.name)}">Sửa</button>` : ""}</td></tr>`).join("")}</tbody></table>${!rows.length ? emptyState("Chưa có " + names[kind].toLowerCase(), "Thêm mục đầu tiên bằng biểu mẫu bên cạnh.") : ""}</div></section>${has("catalog.edit") ? `<aside id="taxonomy-editor-panel" class="panel"><h2>Thêm ${names[kind].toLowerCase()}</h2><p class="muted">Thông tin sẽ được dùng trong trình biên tập sản phẩm.</p>${taxonomyForm(kind)}</aside>` : ""}</div>${result}`;
+      )}</div><div class="taxonomy-layout"><section class="panel"><div class="section-title"><h2>${names[kind]}</h2><span>${rows.length} mục</span></div><label class="taxonomy-search">Tìm ${names[kind].toLowerCase()}<input type="search" data-tax-search placeholder="Nhập tên hoặc mã để tìm…"></label><p class="taxonomy-search-empty muted" hidden>Không tìm thấy kết quả phù hợp.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Tên ${names[kind].toLowerCase()}</th><th>${kind === "attributes" ? "Giá trị" : "Trạng thái"}</th><th><span class="sr-only">Thao tác</span></th></tr></thead><tbody>${rows.map((x) => `<tr><td><b>${e(x.name)}</b><small class="row-description">${e(x.slug || x.code || "")}</small></td><td>${kind === "attributes" ? `<div class="value-chips">${(x.values || []).map((v) => `<span>${e(v.value)}</span>`).join("")}</div>` : stateBadge(x.status)}</td><td>${has("catalog.edit") ? `<button type="button" class="secondary" data-tax-edit="${kind}:${x.id}" aria-label="Sửa ${e(x.name)}">Sửa</button>` : ""}</td></tr>`).join("")}</tbody></table>${!rows.length ? emptyState("Chưa có " + names[kind].toLowerCase(), "Thêm mục đầu tiên bằng biểu mẫu bên cạnh.") : ""}</div></section>${has("catalog.edit") ? `<aside id="taxonomy-editor-panel" class="panel"><h2>Thêm ${names[kind].toLowerCase()}</h2><p class="muted">Thông tin sẽ được dùng trong trình biên tập sản phẩm.</p>${taxonomyForm(kind)}</aside>` : ""}</div>${result}`;
   }
   async function loadTax() {
     for (const kind of ["categories", "brands", "attributes"])
@@ -94,7 +94,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
   async function render(view) {
     if (view === "catalog-editor") {
       const data = await api("/api/admin/catalog/products");
-      return `<section class="panel">${toolbar("Sản phẩm cha & SKU", has("catalog.create") ? button("Thêm sản phẩm", "new-product") : "")}<form id="catalog-search" class="editor-toolbar"><input name="q" aria-label="Tìm sản phẩm/SKU/barcode" placeholder="Tên / SKU / barcode"><button>Tìm</button></form><div id="catalog-results">${productTable(data)}</div>${result}</section>`;
+      return `<section class="panel">${heading("Sản phẩm & phân loại", "Tìm sản phẩm để chỉnh sửa thông tin, lựa chọn mua hàng và giá bán.", has("catalog.create") ? button("+ Thêm sản phẩm", "new-product") : "")}<form id="catalog-search" class="editor-toolbar"><label class="catalog-search-label">Tìm sản phẩm<input name="q" aria-label="Tìm sản phẩm/SKU/barcode" placeholder="Tên sản phẩm, mã SKU hoặc mã vạch"></label><button>Tìm kiếm</button></form><div id="catalog-results">${productTable(data)}</div>${result}</section>`;
     }
     if (view === "media-editor") {
       product = null;
@@ -252,7 +252,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     return null;
   }
   function productTable(data) {
-    return `<p>Tổng: ${data.total} · Trang ${data.page}</p><table class="data-table"><thead><tr><th>Sản phẩm</th><th>Trạng thái</th><th></th></tr></thead><tbody>${data.items.map((p) => `<tr><td>#${p.id} ${e(p.name)}</td><td>${e(p.status)}</td><td><button data-product-id="${p.id}">Mở sản phẩm</button></td></tr>`).join("")}</tbody></table>${data.page > 1 ? button("Trang trước", "catalog-page:" + (data.page - 1)) : ""}${data.items.length === 20 ? button("Trang sau", "catalog-page:" + (data.page + 1)) : ""}`;
+    return `<p>Tổng: ${data.total} · Trang ${data.page}</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Sản phẩm</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>${data.items.map((p) => `<tr><td><b>${e(p.name)}</b></td><td>${stateBadge(p.status)}</td><td><button data-product-id="${p.id}">Mở sản phẩm</button></td></tr>`).join("")}</tbody></table></div>${data.page > 1 ? button("Trang trước", "catalog-page:" + (data.page - 1)) : ""}${data.items.length === 20 ? button("Trang sau", "catalog-page:" + (data.page + 1)) : ""}`;
   }
   function uploadForm() {
     return `<form id="upload-form" class="editor-form"><label>Ảnh JPEG/PNG/WebP tối đa 5 MB<input name="image" type="file" accept="image/jpeg,image/png,image/webp" required></label>${field("Mô tả ảnh (alt)", "alt", "", "text", "required")}<button class="primary">Upload ảnh</button></form>`;
@@ -267,7 +267,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
             )
             .join("")}</select></label>`
         : ""
-    }${kind === "attributes" ? area("Giá trị — mỗi dòng một lựa chọn", "values", (item.values || []).map((v) => v.value).join("\n")) : `<label>Trạng thái<select name="status">${["active", "inactive"].map((v) => option(v, states[v], (item.status || "active") === v)).join("")}</select></label>`}${
+    }${kind === "attributes" ? attributeValuesEditor(item) : `<label>Trạng thái<select name="status">${["active", "inactive"].map((v) => option(v, states[v], (item.status || "active") === v)).join("")}</select></label>`}${
       kind === "categories"
         ? field(
             "Thứ tự hiển thị",
@@ -286,6 +286,25 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         : ""
     }<div class="form-actions"><button class="primary">${item.id ? "Lưu thay đổi" : "Thêm " + names[kind].toLowerCase()}</button>${item.id ? button("Hủy chỉnh sửa", "taxonomy-cancel") : ""}</div></form>`;
   }
+  function attributeValuesEditor(item) {
+    return `<div class="attribute-values-editor"><h3>Lựa chọn thuộc tính</h3><p class="muted">Mỗi lựa chọn là một giá trị để phân loại sản phẩm. Các giá trị đã lưu được giữ nguyên để bảo toàn SKU đang sử dụng.</p><div class="value-chips">${(item.values || []).map((v) => `<span>${e(v.value)}</span>`).join("")}</div><textarea name="values" hidden>${e((item.values || []).map((v) => v.value).join("\n"))}</textarea><div data-new-values>${newValueRow()}</div>${button("+ Thêm lựa chọn", "attribute-value-add")}<small>Tối đa 100 giá trị; mỗi giá trị không quá 100 ký tự.</small></div>`;
+  }
+  function newValueRow() {
+    return `<div class="attribute-value-row"><label>Lựa chọn mới<input data-new-value maxlength="100" placeholder="Ví dụ: 6–12 tháng"></label>${button("Bỏ", "attribute-value-remove")}</div>`;
+  }
+  function syncAttributeValues(form) {
+    const saved =
+      tax.attributes?.find((x) => String(x.id) === form.dataset.taxId)
+        ?.values || [];
+    form.elements.values.value = [
+      ...new Set([
+        ...saved.map((v) => v.value),
+        ...[...form.querySelectorAll("[data-new-value]")]
+          .map((i) => i.value.trim())
+          .filter(Boolean),
+      ]),
+    ].join("\n");
+  }
   function cmsTaxForm(kind) {
     return `<form data-cms-tax="${kind}" class="editor-form">${field(kind === "categories" ? "Tên chuyên mục" : "Tên tag", "name", "", "text", "required")}${field("Slug", "slug", "", "text", "required")}<button>Tạo</button></form>`;
   }
@@ -297,7 +316,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       : null;
     const p = product || {};
     $("#admin-content").innerHTML =
-      `<section class="panel">${toolbar(product ? "Sửa sản phẩm #" + p.id : "Thêm sản phẩm", button("← Danh sách", "catalog-list") + (product ? button("Xem trước nháp", "preview-product") : ""))}<form id="product-form" data-version="${p.version || 0}" class="editor-form"><h2>Thông tin & SEO</h2>${field("Tên sản phẩm", "name", p.name || "", "text", "required")}${field("Slug", "slug", p.slug || "", "text", "required")}${select("Thương hiệu", "brandId", tax.brands, p.brand_id)}<label>Danh mục<select name="categoryId" required>${tax.categories.map((c) => option(c.id, c.name, (p.categoryIds || []).includes(c.id))).join("")}</select></label>${area("Tóm tắt", "shortDescription", p.short_description || "")}${area("Mô tả", "description", p.description || "")}${blockEditor(p.content_blocks || [])}${field("SEO title", "seoTitle", p.seo_title || "")}${field("SEO description", "seoDescription", p.seo_description || "")}<label>Trạng thái<select name="status">${["draft", "active", "inactive"].map((v) => option(v, { draft: "Nháp", active: "Xuất bản", inactive: "Ngừng bán" }[v], (p.status || "draft") === v)).join("")}</select></label>${has("catalog.edit") || (!p.id && has("catalog.create")) ? '<button class="primary">Lưu sản phẩm</button>' : ""}</form>${p.id ? `<h2>Phân loại SKU</h2><fieldset id="sku-matrix"><legend>Sinh tổ hợp thuộc tính</legend>${tax.attributes.map((group) => `<fieldset data-attribute-group="${group.id}"><legend>${e(group.name)}</legend>${group.values.map((v) => `<label><input type="checkbox" value="${v.id}" data-value-label="${e(v.value)}">${e(v.value)}</label>`).join("")}</fieldset>`).join("")}${button("Sinh SKU từ tổ hợp đã chọn", "generate-matrix")}<p>Giới hạn 100 tổ hợp; kiểm tra mã và giá trước khi lưu. Không xóa SKU cũ.</p></fieldset><p>Mỗi dòng SKU có giá và tồn riêng. Tồn chỉ thay đổi qua nghiệp vụ kho.</p><form id="sku-form" class="editor-form"><div id="sku-lines">${p.variants.map(skuLine).join("") || skuLine()}</div>${button("Thêm SKU", "add-sku")}<button class="primary">Lưu SKU</button></form><h2>Ảnh & Gallery</h2>${uploadForm()}<form id="product-media-form" class="editor-form"><p>Chọn ảnh theo thứ tự trong thư viện; ảnh đầu tiên làm cover. Ảnh cũ được giữ đến khi lưu gallery.</p>${galleryMarkup(p)}<button class="primary">Lưu gallery</button></form>` : ""}${result}</section>`;
+      `<div class="catalog-workbench">${heading(product ? e(p.name) : "Thêm sản phẩm", "Quản lý thông tin, phân loại bán hàng và hình ảnh theo từng bước.", button("← Danh sách", "catalog-list") + (product ? button("Xem trước nháp", "preview-product") : ""))}<nav class="catalog-jumps" aria-label="Các phần sản phẩm"><a href="#product-basics">01 · Thông tin</a>${p.id ? '<a href="#product-variants">02 · Phân loại & giá</a><a href="#product-images">03 · Hình ảnh</a>' : ""}</nav><section class="panel catalog-section" id="product-basics"><div class="section-title"><h2>01 · Thông tin sản phẩm</h2><span>Lưu riêng từng phần</span></div><form id="product-form" data-version="${p.version || 0}" class="editor-form">${field("Tên sản phẩm", "name", p.name || "", "text", "required")}${field("Đường dẫn sản phẩm (slug)", "slug", p.slug || "", "text", "required")}${select("Thương hiệu", "brandId", tax.brands, p.brand_id)}<label>Danh mục<select name="categoryId" required>${tax.categories.map((c) => option(c.id, c.name, (p.categoryIds || []).includes(c.id))).join("")}</select></label>${area("Mô tả ngắn", "shortDescription", p.short_description || "")}${area("Mô tả chi tiết", "description", p.description || "")}<details class="catalog-details"><summary>Nội dung mở rộng & hiển thị trên Google</summary><div class="editor-form">${blockEditor(p.content_blocks || [])}${field("Tiêu đề trên Google", "seoTitle", p.seo_title || "")}${field("Mô tả trên Google", "seoDescription", p.seo_description || "")}</div></details><label>Trạng thái sản phẩm<select name="status">${["draft", "active", "inactive"].map((v) => option(v, { draft: "Nháp", active: "Xuất bản", inactive: "Ngừng bán" }[v], (p.status || "draft") === v)).join("")}</select></label><div class="form-actions">${has("catalog.edit") || (!p.id && has("catalog.create")) ? '<button class="primary">Lưu sản phẩm</button>' : ""}</div></form></section>${p.id ? `<section class="panel catalog-section" id="product-variants"><div class="section-title"><h2>02 · Phân loại & giá bán</h2><span>${p.variants.length} SKU đã lưu</span></div><p class="muted">Mỗi SKU là một lựa chọn mua hàng với mã và giá riêng. Điều chỉnh tồn kho tại mục Kho & tồn hàng.</p><details class="catalog-details"><summary>Tạo nhiều SKU từ thuộc tính</summary><fieldset id="sku-matrix"><legend>Chọn các lựa chọn cần bán</legend>${tax.attributes.map((group) => `<fieldset data-attribute-group="${group.id}"><legend>${e(group.name)}</legend><div class="attribute-options">${group.values.map((v) => `<label><input type="checkbox" value="${v.id}" data-value-label="${e(v.value)}"><span>${e(v.value)}</span></label>`).join("")}</div></fieldset>`).join("")}${button("Tạo SKU từ lựa chọn", "generate-matrix")}<p class="muted">Tối đa 100 tổ hợp. SKU cũ được giữ lại. Kiểm tra mã và giá rồi bấm Lưu SKU.</p></fieldset></details><form id="sku-form" class="editor-form"><div id="sku-lines">${p.variants.map(skuLine).join("") || skuLine()}</div><div class="form-actions">${button("+ Thêm SKU thủ công", "add-sku")}<button class="primary">Lưu SKU</button></div></form></section><section class="panel catalog-section" id="product-images"><div class="section-title"><h2>03 · Hình ảnh sản phẩm</h2></div>${uploadForm()}<form id="product-media-form" class="editor-form"><p>Chọn ảnh theo thứ tự trong thư viện; ảnh đầu tiên làm ảnh bìa. Bấm Lưu gallery để áp dụng.</p>${galleryMarkup(p)}<div class="form-actions"><button class="primary">Lưu gallery</button></div></form></section>` : '<p class="panel muted">Lưu sản phẩm trước để thêm phân loại, giá bán và hình ảnh.</p>'}${result}</div>`;
     if (!has("catalog.edit")) {
       root
         .querySelectorAll(
@@ -332,7 +351,8 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     return `<div class="gallery-choice"><label><input type="checkbox" name="${kind}" value="${id}" ${checked ? "checked" : ""}>${e(alt)}<img width="70" height="70" src="${e(url)}" alt="${e(alt)}"></label><label>Ảnh dùng cho<select class="media-variant"><option value="">Toàn sản phẩm</option>${product.variants.map((v) => option(v.id, v.name, Number(variantId) === v.id)).join("")}</select></label>${button("Lên", "gallery-up")}${button("Xuống", "gallery-down")}</div>`;
   }
   function skuLine(v = {}) {
-    return `<fieldset class="sku-line" data-sku-id="${v.id || ""}" data-version="${v.row_version || ""}"><legend>SKU ${v.id || "mới"}</legend><div class="field-row">${field("Tên SKU", "name", v.name || "", "text", "required")}${field("SKU duy nhất", "sku", v.sku || "", "text", "required")}${field("Slug SKU", "slug", v.slug || "")}${field("Barcode", "barcode", v.barcode || "")}${field("Giá bán VND", "price", v.price || 0, "number", 'min="0" required')}${field("Giá gốc VND", "originalPrice", v.original_price ?? v.price ?? 0, "number", 'min="0" required')}${field("Quy cách", "weight", v.weight || "")}${field("Độ tuổi", "age", v.age || "")}${field("Khối lượng (gram)", "weightGrams", v.weight_grams ?? "", "number", 'min="0"')}${field("Dài (mm)", "lengthMm", v.length_mm ?? "", "number", 'min="0"')}${field("Rộng (mm)", "widthMm", v.width_mm ?? "", "number", 'min="0"')}${field("Cao (mm)", "heightMm", v.height_mm ?? "", "number", 'min="0"')}${field("Ngưỡng cảnh báo tồn", "lowStockThreshold", v.low_stock_threshold ?? 5, "number", 'min="0"')}</div><label>Giá trị thuộc tính (IDs, cách nhau dấu phẩy)<input name="attributes" value="${e(v.combination_key?.replaceAll("-", ",") || "")}" placeholder="Xem IDs trong mục Danh mục & Thuộc tính"></label><label>Trạng thái<select name="status">${["active", "inactive", "draft"].map((x) => option(x, x, (v.status || "active") === x)).join("")}</select></label></fieldset>`;
+    const selected = (v.combination_key || "").split("-").filter(Boolean);
+    return `<fieldset class="sku-line" data-sku-id="${v.id || ""}" data-version="${v.row_version || ""}"><legend>${e(v.sku || "SKU mới · chưa lưu")}</legend><div class="field-row">${field("Tên phân loại", "name", v.name || "", "text", "required")}${field("Mã SKU (không trùng)", "sku", v.sku || "", "text", "required")}${field("Giá bán (₫)", "price", v.price || 0, "number", 'min="0" required')}${field("Giá trước giảm (₫)", "originalPrice", v.original_price ?? v.price ?? 0, "number", 'min="0" required')}<label>Trạng thái bán<select name="status">${["active", "inactive", "draft"].map((x) => option(x, states[x] || "Nháp", (v.status || "active") === x)).join("")}</select></label>${field("Ngưỡng cảnh báo tồn", "lowStockThreshold", v.low_stock_threshold ?? 5, "number", 'min="0"')}</div><details class="catalog-details"><summary>Thuộc tính, mã vạch & vận chuyển</summary><div class="field-row">${field("Đường dẫn SKU", "slug", v.slug || "")}${field("Mã vạch", "barcode", v.barcode || "")}${field("Quy cách hiển thị", "weight", v.weight || "")}${field("Độ tuổi hiển thị", "age", v.age || "")}${field("Khối lượng (gram)", "weightGrams", v.weight_grams ?? "", "number", 'min="0"')}${field("Dài (mm)", "lengthMm", v.length_mm ?? "", "number", 'min="0"')}${field("Rộng (mm)", "widthMm", v.width_mm ?? "", "number", 'min="0"')}${field("Cao (mm)", "heightMm", v.height_mm ?? "", "number", 'min="0"')}</div><div class="sku-attribute-selectors">${tax.attributes.map((g) => `<label>${e(g.name)}<select data-sku-attribute><option value="">Không chọn</option>${g.values.map((x) => option(x.id, x.value, selected.includes(String(x.id)))).join("")}</select></label>`).join("")}</div></details><input type="hidden" name="attributes" value="${e(selected.join(","))}"></fieldset>`;
   }
   function blockEditor(values) {
     return `<fieldset><legend>Nội dung bài / mô tả</legend><p class="editor-note">Thêm đoạn, tiêu đề, danh sách hoặc ảnh đã upload. Mọi nội dung được server xác minh và escape.</p><div id="content-blocks">${values.map(blockLine).join("")}</div>${button("Thêm đoạn nội dung", "add-block")}</fieldset>`;
@@ -381,6 +401,24 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       taxEdit = event.target.closest("[data-tax-edit]");
     if (!action && !p && !a && !taxEdit) return;
     try {
+      if (
+        action === "attribute-value-add" ||
+        action === "attribute-value-remove"
+      ) {
+        const form = event.target.closest("form");
+        if (action === "attribute-value-add")
+          form
+            .querySelector("[data-new-values]")
+            .insertAdjacentHTML("beforeend", newValueRow());
+        else event.target.closest(".attribute-value-row").remove();
+        syncAttributeValues(form);
+        if (action === "attribute-value-add")
+          form
+            .querySelector("[data-new-values]")
+            .lastElementChild.querySelector("input")
+            .focus();
+        return;
+      }
       if (action?.startsWith("taxonomy-tab:")) {
         const kind = action.split(":")[1];
         if (!Object.hasOwn(names, kind)) return;
@@ -1099,6 +1137,15 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
   }
 
   root.addEventListener("change", (event) => {
+    if (event.target.matches("[data-sku-attribute]")) {
+      const line = event.target.closest(".sku-line");
+      line.querySelector('[name="attributes"]').value = [
+        ...line.querySelectorAll("[data-sku-attribute]"),
+      ]
+        .map((i) => i.value)
+        .filter(Boolean)
+        .join(",");
+    }
     if (event.target.id === "banner-slot-filter")
       root
         .querySelectorAll("[data-banner-slot]")
@@ -1111,6 +1158,19 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     if (event.target.closest("#banner-form")) previewBanner();
   });
   root.addEventListener("input", (event) => {
+    if (event.target.matches("[data-new-value]"))
+      syncAttributeValues(event.target.closest("form"));
+    if (event.target.matches("[data-tax-search]")) {
+      const query = event.target.value.trim().toLocaleLowerCase("vi");
+      const rows = [...root.querySelectorAll(".taxonomy-layout tbody tr")];
+      rows.forEach(
+        (row) =>
+          (row.hidden = !row.textContent
+            .toLocaleLowerCase("vi")
+            .includes(query)),
+      );
+      $(".taxonomy-search-empty").hidden = rows.some((row) => !row.hidden);
+    }
     if (event.target.closest("#banner-form")) previewBanner();
     if (event.target.closest("#article-form")) articleDirty++;
   });

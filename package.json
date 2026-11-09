@@ -36,7 +36,8 @@
     "test:contrast": "node scripts/check-contrast.mjs",
     "production:check": "node scripts/check-production.mjs",
     "db:backup:production": "node scripts/backup.mjs --production",
-    "test:admin-layout": "node tests/admin-order-layout.browser.mjs"
+    "test:admin-layout": "node tests/admin-order-layout.browser.mjs",
+    "test:admin-catalog": "node tests/admin-catalog-layout.browser.mjs"
   },
   "engines": {
     "node": ">=24.11.0"
