@@ -35,7 +35,8 @@
     "test:upgrade": "node tests/ui-upgrade.browser.mjs",
     "test:contrast": "node scripts/check-contrast.mjs",
     "production:check": "node scripts/check-production.mjs",
-    "db:backup:production": "node scripts/backup.mjs --production"
+    "db:backup:production": "node scripts/backup.mjs --production",
+    "test:admin-layout": "node tests/admin-order-layout.browser.mjs"
   },
   "engines": {
     "node": ">=24.11.0"

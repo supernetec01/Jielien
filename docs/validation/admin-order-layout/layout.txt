@@ -1,0 +1,9 @@
+> jielien-baby-store@3.0.0 test:admin-layout
+> node tests/admin-order-layout.browser.mjs
+
+PASS: sidebar, readable order/customer, single content scroll and close at 320px
+PASS: sidebar, readable order/customer, single content scroll and close at 375px
+PASS: sidebar, readable order/customer, single content scroll and close at 768px
+PASS: sidebar, readable order/customer, single content scroll and close at 1440px
+PASS: sidebar, readable order/customer, single content scroll and close at 1920px
+Admin order layout: 5 viewports passed; no JavaScript exceptions.
