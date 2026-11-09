@@ -17,7 +17,7 @@ Cập nhật: **09/11/2026**. Đây là file theo dõi tập trung cho phiên b�
 - Mua hàng không cần tài khoản, bắt buộc thông tin nhận hàng; không tự gắn đơn guest theo số điện thoại/email trùng.
 - Đổi mật khẩu khi đăng nhập cần mật khẩu hiện tại. Quên mật khẩu có token một lần, hết hạn 30 phút, outbox email Resend và thu hồi phiên; **gửi email thật còn cần cấu hình ở mục A04**.
 - Admin xem hồ sơ/địa chỉ/lịch sử đơn khách, cấp link hỗ trợ sau xác minh người sở hữu và nhập lại mật khẩu admin. Tài khoản demo cũ có quy trình chuyển đổi bằng link hỗ trợ, không reset database.
-- Catalog sản phẩm cha/SKU, giá/tồn, thuộc tính, ảnh, danh mục/thương hiệu, CSV có preview; tài khoản/quyền nhân viên; đơn COD/chuyển khoản VietQR **đối soát thủ công**; phiếu kho và nhận hàng hoàn cơ bản.
+- Catalog sản phẩm cha/SKU, giá/tồn, thuộc tính, ảnh, danh mục/thương hiệu, CSV có preview; sửa và xóa danh mục/thương hiệu/nhóm thuộc tính chưa sử dụng (mục đang có liên kết được bảo vệ), menu desktop cố định toàn chiều cao; tài khoản/quyền nhân viên; đơn COD/chuyển khoản VietQR **đối soát thủ công**; phiếu kho và nhận hàng hoàn cơ bản.
 - CMS duyệt/xuất bản/lên lịch, SEO HTML chính, banner theo slot/lịch, thông tin cửa hàng/chính sách, báo cáo giá trị đơn và tiền đã thu, backup database + media. Các giới hạn mở rộng nằm bên dưới.
 
 ## A. Thiếu cấu hình, dữ liệu hoặc nghiệm thu để dùng thật

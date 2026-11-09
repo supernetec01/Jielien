@@ -15,15 +15,18 @@ Ngày kiểm tra: 2026-11-09. Dữ liệu trình duyệt là fixture trong schem
 
 ## Kiểm chứng
 
-- `npm test`: 67/67, gồm kiểm tra xóa mục chưa sử dụng, chặn xóa mục đang dùng, CSRF, quyền truy cập, lỗi không tồn tại và nhật ký.
+- `npm test`: 79/79 sau khi gộp các cập nhật tài khoản khách hàng trên main, gồm kiểm tra xóa mục chưa sử dụng, chặn xóa mục đang dùng, CSRF, quyền truy cập, lỗi không tồn tại và nhật ký.
 - `npm run test:commerce`: 13/13.
 - `npm run test:usability`: 9/9.
 - `npm run test:management`: 11/11.
 - `npm run test:admin-access`: 6/6.
+- `npm run test:customer-flows`: 6/6 trên mã sau khi gộp, bao gồm hồ sơ khách trong Admin và khôi phục mật khẩu.
 - `npm run test:admin-layout`: 5 kích thước màn hình, menu và hộp thoại đơn hàng.
 - `npm run test:admin-catalog`: thêm/xóa danh mục chưa sử dụng, hủy xác nhận, báo lỗi khi mục đang dùng; hai khung bằng nhau và menu không đổi vị trí khi cuộn; thêm giá trị rồi tải lại, bảo toàn giá trị cũ, bỏ dòng chưa lưu, hủy sửa, tìm không có kết quả; lưu lựa chọn thuộc tính theo tên và tải lại; tạo tổ hợp không trùng; không tràn ngang tại 320/375/768/1440/1920px.
 - Đã xem ảnh desktop/tablet/mobile trong `docs/screenshots/admin-catalog-layout/` và sửa các lỗi tab bị khuất, danh sách bị cắt trên điện thoại.
 - Không thay migration. API mới: `DELETE /api/admin/catalog/{categories|brands|attributes}/:id`, yêu cầu quyền `catalog.edit` và CSRF. Kiểm tra liên kết, xóa và ghi audit trong cùng transaction; khóa dòng trước khi kiểm tra để bảo vệ liên kết khi có thao tác đồng thời.
+
+Đã gộp các cập nhật mới trên remote `main` (tới `450448e`) bằng merge, giữ lại luồng tài khoản khách hàng và bản sửa giao diện. Xung đột CSS được giải quyết bằng cách giữ cả style hồ sơ khách lẫn nút xóa. Các kết quả sau khi gộp lưu trong các file `.txt` cùng thư mục.
 
 ## Giới hạn và công việc tiếp theo
 
