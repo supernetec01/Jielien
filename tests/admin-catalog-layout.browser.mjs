@@ -42,6 +42,43 @@ try {
     await page.locator(`[data-section="${section}"]`).click();
   }
   await navigate("taxonomy-editor");
+  const categoryForm = page.locator('[data-tax-kind="categories"]');
+  await categoryForm.locator('[name="name"]').fill("Danh mục kiểm tra xóa");
+  await categoryForm.locator('[name="slug"]').fill("danh-muc-kiem-tra-xoa");
+  await categoryForm.locator("button.primary").click();
+  const deleteButton = page.getByRole("button", {
+    name: "Xóa Danh mục kiểm tra xóa",
+    exact: true,
+  });
+  await deleteButton.waitFor();
+  page.once("dialog", (d) => d.dismiss());
+  await deleteButton.click();
+  assert.ok(
+    await deleteButton.isVisible(),
+    "cancel deletion preserves category",
+  );
+  page.once("dialog", (d) => d.accept());
+  const deleted = page.waitForResponse(
+    (r) => r.request().method() === "DELETE",
+  );
+  await deleteButton.click();
+  assert.equal((await deleted).status(), 200);
+  await deleteButton.waitFor({ state: "detached" });
+  page.once("dialog", (d) => d.accept());
+  const blocked = page.waitForResponse(
+    (r) => r.request().method() === "DELETE",
+  );
+  await page
+    .locator('[data-editor-action^="taxonomy-delete:"]')
+    .first()
+    .click();
+  assert.equal((await blocked).status(), 409);
+  await page.waitForFunction(() =>
+    document
+      .querySelector("#taxonomy-action-message")
+      ?.textContent.includes("Không thể xóa"),
+  );
+  await navigate("taxonomy-editor");
   await page.locator('[data-editor-action="taxonomy-tab:attributes"]').click();
   const edit = page.locator("[data-tax-edit]").first();
   await edit.click();
@@ -111,6 +148,40 @@ try {
     await page.setViewportSize({ width, height: 1000 });
     await navigate("taxonomy-editor");
     await page
+      .locator('[data-editor-action="taxonomy-tab:categories"]')
+      .click();
+    await page.locator('[data-tax-kind="categories"]').waitFor();
+    await page.evaluate(() => scrollTo(0, 0));
+    if (width >= 1440) {
+      const panels = page.locator(".taxonomy-layout > .panel");
+      const left = await panels.nth(0).boundingBox(),
+        right = await panels.nth(1).boundingBox();
+      assert.ok(
+        Math.abs(left.width - right.width) < 2 &&
+          Math.abs(left.height - right.height) < 2,
+        "panels have equal width and height",
+      );
+      const sidebar = page.locator(".admin-sidebar");
+      const before = await sidebar.boundingBox();
+      assert.equal(before.x, 0);
+      assert.equal(before.y, 0);
+      assert.equal(before.height, 1000);
+      await page.mouse.move(width - 50, 500);
+      await page.mouse.wheel(0, 700);
+      await page.waitForFunction(() => scrollY > 0);
+      assert.deepEqual(
+        await sidebar.boundingBox(),
+        before,
+        "content wheel does not move sidebar",
+      );
+      await page.evaluate(() => scrollTo(0, 0));
+    }
+    await page.screenshot({
+      path: `${out}/categories-${width}.png`,
+      fullPage: true,
+    });
+    await navigate("taxonomy-editor");
+    await page
       .locator('[data-editor-action="taxonomy-tab:attributes"]')
       .click();
     await page.locator("[data-tax-edit]").first().click();
@@ -177,7 +248,7 @@ try {
   assert.deepEqual(errors, []);
   await writeFile(
     `${out}/README.md`,
-    "# Catalog UI verification\n\nAll screenshots use an isolated fixture schema, never customer data. Widths: 320, 375, 768, 1440, 1920. Attribute add/remove-before-save, preservation of saved values, cancel, search, duplicate-safe SKU generation and name-based attribute selection verified.\n",
+    "# Catalog UI verification\n\nAll screenshots use an isolated fixture schema, never customer data. Widths: 320, 375, 768, 1440, 1920. Category delete/cancel/in-use rejection, equal desktop panels, fixed sidebar during wheel scrolling, attribute add/remove-before-save, preservation of saved values, cancel, search, duplicate-safe SKU generation and name-based attribute selection verified.\n",
   );
 } finally {
   await browser?.close();

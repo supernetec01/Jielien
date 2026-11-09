@@ -73,8 +73,8 @@ try {
       );
       const header = await page.locator(".management-header").boundingBox();
       assert.ok(
-        Math.abs(bounds.y - (header.y + header.height)) <= 1,
-        "sidebar starts immediately below header",
+        Math.abs(bounds.y) <= 1 && header.x >= bounds.width,
+        "sidebar spans viewport from top; header starts to its right",
       );
       const before = await page.locator(".workspace-brand").boundingBox();
       await page

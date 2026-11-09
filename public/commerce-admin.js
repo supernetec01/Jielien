@@ -85,7 +85,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       )
       .join(
         "",
-      )}</div><div class="taxonomy-layout"><section class="panel"><div class="section-title"><h2>${names[kind]}</h2><span>${rows.length} mục</span></div><label class="taxonomy-search">Tìm ${names[kind].toLowerCase()}<input type="search" data-tax-search placeholder="Nhập tên hoặc mã để tìm…"></label><p class="taxonomy-search-empty muted" hidden>Không tìm thấy kết quả phù hợp.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Tên ${names[kind].toLowerCase()}</th><th>${kind === "attributes" ? "Giá trị" : "Trạng thái"}</th><th><span class="sr-only">Thao tác</span></th></tr></thead><tbody>${rows.map((x) => `<tr><td><b>${e(x.name)}</b><small class="row-description">${e(x.slug || x.code || "")}</small></td><td>${kind === "attributes" ? `<div class="value-chips">${(x.values || []).map((v) => `<span>${e(v.value)}</span>`).join("")}</div>` : stateBadge(x.status)}</td><td>${has("catalog.edit") ? `<button type="button" class="secondary" data-tax-edit="${kind}:${x.id}" aria-label="Sửa ${e(x.name)}">Sửa</button>` : ""}</td></tr>`).join("")}</tbody></table>${!rows.length ? emptyState("Chưa có " + names[kind].toLowerCase(), "Thêm mục đầu tiên bằng biểu mẫu bên cạnh.") : ""}</div></section>${has("catalog.edit") ? `<aside id="taxonomy-editor-panel" class="panel"><h2>Thêm ${names[kind].toLowerCase()}</h2><p class="muted">Thông tin sẽ được dùng trong trình biên tập sản phẩm.</p>${taxonomyForm(kind)}</aside>` : ""}</div>${result}`;
+      )}</div><div class="taxonomy-layout" data-taxonomy-kind="${kind}"><section class="panel"><div class="section-title"><h2>${names[kind]}</h2><span>${rows.length} mục</span></div><p id="taxonomy-action-message" class="form-error" role="alert" hidden></p><label class="taxonomy-search">Tìm ${names[kind].toLowerCase()}<input type="search" data-tax-search placeholder="Nhập tên hoặc mã để tìm…"></label><p class="taxonomy-search-empty muted" hidden>Không tìm thấy kết quả phù hợp.</p><div class="table-wrap"><table class="data-table"><thead><tr><th>Tên ${names[kind].toLowerCase()}</th><th>${kind === "attributes" ? "Giá trị" : "Trạng thái"}</th><th>Thao tác</th></tr></thead><tbody>${rows.map((x) => `<tr><td><b>${e(x.name)}</b><small class="row-description">${e(x.slug || x.code || "")}</small></td><td>${kind === "attributes" ? `<div class="value-chips">${(x.values || []).map((v) => `<span>${e(v.value)}</span>`).join("")}</div>` : stateBadge(x.status)}</td><td>${has("catalog.edit") ? `<div class="taxonomy-row-actions"><button type="button" class="secondary" data-tax-edit="${kind}:${x.id}" aria-label="Sửa ${e(x.name)}">Sửa</button><button type="button" class="secondary taxonomy-delete" data-editor-action="taxonomy-delete:${kind}:${x.id}" aria-label="Xóa ${e(x.name)}">Xóa</button></div>` : ""}</td></tr>`).join("")}</tbody></table>${!rows.length ? emptyState("Chưa có " + names[kind].toLowerCase(), "Thêm mục đầu tiên bằng biểu mẫu bên cạnh.") : ""}</div></section>${has("catalog.edit") ? `<aside id="taxonomy-editor-panel" class="panel"><h2>Thêm ${names[kind].toLowerCase()}</h2><p class="muted">Thông tin sẽ được dùng trong trình biên tập sản phẩm.</p>${taxonomyForm(kind)}</aside>` : ""}</div>${result}`;
   }
   async function loadTax() {
     for (const kind of ["categories", "brands", "attributes"])
@@ -417,6 +417,32 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
             .querySelector("[data-new-values]")
             .lastElementChild.querySelector("input")
             .focus();
+        return;
+      }
+      if (action?.startsWith("taxonomy-delete:")) {
+        if (!has("catalog.edit")) return;
+        const [, kind, target] = action.split(":");
+        const item = tax[kind]?.find((x) => String(x.id) === target);
+        if (!item) return;
+        if (
+          !confirm(
+            `Xóa ${names[kind].toLowerCase()} “${item.name}”? Chỉ có thể xóa mục chưa được sử dụng. Thao tác này không thể hoàn tác.`,
+          )
+        )
+          return;
+        try {
+          await api(`/api/admin/catalog/${kind}/${target}`, {
+            method: "DELETE",
+          });
+        } catch (err) {
+          const message = $("#taxonomy-action-message");
+          message.hidden = false;
+          message.textContent = err.message;
+          message.scrollIntoView({ block: "nearest" });
+          return;
+        }
+        await refresh("taxonomy-editor");
+        notify("Đã xóa " + item.name);
         return;
       }
       if (action?.startsWith("taxonomy-tab:")) {

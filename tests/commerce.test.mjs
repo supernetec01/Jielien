@@ -1163,3 +1163,121 @@ test("storefront promotions are sourced from active unexpired coupons, not hardc
   site = (await request("/api/site", undefined, "GET", null)).data;
   assert.ok(!site.coupons.some((c) => c.code === "MEBE50"));
 });
+
+test("taxonomy deletion checks CSRF and permissions, preserves used records and audits unused deletions", async (t) => {
+  const { request, db, session } = await fixture(t);
+  const base = "/api/admin/catalog/";
+  for (const [kind, body] of [
+    ["categories", { name: "Danh mục xóa thử", slug: "danh-muc-xoa-thu" }],
+    ["brands", { name: "Thương hiệu xóa thử" }],
+    [
+      "attributes",
+      { name: "Màu xóa thử", code: "mau-xoa-thu", values: ["Đỏ", "Xanh"] },
+    ],
+  ]) {
+    const created = await request(base + kind, body, "POST");
+    assert.equal(created.status, 201);
+    const path = base + kind + "/" + created.data.item.id;
+    assert.equal((await request(path, undefined, "DELETE", null)).status, 401);
+    assert.equal(
+      (await request(path, undefined, "DELETE", session, false)).status,
+      403,
+    );
+    assert.equal((await request(path, undefined, "DELETE")).status, 200);
+    assert.equal((await request(path, undefined, "DELETE")).status, 404);
+    assert.equal(
+      (await request(base + kind)).data.items.some(
+        (x) => x.id === created.data.item.id,
+      ),
+      false,
+    );
+  }
+  const parent = (
+    await request(
+      base + "categories",
+      { name: "Danh mục cha thử", slug: "cha-thu" },
+      "POST",
+    )
+  ).data.item;
+  const child = (
+    await request(
+      base + "categories",
+      { name: "Danh mục con thử", slug: "con-thu", parentId: parent.id },
+      "POST",
+    )
+  ).data.item;
+  assert.equal(
+    (await request(base + "categories/" + parent.id, undefined, "DELETE"))
+      .status,
+    409,
+  );
+  assert.equal(
+    (await request(base + "categories/" + child.id, undefined, "DELETE"))
+      .status,
+    200,
+  );
+  const product = (
+    await db.pool.query(
+      "SELECT id,brand_id FROM products WHERE brand_id IS NOT NULL LIMIT 1",
+    )
+  ).rows[0];
+  await db.pool.query(
+    "INSERT INTO product_categories(product_id,category_id) VALUES($1,$2)",
+    [product.id, parent.id],
+  );
+  const inUse = await request(
+    base + "categories/" + parent.id,
+    undefined,
+    "DELETE",
+  );
+  assert.equal(inUse.status, 409);
+  assert.equal(inUse.data.error, "taxonomy_in_use");
+  assert.equal(
+    (await request(base + "brands/" + product.brand_id, undefined, "DELETE"))
+      .status,
+    409,
+  );
+  const attribute = (
+    await db.pool.query(
+      "SELECT a.attribute_id FROM attribute_values a JOIN variant_attribute_values v ON v.attribute_value_id=a.id LIMIT 1",
+    )
+  ).rows[0];
+  assert.ok(attribute);
+  assert.equal(
+    (
+      await request(
+        base + "attributes/" + attribute.attribute_id,
+        undefined,
+        "DELETE",
+      )
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await db.pool.query(
+        "SELECT 1 FROM product_categories WHERE product_id=$1 AND category_id=$2",
+        [product.id, parent.id],
+      )
+    ).rowCount,
+    1,
+  );
+  assert.equal(
+    Number(
+      (
+        await db.pool.query(
+          "SELECT count(*) FROM audit_logs WHERE action='catalog.taxonomy_deleted'",
+        )
+      ).rows[0].count,
+    ),
+    4,
+  );
+  await db.pool.query(
+    "DELETE FROM user_roles WHERE user_id=(SELECT id FROM users WHERE email='admin@example.test')",
+  );
+  assert.equal(
+    (await request(base + "categories/" + parent.id, undefined, "DELETE"))
+      .status,
+    403,
+  );
+});
