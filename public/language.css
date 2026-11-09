@@ -1,0 +1,70 @@
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font:
+    600 13px/1.4 system-ui,
+    sans-serif;
+}
+.language-switch select {
+  font: inherit;
+  width: auto;
+  min-height: 36px;
+  border: 1px solid #bccbd3;
+  border-radius: 7px;
+  background: #fff;
+  color: #17334b;
+  padding: 6px 26px 6px 10px;
+  cursor: pointer;
+}
+.language-switch select:focus-visible {
+  outline: 3px solid #86b529;
+  outline-offset: 2px;
+}
+.topline-content {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+.topline .language-switch select {
+  min-height: 30px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+html[lang="zh-CN"] body {
+  font-family: system-ui, "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+}
+@media (max-width: 600px) {
+  .topline-content {
+    justify-content: space-between;
+  }
+  .language-switch {
+    gap: 4px;
+    font-size: 12px;
+  }
+  .language-switch > span {
+    display: none;
+  }
+  .header-row .language-switch {
+    margin-left: auto;
+  }
+  .header-row:has(.language-switch) {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 680px) {
+  .topline:has(.language-switch) {
+    display: block;
+  }
+  .topline-content {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .topline-content > span:first-child {
+    font-size: 10px;
+  }
+  #company-tagline,
+  #company-phone {
+    display: none;
+  }
+}

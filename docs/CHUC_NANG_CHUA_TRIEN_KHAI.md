@@ -127,3 +127,7 @@ Nếu có thay đổi local, lưu bằng commit hoặc stash trước khi chuy�
 - Code hiện tại: `lib/password-recovery.mjs`, `lib/shipping-policy.mjs`, `lib/auth.mjs`, `server.mjs`, `public/commerce-admin.js`; giới hạn schema trong `db/migrations/`.
 - Giới hạn catalog/SKU: [validation/admin-catalog-layout/README.md](validation/admin-catalog-layout/README.md). Giới hạn V3: [frontend-v3/RESULTS.md](frontend-v3/RESULTS.md).
 - Yêu cầu nâng cấp chi tiết: [UPGRADE_SPEC.md](UPGRADE_SPEC.md); phần chưa hoàn thành lịch sử: [UPGRADE_DELIVERY.md](UPGRADE_DELIVERY.md), [COMMERCE_RELEASE.md](COMMERCE_RELEASE.md). Trạng thái mới trong file này thay thế các mô tả cũ về OTP, khôi phục mật khẩu và số migration địa chỉ.
+
+## Cập nhật giao diện Việt–Trung và menu ngành hàng
+
+Đã có menu mở khi rê chuột, highlight ngành hàng và bộ chọn Việt / Trung Giản thể cho các nhãn giao diện chính. Phần còn thiếu là dịch nội dung tự nhập (sản phẩm, bài viết, banner, chính sách), trường dịch trong Admin và URL/SEO theo ngôn ngữ. Xem [phạm vi, kiểm thử và thông tin cần cung cấp](validation/storefront-language/README.md). Không coi bản dịch giao diện là toàn bộ CMS song ngữ.

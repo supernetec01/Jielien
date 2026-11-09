@@ -638,6 +638,7 @@ main {
   gap: 13px;
 }
 .category-card {
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
   min-height: 176px;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -649,7 +650,10 @@ main {
   text-align: center;
   background: #fff;
 }
-.category-card:hover {
+.category-card:hover,
+.category-card:focus-visible {
+  background: #edf5df;
+  color: #29470f;
   transform: translateY(-3px);
   border-color: #a9c987;
   box-shadow: var(--shadow);
@@ -2385,13 +2389,14 @@ main {
 }
 .dynamic-nav {
   display: flex;
-  gap: 26px;
+  gap: 6px;
   min-width: 0;
   overflow-x: auto;
   white-space: nowrap;
   scrollbar-width: thin;
 }
 .dynamic-nav a {
+  padding: 9px 12px;
   font-size: 12px;
   font-weight: 650;
   white-space: nowrap;
@@ -3549,3 +3554,9 @@ main {
   background: var(--navy);
   color: white;
 }
+
+/* Consistent category highlighting in both header and dropdown. */
+.dynamic-nav a, .navlink, .category-dropdown a { border-radius: 8px; transition: background-color .18s ease, color .18s ease, box-shadow .18s ease; }
+.dynamic-nav a:hover, .dynamic-nav a:focus-visible, .navlink:hover, .navlink:focus-visible, .category-dropdown a:hover, .category-dropdown a:focus-visible { background: #e9f3d8; color: #29470f; box-shadow: inset 0 -3px #86b529; }
+@media (min-width: 901px) { .storefront-v3 .category-dropdown { width: 288px; max-height: min(560px, 65dvh); overflow-y: auto; } }
+@media (prefers-reduced-motion: reduce) { .category-card, .dynamic-nav a, .category-dropdown a { transition: none; transform: none; } }

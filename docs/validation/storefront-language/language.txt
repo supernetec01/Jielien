@@ -1,0 +1,9 @@
+
+> jielien-baby-store@3.0.0 test:storefront-language
+> node tests/storefront-language.browser.mjs
+
+PASS: hover/touch menu, language round-trip and responsive 320px
+PASS: hover/touch menu, language round-trip and responsive 375px
+PASS: hover/touch menu, language round-trip and responsive 768px
+PASS: hover/touch menu, language round-trip and responsive 1440px
+PASS: hover/touch menu, language round-trip and responsive 1920px

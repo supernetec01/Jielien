@@ -39,6 +39,7 @@
     "test:qa-fixes": "node tests/qa-fixes.browser.mjs",
     "test:customer-flows": "node tests/customer-account.browser.mjs",
     "test:admin-layout": "node tests/admin-order-layout.browser.mjs",
+    "test:storefront-language": "node tests/storefront-language.browser.mjs",
     "test:admin-catalog": "node tests/admin-catalog-layout.browser.mjs"
   },
   "engines": {

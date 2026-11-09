@@ -1,0 +1,1 @@
+All screenshots use isolated catalog fixtures. Verified VI/zh-CN round-trip, reload, SPA and SSR navigation, keyboard, mouse, touch controls, no user input translation, and 320/375/768/1440/1920px widths. Store-authored content remains in its original language.

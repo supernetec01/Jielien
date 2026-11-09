@@ -1,31 +1,11 @@
+import { setupCategoryNavigation } from "./category-navigation.js";
 // SSR articles retain their complete HTML. This module only enhances the public chrome.
 import { icon } from "./ui-icons.js";
 import { hydratePublicShell } from "./v3-storefront.js";
 document
   .querySelectorAll("[data-v3-icon]")
   .forEach((el) => (el.innerHTML = icon(el.dataset.v3Icon)));
-const menu = document.getElementById("category-dropdown"),
-  backdrop = document.getElementById("menu-backdrop");
-function close() {
-  menu.hidden = true;
-  backdrop.hidden = true;
-  document
-    .querySelectorAll('[aria-controls="category-dropdown"]')
-    .forEach((b) => b.setAttribute("aria-expanded", "false"));
-}
-for (const id of ["category-menu", "mobile-menu"])
-  document.getElementById(id)?.addEventListener("click", () => {
-    const open = menu.hidden;
-    menu.hidden = !open;
-    backdrop.hidden = !open;
-    document
-      .querySelectorAll('[aria-controls="category-dropdown"]')
-      .forEach((b) => b.setAttribute("aria-expanded", String(open)));
-  });
-backdrop?.addEventListener("click", close);
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") close();
-});
+setupCategoryNavigation();
 const search = document.getElementById("search-form");
 search.action = "/san-pham";
 search.method = "GET";
@@ -50,8 +30,11 @@ try {
   const response = await fetch("/api/auth/me", { credentials: "same-origin" });
   if (response.ok) {
     const { user } = await response.json();
-    if (user?.fullName)
-      document.getElementById("account-label").textContent = user.fullName;
+    if (user?.fullName) {
+      const label = document.getElementById("account-label");
+      label.setAttribute("data-no-translate", "");
+      label.textContent = user.fullName;
+    }
     const cartResponse = await fetch("/api/cart", {
       credentials: "same-origin",
     });

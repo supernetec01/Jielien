@@ -1,3 +1,4 @@
+import { setupCategoryNavigation } from "/category-navigation.js";
 import { createCheckoutKey } from "/checkout-key.js";
 import { icon } from "/ui-icons.js";
 import {
@@ -512,30 +513,7 @@ function navigate(url, options = {}) {
   history.pushState({}, "", parsed.pathname + parsed.search);
   render(options);
 }
-function closeMenu() {
-  ["#category-menu", "#mobile-menu"].forEach((s) =>
-    $(s).setAttribute("aria-expanded", "false"),
-  );
-  $("#category-dropdown").hidden = true;
-  $("#menu-backdrop").hidden = true;
-  $("#category-menu").setAttribute("aria-expanded", "false");
-  $("#mobile-menu").setAttribute("aria-expanded", "false");
-}
-function toggleMenu() {
-  const opening = $("#category-dropdown").hidden;
-  ["#category-menu", "#mobile-menu"].forEach((s) =>
-    $(s).setAttribute("aria-expanded", String(opening)),
-  );
-  const hidden = !$("#category-dropdown").hidden;
-  const bottom = $(".site-header").getBoundingClientRect().bottom;
-  $("#category-dropdown").style.top = bottom + "px";
-  $("#menu-backdrop").style.top = bottom + "px";
-  $("#category-dropdown").hidden = hidden;
-  $("#menu-backdrop").hidden = hidden;
-  $("#category-menu").setAttribute("aria-expanded", String(!hidden));
-  $("#mobile-menu").setAttribute("aria-expanded", String(!hidden));
-  if (!hidden) $("#category-dropdown a")?.focus();
-}
+const { close: closeMenu } = setupCategoryNavigation();
 function checkoutDraft() {
   const form = $("#checkout-form");
   return form ? Object.fromEntries(new FormData(form)) : null;
@@ -1058,9 +1036,6 @@ $("#search").addEventListener("input", () => {
     }
   }, 180);
 });
-$("#category-menu").addEventListener("click", toggleMenu);
-$("#mobile-menu").addEventListener("click", toggleMenu);
-$("#menu-backdrop").addEventListener("click", closeMenu);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     const wasOpen = !$("#category-dropdown").hidden;
@@ -1607,7 +1582,10 @@ async function init() {
         );
       }
       const label = $("#account-label");
-      if (label) label.textContent = identity.fullName;
+      if (label) {
+        label.setAttribute("data-no-translate", "");
+        label.textContent = identity.fullName;
+      }
     }
     try {
       ({ methods: paymentMethods } = await api("/api/payment-methods"));
