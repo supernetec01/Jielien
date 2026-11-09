@@ -39,7 +39,7 @@ test("published migrations remain immutable and populated LAN schema upgrades wi
     }
     await seedCatalog(
       db.pool,
-      new URL("../public/catalog.json", import.meta.url),
+      new URL("../db/fixtures/catalog.json", import.meta.url),
     );
     await db.pool.query(
       "UPDATE product_variants SET price=123456,original_price=150000 WHERE id=1",
@@ -86,7 +86,7 @@ test("published migrations remain immutable and populated LAN schema upgrades wi
     assert.deepEqual((await migrate(db.pool)).applied, []);
     await seedCatalog(
       db.pool,
-      new URL("../public/catalog.json", import.meta.url),
+      new URL("../db/fixtures/catalog.json", import.meta.url),
     );
     assert.deepEqual(await snapshot(), before);
   } finally {

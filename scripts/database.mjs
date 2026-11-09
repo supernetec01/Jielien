@@ -11,7 +11,10 @@ try {
   } else if (command === "import") {
     await createStore({
       pool,
-      catalogPath: resolve("public/catalog.json"),
+      catalogPath:
+        process.env.JIELIEN_DEMO_DATA === "true"
+          ? resolve("db/fixtures/catalog.json")
+          : null,
       legacyPath: resolve("data/store.sqlite"),
     });
     const { rows } = await pool.query(

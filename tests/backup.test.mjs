@@ -123,3 +123,11 @@ test("container media stream is checksummed, path constrained and requires a suc
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test('production backups explicitly select the production stack, local backup defaults stay unchanged',async()=>{
+ const {backupComposeArgs}=await import('../scripts/backup.mjs');
+ assert.ok(backupComposeArgs().some(s=>s.endsWith('/.env.local')));
+ assert.ok(backupComposeArgs().some(s=>s.endsWith('/compose.yaml')));
+ assert.ok(backupComposeArgs(true).some(s=>s.endsWith('/.env.production')));
+ assert.ok(backupComposeArgs(true).some(s=>s.endsWith('/compose.production.yaml')));
+});

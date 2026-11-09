@@ -11,6 +11,10 @@ const sprite =
     )
     .join("") +
   "</svg>";
+if (!html.includes('href="#i-')) {
+  console.log('V3 renders SVG paths directly from ui-icons.js; no static sprite is needed.');
+  process.exit(0);
+}
 const replaced = html.replace(
   /<svg xmlns="http:\/\/www.w3.org\/2000\/svg" style="display:none" aria-hidden="true">[\s\S]*?<\/svg>/,
   () => sprite,

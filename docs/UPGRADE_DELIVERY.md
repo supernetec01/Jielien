@@ -1,5 +1,7 @@
 # Bàn giao nâng cấp giao diện Jielien
 
+> Hồ sơ của lượt UX ban đầu. Trạng thái sau tích hợp V3/LAN và production mới xem [RELEASE_READINESS.md](RELEASE_READINESS.md). Các dòng về nhánh chưa push và migration trong hồ sơ này là lịch sử, không phải trạng thái bản tích hợp.
+
 Đối chiếu `docs/UPGRADE_SPEC.md` và audit UI/UX. Nhánh: `feature/ux-upgrade-phase1`.
 
 Đây là bản nâng cấp giao diện và một phần báo cáo, **không phải tuyên bố hoàn thành toàn bộ 3 giai đoạn** trong đặc tả. Không triển khai lên máy công ty, không mở website công khai. Không thay migration 001–012, không reset database hoặc thay mật khẩu. Mọi kiểm thử dùng schema riêng.

@@ -213,16 +213,26 @@ export async function saveBackupBundle({
     throw error;
   }
 }
+export function backupComposeArgs(production = false) {
+  return [
+    "compose",
+    "--env-file",
+    join(root, production ? ".env.production" : ".env.local"),
+    "-f",
+    join(root, production ? "compose.production.yaml" : "compose.yaml"),
+  ];
+}
 async function main() {
-  const directory = join(root, "data/backups/postgresql");
+  const production = process.argv.includes("--production");
+  const composeArgs = backupComposeArgs(production);
+  const directory = join(
+    root,
+    production ? "data/backups/production" : "data/backups/postgresql",
+  );
   const result = await saveBackupBundle({
     command: "docker",
     args: [
-      "compose",
-      "--env-file",
-      join(root, ".env.local"),
-      "-f",
-      join(root, "compose.yaml"),
+      ...composeArgs,
       "exec",
       "-T",
       "db",
@@ -233,11 +243,7 @@ async function main() {
     directory,
     mediaCommand: "docker",
     mediaArgs: [
-      "compose",
-      "--env-file",
-      join(root, ".env.local"),
-      "-f",
-      join(root, "compose.yaml"),
+      ...composeArgs,
       "exec",
       "-T",
       "app",

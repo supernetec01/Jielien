@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { chromium } from "playwright-core";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createAuth } from "../lib/auth.mjs";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
 const db = await createTestDatabase();
@@ -73,8 +73,8 @@ try {
     await page.goto(base + "/");
     await page.locator(".hero").waitFor();
     assert.equal(
-      await page.locator("#staff-admin-link").isVisible(),
-      allow,
+      await page.locator('a[href="/quan-tri"]').count(),
+      0,
       `${name}: footer visibility`,
     );
     assert.equal(
@@ -138,7 +138,7 @@ try {
   await page.locator("#auth-form").waitFor();
   await page.goto(base + "/");
   await page.locator(".hero").waitFor();
-  assert.equal(await page.locator("#staff-admin-link").isVisible(), false);
+  assert.equal(await page.locator('a[href="/quan-tri"]').count(), 0);
   await context.close();
   console.log("PASS: logout hides the staff entry on next storefront visit");
   console.log("Admin navigation browser complete: 6 checks passed.");

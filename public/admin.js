@@ -12,12 +12,15 @@ const escape = (value) =>
         char
       ],
   );
+const roleLabel = (role) =>
+  role === "banner_manager" ? "Quản lý banner và ảnh chiến dịch" : role;
 const money = (value) => Number(value || 0).toLocaleString("vi-VN") + "đ";
 const date = (value) =>
   value && !Number.isNaN(new Date(value).valueOf())
     ? new Date(value).toLocaleString("vi-VN")
     : "—";
 const roleLabels = {
+  banner_manager: "Quản lý banner và ảnh chiến dịch",
   admin: "Quản trị viên",
   boss: "Chủ cửa hàng (chỉ xem)",
   sales: "Bán hàng",
@@ -84,8 +87,8 @@ const sections = [
   },
   {
     id: "banners-editor",
-    label: "Banner trang chủ",
-    permission: "settings.read",
+    label: "Banner & Poster Studio",
+    permission: "banners.read",
   },
   { id: "import-editor", label: "CSV sản phẩm", permission: "catalog.read" },
   {
@@ -158,6 +161,10 @@ function notify(message) {
   }, 3500);
 }
 function has(permission) {
+  if (permission === "banners.read")
+    return (user?.permissions || []).some(
+      (p) => p === "banners.read" || p === "settings.read",
+    );
   return !permission || (user?.permissions || []).includes(permission);
 }
 function statusLabel(status) {

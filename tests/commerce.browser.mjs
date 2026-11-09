@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import sharp from "sharp";
 import { chromium } from "playwright-core";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createAuth } from "../lib/auth.mjs";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
 const db = await createTestDatabase(),

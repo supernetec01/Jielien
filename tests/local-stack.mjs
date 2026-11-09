@@ -61,6 +61,13 @@ function docker(args, capture = false) {
     );
   });
 }
+// This stack uses an isolated project and directory. Demo data is explicitly test-only.
+const fixtureOverride = join(temporary, "fixture-data.yaml");
+await writeFile(
+  fixtureOverride,
+  'services:\n  app:\n    environment:\n      JIELIEN_DEMO_DATA: "true"\n',
+);
+compose.push("-f", fixtureOverride);
 let started = false;
 try {
   const certificate =

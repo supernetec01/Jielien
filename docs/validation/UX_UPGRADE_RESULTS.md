@@ -1,5 +1,7 @@
 # Kiểm chứng UX upgrade
 
+> Hồ sơ của lượt UX ban đầu. Trạng thái sau tích hợp V3/LAN và production mới xem [RELEASE_READINESS.md](../RELEASE_READINESS.md). Các dòng về nhánh chưa push và migration trong hồ sơ này là lịch sử, không phải trạng thái bản tích hợp.
+
 Môi trường cloud: Node 24.22.1, PostgreSQL 17.11, Chromium thật qua playwright-core. Test schema tạm, cổng HTTP ngẫu nhiên; không dùng database công ty hoặc sửa dịch vụ 3000/3001. Dữ liệu trong ảnh là fixture; không có tài khoản/mật khẩu vận hành.
 
 | Lệnh | Kết quả |

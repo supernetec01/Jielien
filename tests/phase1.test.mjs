@@ -9,7 +9,7 @@ import { createTestDatabase, closeServer } from "./support/database.mjs";
 import { createStore } from "../db/store.mjs";
 import { createAuth } from "../lib/auth.mjs";
 import { createCartService } from "../lib/cart.mjs";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 
 const password = "PhaseOneTest!123";
 const products = [

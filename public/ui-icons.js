@@ -1,5 +1,12 @@
-// Local SVG icons render consistently without external fonts or network requests.
+// Shared local SVG paths.
 export const paths = {
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/>',
+  heart:
+    '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
+  bag: '<path d="M5 7h14l2 14H3L5 7Z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/>',
+  home: '<path d="m3 10 9-8 9 8v11h-7v-7h-4v7H3Z"/>',
+  book: '<path d="M12 5C9 3 5 3 2 4v16c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1v16"/>',
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   box: '<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="M3 8v9l9 5 9-5V8M12 13v9M7.5 5.5l9 5"/>',
   file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
@@ -12,14 +19,9 @@ export const paths = {
   check: '<path d="m5 12 4 4L19 6"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
-  user: '<circle cx="12" cy="8" r="4"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/>',
   receipt: '<path d="M5 3h14v19l-3-2-4 2-4-2-3 2V3ZM8 7h8M8 11h8M8 15h5"/>',
-  heart:
-    '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
   cart: '<path d="M2 3h3l3 13h11l3-9H6M9 21h.01M18 21h.01"/>',
-  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   close: '<path d="m6 6 12 12M18 6 6 18"/>',
-  home: '<path d="m3 10 9-8 9 8v11h-7v-7h-4v7H3Z"/>',
   bolt: '<path d="m13 2-9 12h7l-1 8 10-13h-8Z"/>',
   phone: '<path d="m5 3 4 4-2 3a16 16 0 0 0 7 7l3-2 4 4-2 3C10 22 2 14 2 5Z"/>',
   chat: '<path d="M21 11a9 9 0 0 1-9 9H3l1-6a9 9 0 1 1 17-3ZM8 10h8M8 14h5"/>',

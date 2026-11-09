@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir, writeFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
 const db = await createTestDatabase();
 let app;

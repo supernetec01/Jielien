@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright-core";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createAuth } from "../lib/auth.mjs";
 import { createStore } from "../db/store.mjs";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
@@ -54,7 +54,7 @@ try {
   const ready = () =>
     page.waitForFunction(
       () =>
-        document.querySelector("#main") &&
+        document.querySelector("#main")?.dataset.hydrated === "true" &&
         !document.querySelector("#main").hasAttribute("aria-busy") &&
         !document.querySelector("#main .loading"),
     );
@@ -134,7 +134,7 @@ try {
       ["/tin-tuc", "news"],
     ]) {
       await page.goto(base + path);
-      if (name === "news") await page.locator(".ssr-content").waitFor();
+      if (name === "news") await page.locator("#main h1").waitFor();
       else {
         await ready();
         if (name === "home") await page.locator(".hero").waitFor();
@@ -310,7 +310,7 @@ try {
     "unsafe-name-fixture",
   ]);
   await storefront.goto(base + "/");
-  await storefront.locator(".hero").waitFor();
+  await storefront.waitForFunction(()=>document.querySelector("#main")?.dataset.hydrated === "true");
   assert.equal(
     await storefront.evaluate(() => window.__categoryXss),
     undefined,

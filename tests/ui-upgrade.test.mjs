@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTestDatabase } from "./support/database.mjs";
-import { createApp } from "../server.mjs";
+import { createApp } from "./support/app.mjs";
 import { createAuth } from "../lib/auth.mjs";
 import { createOperations } from "../lib/operations.mjs";
 import { createStore } from "../db/store.mjs";
