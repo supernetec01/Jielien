@@ -5,6 +5,7 @@
 PASS: guest footer/account/direct access and backend RBAC
 PASS: customer footer/account/direct access and backend RBAC
 PASS: no_access footer/account/direct access and backend RBAC
+Request failed: ECONNRESET
 PASS: viewer footer/account/direct access and backend RBAC
 PASS: admin footer/account/direct access and backend RBAC
 PASS: logout hides the staff entry on next storefront visit

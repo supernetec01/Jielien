@@ -31,6 +31,7 @@ try {
   const pageFor = async () => {
     const c = await browser.newContext({
         viewport: { width: 1440, height: 1000 },
+        reducedMotion: "reduce",
       }),
       p = await c.newPage();
     p.setDefaultTimeout(10000);
@@ -99,12 +100,18 @@ try {
   );
   for (const width of [320, 375, 768, 1440, 1920]) {
     await admin.setViewportSize({ width, height: 1000 });
+    await admin.evaluate(() => scrollTo({ top: 0, left: 0, behavior: 'instant' }));
     assert.ok(
       await admin.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth + 1,
       ),
       `customer ${width}`,
     );
+    if (width >= 1440) {
+      const heading = await admin.locator('.customer-profile h1').boundingBox();
+      const header = await admin.locator('.management-header').boundingBox();
+      assert.ok(heading.y >= header.y + header.height, 'customer heading clears sticky header');
+    }
     await admin.screenshot({
       path: `${out}/admin-customer-${width}.png`,
       fullPage: true,

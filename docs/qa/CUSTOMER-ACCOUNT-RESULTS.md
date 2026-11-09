@@ -35,10 +35,14 @@ Tất cả chạy với schema PostgreSQL tạm và sender email sandbox, Chromi
 | `npm run test:frontend-v3` | 12/12 nhóm |
 | `npm run test:qa-fixes` | 4/4 nhóm |
 | `npm run test:local` | 7/7 |
+| `npm run test:admin-layout` | 5/5 viewport |
+| `npm run test:admin-catalog` | 5/5 viewport |
 
 API kiểm tra validation, quyền/CSRF, liên hệ trùng, phone-only, phản hồi chung, hash token và payload mã hóa, dùng lại/hết hạn/thay thế link, tiêu thụ đồng thời, thay email/mật khẩu/vai trò, thu hồi nhiều phiên, retry giữa worker, xóa payload và chuyển tài khoản demo qua hỗ trợ. Browser đi qua cả đăng ký/đăng nhập, reset qua sandbox email, admin hỗ trợ với mật khẩu sai/đúng, guest COD và lỗi form.
 
 Ảnh trong `docs/screenshots/customer-flows/` và `docs/screenshots/qa-fixes/account-*.png` sử dụng dữ liệu fixture giả: khách `buyer@example.test`, địa chỉ thử và đơn thử 450.000đ. Hồ sơ admin, quên mật khẩu, reset và tài khoản được chụp ở 320/375/768/1440/1920px; kiểm tra tràn trang bằng browser và xem ảnh desktop/mobile. Bảng đơn có vùng cuộn riêng trên điện thoại. Không chụp mật khẩu hoặc link hỗ trợ đang có hiệu lực.
+
+Đã hợp nhất giao diện mới nhất từ `main` tại `c693548` (layout Admin, đơn hàng và editor thuộc tính/SKU), rồi chạy lại customer-flows, management, admin-access, usability, commerce, admin-layout và admin-catalog. Sửa race trong test admin-catalog: phải chờ PATCH thành công và form tải lại trước khi mở bản vừa lưu; lần chạy lại đạt cả 5 viewport. Ảnh hồ sơ khách được chụp lại với giao diện hợp nhất và kiểm tra tiêu đề không bị sticky header che. CI bổ sung `test:customer-flows`.
 
 ## Vận hành và giới hạn
 
