@@ -1,0 +1,1 @@
+All products, warehouses and prices in these screenshots are isolated fixtures. Verified UI create warehouse, product-scoped SKU picker, edit stock/price, cancel/delete a warehouse product, other warehouse preservation, and three distinct SKU images/prices across 320/375/768/1440/1920px.

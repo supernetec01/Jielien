@@ -2139,3 +2139,134 @@
   gap: 12px;
   align-items: start;
 }
+
+.warehouse-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.admin-workspace .warehouse-card {
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  background: white;
+  border: 1px solid #ccd9e4;
+  padding: 18px;
+  border-radius: 12px;
+  color: #17334b;
+}
+.warehouse-card small {
+  font-weight: 400;
+}
+.admin-workspace .warehouse-card.active {
+  border: 2px solid #709b1d;
+  background: #f0f6e6;
+}
+.warehouse-workbench .panel {
+  margin-bottom: 22px;
+}
+.warehouse-workbench summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding-bottom: 12px;
+}
+.warehouse-workbench [hidden] {
+  display: none !important;
+}
+.warehouse-product-actions {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 16px;
+  background: #f6f8fb;
+  border-radius: 10px;
+}
+.warehouse-product-actions label {
+  flex: 1;
+  min-width: min(240px, 100%);
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+}
+.warehouse-product-actions select {
+  max-width: 100%;
+}
+.sku-image-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+.sku-image-note img {
+  object-fit: contain;
+  border: 1px solid #dce5ee;
+  border-radius: 8px;
+}
+@media (max-width: 600px) {
+  .warehouse-workbench .data-table,
+  .warehouse-workbench tbody {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  .warehouse-workbench thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .warehouse-workbench tr {
+    display: grid;
+    gap: 12px;
+    padding: 16px 0;
+    border-bottom: 1px solid #dce5ee;
+  }
+  .admin-workspace .warehouse-workbench td {
+    display: block;
+    border: 0;
+    padding: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .warehouse-workbench .table-wrap {
+    max-height: none;
+  }
+}
+
+.warehouse-product-tools {
+  margin-bottom: 22px;
+}
+.warehouse-product-tools summary {
+  font-size: 14px;
+  color: #526b82;
+}
+.warehouse-stock-counts {
+  display: flex;
+  gap: 16px;
+}
+.warehouse-stock-counts span {
+  display: grid;
+  gap: 3px;
+}
+.warehouse-stock-counts small {
+  color: #526b82;
+  font-size: 12px;
+}
+.warehouse-stock-counts b {
+  font-size: 16px;
+}
+@media (max-width: 600px) {
+  .warehouse-workbench [data-price-label]::before {
+    content: attr(data-price-label);
+    display: block;
+    font-size: 12px;
+    color: #526b82;
+    margin-bottom: 5px;
+  }
+}

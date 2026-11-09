@@ -1,0 +1,9 @@
+
+> jielien-baby-store@3.0.0 test:warehouse
+> node tests/warehouse-catalog.browser.mjs
+
+PASS: per-warehouse prices/stock, three SKU images and responsive 320px
+PASS: per-warehouse prices/stock, three SKU images and responsive 375px
+PASS: per-warehouse prices/stock, three SKU images and responsive 768px
+PASS: per-warehouse prices/stock, three SKU images and responsive 1440px
+PASS: per-warehouse prices/stock, three SKU images and responsive 1920px

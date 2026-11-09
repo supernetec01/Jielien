@@ -501,6 +501,7 @@ export async function createApp({
             payment: body.payment,
             note,
             idempotencyKey,
+            pricingKey: body.pricingKey,
             userId: session?.user.id || null,
           });
           return json(res, 201, { order: await withTransferQr(order) });

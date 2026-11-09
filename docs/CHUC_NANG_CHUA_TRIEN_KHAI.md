@@ -131,3 +131,7 @@ Nếu có thay đổi local, lưu bằng commit hoặc stash trước khi chuy�
 ## Cập nhật giao diện Việt–Trung và menu ngành hàng
 
 Đã có menu mở khi rê chuột, highlight ngành hàng và bộ chọn Việt / Trung Giản thể cho các nhãn giao diện chính. Phần còn thiếu là dịch nội dung tự nhập (sản phẩm, bài viết, banner, chính sách), trường dịch trong Admin và URL/SEO theo ngôn ngữ. Xem [phạm vi, kiểm thử và thông tin cần cung cấp](validation/storefront-language/README.md). Không coi bản dịch giao diện là toàn bộ CMS song ngữ.
+
+## Cập nhật SKU và nhiều kho
+
+Đã triển khai SKU riêng theo sản phẩm, ảnh theo SKU, tồn và giá bán riêng theo kho; quản lý tạo kho/thêm/sửa/xóa SKU hoặc sản phẩm trong kho; xóa sản phẩm dọn số dư mọi kho và giữ lịch sử. Website tự phân bổ giá thấp còn hàng, chia nhiều kho khi cần, lưu giá/kho trong đơn và chặn báo giá cũ. Còn thiếu chọn kho theo địa lý/phí vận chuyển, giá vốn, lô/hạn dùng và khôi phục sản phẩm đã xóa. Xem [hướng dẫn và kết quả kiểm thử](validation/warehouse-catalog/README.md).

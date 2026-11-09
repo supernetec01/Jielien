@@ -638,7 +638,11 @@ main {
   gap: 13px;
 }
 .category-card {
-  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
   min-height: 176px;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -2780,6 +2784,7 @@ main {
   font-size: 32px;
 }
 .detail-pricing strong {
+  font-size: clamp(19px, 6.8vw, 30px);
   color: var(--navy);
 }
 .detail-info .delivery-note {
@@ -3556,7 +3561,44 @@ main {
 }
 
 /* Consistent category highlighting in both header and dropdown. */
-.dynamic-nav a, .navlink, .category-dropdown a { border-radius: 8px; transition: background-color .18s ease, color .18s ease, box-shadow .18s ease; }
-.dynamic-nav a:hover, .dynamic-nav a:focus-visible, .navlink:hover, .navlink:focus-visible, .category-dropdown a:hover, .category-dropdown a:focus-visible { background: #e9f3d8; color: #29470f; box-shadow: inset 0 -3px #86b529; }
-@media (min-width: 901px) { .storefront-v3 .category-dropdown { width: 288px; max-height: min(560px, 65dvh); overflow-y: auto; } }
-@media (prefers-reduced-motion: reduce) { .category-card, .dynamic-nav a, .category-dropdown a { transition: none; transform: none; } }
+.dynamic-nav a,
+.navlink,
+.category-dropdown a {
+  border-radius: 8px;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.dynamic-nav a:hover,
+.dynamic-nav a:focus-visible,
+.navlink:hover,
+.navlink:focus-visible,
+.category-dropdown a:hover,
+.category-dropdown a:focus-visible {
+  background: #e9f3d8;
+  color: #29470f;
+  box-shadow: inset 0 -3px #86b529;
+}
+@media (min-width: 901px) {
+  .storefront-v3 .category-dropdown {
+    width: 288px;
+    max-height: min(560px, 65dvh);
+    overflow-y: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .category-card,
+  .dynamic-nav a,
+  .category-dropdown a {
+    transition: none;
+    transform: none;
+  }
+}
+.allocation-prices {
+  padding-left: 18px;
+  margin: 8px 0;
+  font-size: 13px;
+  color: #42566a;
+  line-height: 1.65;
+}

@@ -298,7 +298,7 @@ async function fetchQuote() {
 }
 function summaryMarkup(q, checkout = false) {
   return `<aside class="panel summary"><h2>${checkout ? "Đơn hàng của mẹ" : "Thông tin thanh toán"}</h2>
-  ${checkout ? `<div class="checkout-items">${q.items.map((item) => `<div class="checkout-mini"><img src="${escape(item.image)}" alt=""><div>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></div></div>`).join("")}</div>` : ""}
+  ${checkout ? `<div class="checkout-items">${q.items.map((item) => `<div class="checkout-mini"><img src="${escape(item.image)}" alt=""><div>${escape(item.name)}<b>${money(item.lineTotal)}</b>${allocationMarkup(item)}</div></div>`).join("")}</div>` : ""}
   ${shippingMarkup(q)}
   <form id="coupon-form" class="coupon-form"><input name="coupon" id="coupon" maxlength="30" placeholder="Nhập mã ưu đãi" aria-label="Mã ưu đãi" value="${escape(coupon)}"><button class="secondary">Áp dụng</button></form>
   ${coupon ? `<button class="filter-chip" id="remove-coupon">${escape(coupon)} ×</button>` : `<div class="coupon-suggestions">${(siteData.coupons || []).map((c) => `<button type="button" data-coupon="${escape(c.code)}">${escape(c.code)}</button>`).join("")}</div>`}
@@ -307,6 +307,11 @@ function summaryMarkup(q, checkout = false) {
   <div class="summary-line discount"><span>Giảm giá</span><b>−${money(q.discount)}</b></div><div class="summary-line"><span>Phí giao hàng</span><b>${q.shipping ? money(q.shipping) : "Miễn phí"}</b></div><div class="summary-line total"><span>Tổng cộng</span><strong id="grand-total">${money(q.total)}</strong></div>
   ${checkout ? '<button class="primary" type="submit" form="checkout-form" id="place-order">Đặt hàng COD →</button>' : '<a href="/thanh-toan" data-link class="primary">Tiến hành đặt hàng →</a>'}
   <p class="summary-note">${checkout ? "Thanh toán theo phương thức đã chọn. Kiểm tra thông tin trước khi xác nhận." : "Kiểm tra sản phẩm và phí giao hàng trước khi đặt."}</p></aside>`;
+}
+function allocationMarkup(item) {
+  return item.allocations?.length
+    ? `<ul class="allocation-prices" aria-label="Phân bổ giá theo kho">${item.allocations.map((a) => `<li>${a.quantity} × ${money(a.price)} = ${money(a.lineTotal)}</li>`).join("")}</ul>`
+    : "";
 }
 async function cartPage(version) {
   document.title = "Giỏ hàng | Jielien";
@@ -330,7 +335,7 @@ async function cartPage(version) {
   return `${breadcrumbs([["Giỏ hàng"]])}<h1 class="page-title">Giỏ hàng của mẹ</h1><p class="page-subtitle">${q.items.length} sản phẩm đã chọn · Kiểm tra lại trước khi đặt hàng</p><div class="cart-layout"><section class="panel"><div>${q.items
     .map((item) => {
       const p = products.find((p) => p.id === item.id);
-      return `<article class="cart-item"><img src="${escape(item.image)}" alt="${escape(item.name)}"><div><h3><a href="${productLink(p)}" data-link>${escape(item.name)}</a></h3><small>${escape(p.brand)} · ${escape(p.weight)}</small>${quantityControl(item.id, item.quantity)}<button class="remove-item" data-remove="${item.id}">Xóa sản phẩm</button></div><div><div class="product-price">${money(item.lineTotal)}</div><div class="old-price">${money(p.oldPrice * item.quantity)}</div></div></article>`;
+      return `<article class="cart-item"><img src="${escape(item.image)}" alt="${escape(item.name)}"><div><h3><a href="${productLink(p)}" data-link>${escape(item.name)}</a></h3><small>${escape(p.brand)} · ${escape(p.weight)}</small>${quantityControl(item.id, item.quantity)}${allocationMarkup(item)}<button class="remove-item" data-remove="${item.id}">Xóa sản phẩm</button></div><div><div class="product-price">${money(item.lineTotal)}</div><div class="old-price">${money(p.oldPrice * item.quantity)}</div></div></article>`;
     })
     .join(
       "",
@@ -399,7 +404,7 @@ function transferMarkup(order) {
   return `<section class="transfer-panel" aria-label="Hướng dẫn chuyển khoản"><div class="transfer-qr">${t.qrDataUrl ? `<img id="transfer-qr" src="${escape(t.qrDataUrl)}" alt="VietQR chuyển khoản cho đơn ${escape(order.id)}" width="280" height="280">` : ""}<p>Quét bằng ứng dụng ngân hàng</p></div><div><h2>Chuyển khoản thanh toán đơn hàng</h2><dl class="transfer-details"><dt>Ngân hàng</dt><dd>${escape(t.bankName)}</dd><dt>Số tài khoản</dt><dd><b>${escape(t.accountNumber)}</b> <button class="copy-transfer" data-copy-transfer="${escape(t.accountNumber)}" aria-label="Sao chép số tài khoản">Sao chép</button></dd><dt>Chủ tài khoản</dt><dd>${escape(t.accountName)}</dd><dt>Số tiền</dt><dd><b>${money(t.amount)}</b> <button class="copy-transfer" data-copy-transfer="${t.amount}" aria-label="Sao chép số tiền">Sao chép</button></dd><dt>Nội dung chuyển khoản</dt><dd><b>${escape(t.reference)}</b> <button class="copy-transfer" data-copy-transfer="${escape(t.reference)}" aria-label="Sao chép nội dung chuyển khoản">Sao chép</button></dd></dl><p>Giữ nguyên số tiền và nội dung để cửa hàng đối soát đúng đơn. Kiểm tra tên người nhận trong ứng dụng ngân hàng trước khi xác nhận.</p><p class="notice">Đang chờ đối soát. Quét mã không tự xác nhận đã trả tiền; cửa hàng sẽ cập nhật sau khi nhận tiền. Nếu đã chuyển, bạn không thanh toán lại.</p><button class="secondary" data-refresh-payment="${escape(order.id)}">Cập nhật trạng thái thanh toán</button></div></section>`;
 }
 function orderMarkup(order) {
-  return `<section class="panel order-card"><div class="order-number"><strong>Mã đơn: ${escape(order.id)}</strong><span class="status">${escape({ pending: "Chờ xác nhận", confirmed: "Đã xác nhận", processing: "Đang chuẩn bị", shipped: "Đang giao", delivered: "Đã giao", cancelled: "Đã hủy" }[order.status] || order.status)} · ${escape(paymentLabel(order.payment))}</span></div>${transferMarkup(order)}<div class="order-details"><div><h3>Người nhận</h3><p><b>${escape(order.customer.name)}</b></p><p>${escape(order.customer.phone)}</p><p>${escape(order.customer.address)}</p><p>${escape(order.customer.district)}, ${escape(order.customer.province)}</p></div><div><h3>Thông tin đơn</h3><p>Ngày đặt: ${new Date(order.createdAt).toLocaleString("vi-VN")}</p><p>Phương thức: ${escape(paymentLabel(order.payment))}</p><p>Thanh toán: ${order.paymentStatus === "paid" ? "Đã ghi nhận thu tiền" : "Chưa ghi nhận thu tiền"}</p>${order.note ? `<p>Ghi chú: ${escape(order.note)}</p>` : ""}</div></div>${order.items.map((item) => `<div class="checkout-mini"><img src="${escape(item.image)}" alt=""><div>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></div><strong>${money(item.lineTotal)}</strong></div>`).join("")}<div class="summary-line"><span>Tạm tính</span><b>${money(order.subtotal)}</b></div><div class="summary-line discount"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="summary-line"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="summary-line total"><span>Tổng thanh toán</span><strong>${money(order.total)}</strong></div><p class="notice">Bạn lưu mã đơn để tra cứu cùng số điện thoại. Vận chuyển được cửa hàng xử lý thủ công.</p></section>`;
+  return `<section class="panel order-card"><div class="order-number"><strong>Mã đơn: ${escape(order.id)}</strong><span class="status">${escape({ pending: "Chờ xác nhận", confirmed: "Đã xác nhận", processing: "Đang chuẩn bị", shipped: "Đang giao", delivered: "Đã giao", cancelled: "Đã hủy" }[order.status] || order.status)} · ${escape(paymentLabel(order.payment))}</span></div>${transferMarkup(order)}<div class="order-details"><div><h3>Người nhận</h3><p><b>${escape(order.customer.name)}</b></p><p>${escape(order.customer.phone)}</p><p>${escape(order.customer.address)}</p><p>${escape(order.customer.district)}, ${escape(order.customer.province)}</p></div><div><h3>Thông tin đơn</h3><p>Ngày đặt: ${new Date(order.createdAt).toLocaleString("vi-VN")}</p><p>Phương thức: ${escape(paymentLabel(order.payment))}</p><p>Thanh toán: ${order.paymentStatus === "paid" ? "Đã ghi nhận thu tiền" : "Chưa ghi nhận thu tiền"}</p>${order.note ? `<p>Ghi chú: ${escape(order.note)}</p>` : ""}</div></div>${order.items.map((item) => `<div class="checkout-mini"><img src="${escape(item.image)}" alt=""><div>${escape(item.name)}<b>${money(item.lineTotal)}</b>${allocationMarkup(item)}</div><strong>${money(item.lineTotal)}</strong></div>`).join("")}<div class="summary-line"><span>Tạm tính</span><b>${money(order.subtotal)}</b></div><div class="summary-line discount"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="summary-line"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="summary-line total"><span>Tổng thanh toán</span><strong>${money(order.total)}</strong></div><p class="notice">Bạn lưu mã đơn để tra cứu cùng số điện thoại. Vận chuyển được cửa hàng xử lý thủ công.</p></section>`;
 }
 function lookupPage() {
   document.title = "Tra cứu đơn hàng | Jielien";
@@ -672,6 +677,7 @@ async function submitOrder(event) {
     payment: data.payment,
     note: data.note.trim(),
     idempotencyKey: checkoutKey,
+    pricingKey: quote?.pricingKey,
   };
   submitting = true;
   $("#place-order").disabled = true;
@@ -711,6 +717,13 @@ async function submitOrder(event) {
       (error.status >= 500 && error.code !== "payment_unavailable");
     pendingOrder = uncertain ? { payload } : null;
     if (!uncertain) checkoutKey = createCheckoutKey();
+    if (error.code === "pricing_changed") {
+      try {
+        const draft = checkoutDraft();
+        await render({ scroll: false });
+        restoreDraft(draft);
+      } catch {}
+    }
     $("#checkout-error").textContent =
       error.message +
       (uncertain
@@ -1270,7 +1283,7 @@ async function updateMiniCart() {
       body: JSON.stringify({ items: cartItems(), coupon }),
     });
     if (version !== miniVersion) return;
-    box.innerHTML = `<div class="mini-items">${q.items.map((item) => `<article class="mini-item"><img src="${escape(item.image)}" alt="" width="72" height="72"><div><a href="${productLink(products.find((p) => p.id === item.id))}" data-link>${escape(item.name)}</a><b>${money(item.price)}</b><div class="mini-quantity"><button data-mini-change="-1" data-item="${item.id}" aria-label="Giảm số lượng ${escape(item.name)}" ${item.quantity === 1 ? "disabled" : ""}>${icon("minus")}</button><span>${item.quantity}</span><button data-mini-change="1" data-item="${item.id}" aria-label="Tăng số lượng ${escape(item.name)}">${icon("plus")}</button><button data-mini-remove data-item="${item.id}" aria-label="Xóa ${escape(item.name)}">${icon("trash")}</button></div></div></article>`).join("")}</div>${shippingMarkup(q)}<div class="summary-line"><span>Tạm tính</span><b>${money(q.subtotal)}</b></div><div class="summary-line"><span>Phí giao hàng</span><b>${money(q.shipping)}</b></div><div class="summary-line total"><span>Tổng thanh toán</span><strong>${money(q.total)}</strong></div><div class="mini-actions"><a class="primary" href="/thanh-toan" data-link>Thanh toán ${icon("arrow")}</a><a class="secondary" href="/gio-hang" data-link>Xem giỏ hàng</a></div>`;
+    box.innerHTML = `<div class="mini-items">${q.items.map((item) => `<article class="mini-item"><img src="${escape(item.image)}" alt="" width="72" height="72"><div><a href="${productLink(products.find((p) => p.id === item.id))}" data-link>${escape(item.name)}</a><b>${money(item.lineTotal)}</b>${allocationMarkup(item)}<div class="mini-quantity"><button data-mini-change="-1" data-item="${item.id}" aria-label="Giảm số lượng ${escape(item.name)}" ${item.quantity === 1 ? "disabled" : ""}>${icon("minus")}</button><span>${item.quantity}</span><button data-mini-change="1" data-item="${item.id}" aria-label="Tăng số lượng ${escape(item.name)}">${icon("plus")}</button><button data-mini-remove data-item="${item.id}" aria-label="Xóa ${escape(item.name)}">${icon("trash")}</button></div></div></article>`).join("")}</div>${shippingMarkup(q)}<div class="summary-line"><span>Tạm tính</span><b>${money(q.subtotal)}</b></div><div class="summary-line"><span>Phí giao hàng</span><b>${money(q.shipping)}</b></div><div class="summary-line total"><span>Tổng thanh toán</span><strong>${money(q.total)}</strong></div><div class="mini-actions"><a class="primary" href="/thanh-toan" data-link>Thanh toán ${icon("arrow")}</a><a class="secondary" href="/gio-hang" data-link>Xem giỏ hàng</a></div>`;
   } catch (error) {
     if (version === miniVersion)
       box.innerHTML = `<p class="form-error" role="alert">${escape(error.message)}</p><a class="secondary" href="/gio-hang" data-link>Kiểm tra giỏ hàng</a>`;

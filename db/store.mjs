@@ -139,7 +139,11 @@ async function audit(
     ],
   );
 }
-export const variantSQL = `SELECT v.*,p.description,p.content_blocks,p.name AS product_name,b.name AS brand,
+export const effectivePriceSQL =
+  "COALESCE((SELECT ib.price FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id WHERE ib.variant_id=v.id AND w.type='normal' AND w.status='active' ORDER BY (ib.on_hand>ib.reserved) DESC,ib.price,ib.warehouse_id LIMIT 1),v.price)";
+export const variantSQL = `SELECT v.*,${effectivePriceSQL} AS price,
+ COALESCE((SELECT ib.original_price FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id WHERE ib.variant_id=v.id AND w.type='normal' AND w.status='active' ORDER BY (ib.on_hand>ib.reserved) DESC,ib.price,ib.warehouse_id LIMIT 1),v.original_price) AS original_price,
+ (SELECT count(DISTINCT ib.price)>1 FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id WHERE ib.variant_id=v.id AND ib.on_hand>ib.reserved AND w.type='normal' AND w.status='active') AS price_varies,p.description,p.content_blocks,p.name AS product_name,b.name AS brand,
  COALESCE((SELECT c.name FROM product_categories pc JOIN categories c ON c.id=pc.category_id WHERE pc.product_id=p.id AND c.status='active' ORDER BY c.sort_order,c.id LIMIT 1),'Sản phẩm') AS category,
  COALESCE((SELECT m.url FROM product_media m WHERE m.product_id=p.id AND (m.variant_id=v.id OR m.variant_id IS NULL) ORDER BY m.variant_id NULLS LAST,m.sort_order,m.id LIMIT 1),'') AS image,
  COALESCE((SELECT json_agg(json_build_object('url',m.url,'alt',m.alt_text) ORDER BY m.sort_order,m.id) FROM product_media m WHERE m.product_id=p.id AND (m.variant_id=v.id OR m.variant_id IS NULL)),'[]') AS gallery,
@@ -163,6 +167,7 @@ export function adaptProduct(p) {
     gallery: p.gallery || [],
     image: p.image,
     price: number(p.price),
+    priceVaries: p.price_varies === true,
     oldPrice: number(p.original_price ?? p.price),
     stock: number(p.available),
     age: p.age,
@@ -172,13 +177,15 @@ export function adaptProduct(p) {
     status: p.status,
   };
 }
-async function productsFrom(client, includeInactive = false) {
+async function productsFrom(client, includeInactive = false, ids = null) {
   const result = await client.query(
     variantSQL +
       (includeInactive
-        ? ""
-        : " WHERE v.status='active' AND p.status='active'") +
+        ? " WHERE p.deleted_at IS NULL"
+        : " WHERE p.deleted_at IS NULL AND v.status='active' AND p.status='active'") +
+      (ids ? " AND v.id=ANY($1::bigint[])" : "") +
       " ORDER BY v.id",
+    ids ? [ids] : [],
   );
   return result.rows.map(adaptProduct);
 }
@@ -216,13 +223,41 @@ async function calculate(client, items, couponValue, lockCoupon = false) {
   let coupon = "";
   if (couponValue != null && couponValue !== "")
     coupon = clean(couponValue, "Mã ưu đãi", 1, 30).toUpperCase();
-  const all = await productsFrom(client);
+  const all = await productsFrom(
+    client,
+    false,
+    items.map((i) => i.id),
+  );
   const byId = new Map(all.map((p) => [p.id, p]));
+  const stocks = (
+    await client.query(
+      "SELECT b.*,w.name AS warehouse_name FROM inventory_balances b JOIN warehouses w ON w.id=b.warehouse_id WHERE b.variant_id=ANY($1::bigint[]) AND w.type='normal' AND w.status='active' AND b.on_hand>b.reserved ORDER BY b.variant_id,b.price,b.warehouse_id",
+      [items.map((i) => i.id)],
+    )
+  ).rows;
   const lines = items.map(({ id, quantity }) => {
     const p = byId.get(id);
     if (!p)
       fail(400, "invalid_items", "Sản phẩm không tồn tại hoặc đã ngừng bán.");
-    if (p.stock < quantity)
+    let remaining = quantity;
+    const allocations = [];
+    for (const stock of stocks.filter((s) => number(s.variant_id) === id)) {
+      const amount = Math.min(
+        remaining,
+        number(stock.on_hand) - number(stock.reserved),
+      );
+      if (amount > 0)
+        allocations.push({
+          warehouseId: number(stock.warehouse_id),
+          warehouseName: stock.warehouse_name,
+          quantity: amount,
+          price: number(stock.price),
+          lineTotal: amount * number(stock.price),
+        });
+      remaining -= amount;
+      if (!remaining) break;
+    }
+    if (remaining)
       fail(
         409,
         "insufficient_stock",
@@ -233,10 +268,11 @@ async function calculate(client, items, couponValue, lockCoupon = false) {
       name: p.name,
       gallery: p.gallery || [],
       image: p.image,
-      price: p.price,
+      price: allocations[0].price,
       quantity,
-      lineTotal: p.price * quantity,
+      lineTotal: allocations.reduce((n, a) => n + a.lineTotal, 0),
       sku: p.sku,
+      allocations,
     };
   });
   const subtotal = lines.reduce((sum, p) => sum + p.lineTotal, 0);
@@ -271,7 +307,15 @@ async function calculate(client, items, couponValue, lockCoupon = false) {
 }
 function publicQuote(q) {
   const { offer, skus, ...result } = q;
-  return result;
+  const pricingKey = createHash("sha256")
+    .update(
+      JSON.stringify({
+        items: q.items.map((i) => ({ id: i.id, allocations: i.allocations })),
+        total: q.total,
+      }),
+    )
+    .digest("hex");
+  return { ...result, pricingKey };
 }
 async function readOrder(client, numberValue) {
   const result = await client.query(
@@ -317,6 +361,8 @@ async function readOrder(client, numberValue) {
       sku: i.sku_snapshot,
       name: i.name_snapshot,
       image: i.image_snapshot,
+      warehouseId: i.warehouse_id ? number(i.warehouse_id) : null,
+      warehouseName: i.warehouse_name_snapshot,
       price: number(i.unit_price),
       quantity: number(i.quantity),
       lineTotal: number(i.line_total),
@@ -503,6 +549,12 @@ export async function createStore({
           )
         ).rows;
         const q = await calculate(client, items, coupon, true);
+        if (input.pricingKey && input.pricingKey !== publicQuote(q).pricingKey)
+          fail(
+            409,
+            "pricing_changed",
+            "Giá hoặc kho xuất đã thay đổi. Vui lòng cập nhật báo giá và kiểm tra lại trước khi đặt hàng.",
+          );
         const orderNumber = `JL${Date.now().toString(36).toUpperCase()}${randomBytes(3).toString("hex").toUpperCase()}`,
           token = randomBytes(32).toString("base64url");
         const order = (
@@ -531,25 +583,31 @@ export async function createStore({
           )
         ).rows[0];
         for (const line of q.items) {
-          await client.query(
-            "INSERT INTO order_items(order_id,variant_id,sku_snapshot,name_snapshot,image_snapshot,quantity,unit_price,line_total) VALUES($1,$2,$3,$4,$5,$6,$7,$8)",
-            [
-              order.id,
-              line.id,
-              q.skus.get(line.id),
-              line.name,
-              line.image,
-              line.quantity,
-              line.price,
-              line.lineTotal,
-            ],
-          );
+          for (const allocation of line.allocations)
+            await client.query(
+              "INSERT INTO order_items(order_id,variant_id,sku_snapshot,name_snapshot,image_snapshot,quantity,unit_price,line_total,warehouse_id,warehouse_name_snapshot) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+              [
+                order.id,
+                line.id,
+                q.skus.get(line.id),
+                line.name,
+                line.image,
+                allocation.quantity,
+                allocation.price,
+                allocation.lineTotal,
+                allocation.warehouseId,
+                allocation.warehouseName,
+              ],
+            );
           let remaining = line.quantity;
-          for (const balance of balances.filter(
-            (b) => number(b.variant_id) === line.id,
-          )) {
+          for (const selected of line.allocations) {
+            const balance = balances.find(
+              (b) =>
+                number(b.variant_id) === line.id &&
+                number(b.warehouse_id) === selected.warehouseId,
+            );
             const allocation = Math.min(
-              remaining,
+              selected.quantity,
               number(balance.on_hand) - number(balance.reserved),
             );
             if (allocation <= 0) continue;
@@ -904,9 +962,10 @@ export async function createStore({
           )
         ).rows[0];
         const variant = (
-          await client.query("SELECT id FROM product_variants WHERE id=$1", [
-            variantId,
-          ])
+          await client.query(
+            "SELECT v.id FROM product_variants v JOIN products p ON p.id=v.product_id WHERE v.id=$1 AND p.deleted_at IS NULL FOR UPDATE OF v",
+            [variantId],
+          )
         ).rows[0];
         if (!warehouse || !variant)
           fail(404, "inventory_not_found", "Không tìm thấy kho hoặc SKU.");
@@ -981,7 +1040,7 @@ export async function createStore({
       await transaction(pool, async (client) => {
         const old = (
           await client.query(
-            "SELECT * FROM product_variants WHERE id=$1 FOR UPDATE",
+            "SELECT v.* FROM product_variants v JOIN products p ON p.id=v.product_id WHERE v.id=$1 AND p.deleted_at IS NULL FOR UPDATE OF v",
             [id],
           )
         ).rows[0];
@@ -1059,7 +1118,7 @@ export async function createStore({
     },
     async dashboard() {
       const result = await pool.query(
-        "SELECT (SELECT count(*) FROM products) AS products,(SELECT count(*) FROM product_variants) AS variants,(SELECT count(*) FROM users) AS customers,(SELECT count(*) FROM orders) AS orders,(SELECT count(*) FROM orders WHERE status='pending') AS pending_orders,(SELECT COALESCE(sum(amount),0) FROM payments WHERE status='paid') AS revenue,(SELECT count(*) FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id JOIN product_variants pv ON pv.id=ib.variant_id WHERE w.type='normal' AND w.status='active' AND ib.on_hand-ib.reserved<=pv.low_stock_threshold) AS low_stock",
+        "SELECT (SELECT count(*) FROM products WHERE deleted_at IS NULL) AS products,(SELECT count(*) FROM product_variants v JOIN products p ON p.id=v.product_id WHERE p.deleted_at IS NULL) AS variants,(SELECT count(*) FROM users) AS customers,(SELECT count(*) FROM orders) AS orders,(SELECT count(*) FROM orders WHERE status='pending') AS pending_orders,(SELECT COALESCE(sum(amount),0) FROM payments WHERE status='paid') AS revenue,(SELECT count(*) FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id JOIN product_variants pv ON pv.id=ib.variant_id WHERE w.type='normal' AND w.status='active' AND ib.on_hand-ib.reserved<=pv.low_stock_threshold) AS low_stock",
       );
       const r = result.rows[0];
       return {

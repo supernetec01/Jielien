@@ -1,0 +1,14 @@
+
+> jielien-baby-store@3.0.0 test:usability
+> node tests/usability.browser.mjs
+
+PASS 1: accent-insensitive navigation search filters groups and shows empty results
+PASS 2: taxonomy create/edit persists; editor is replaced rather than duplicated and excludes self-parent
+PASS 3: taxonomy tabs show one focused form at a time
+PASS 4: report preset persists seven-day inclusive range, live metrics match API and CSV downloads
+PASS 5: invalid date range has a readable error and preserves input
+PASS 6: CMS empty result explains next steps and preserves filter
+PASS 7: four redesigned screens fit mobile/tablet/desktop; mobile navigation opens and closes after selection
+PASS 8: storefront has readable product titles and no horizontal overflow
+PASS 9: no browser JavaScript exceptions
+Usability browser complete: 9 checks passed.

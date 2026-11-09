@@ -66,11 +66,14 @@ test("published migrations remain immutable and populated LAN schema upgrades wi
         )
       ).rows,
       orders: (await db.pool.query("SELECT * FROM orders ORDER BY id")).rows,
-      items: (await db.pool.query("SELECT * FROM order_items ORDER BY id"))
-        .rows,
+      items: (
+        await db.pool.query(
+          "SELECT id,order_id,variant_id,sku_snapshot,name_snapshot,image_snapshot,quantity,unit_price,line_total FROM order_items ORDER BY id",
+        )
+      ).rows,
       stock: (
         await db.pool.query(
-          "SELECT * FROM inventory_balances ORDER BY warehouse_id,variant_id",
+          "SELECT warehouse_id,variant_id,on_hand,reserved,updated_at FROM inventory_balances ORDER BY warehouse_id,variant_id",
         )
       ).rows,
       users: (

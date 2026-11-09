@@ -1,6 +1,9 @@
 // Maintained UI vocabulary. Store-authored content is kept in its original language.
 export const zh = Object.fromEntries(
   `
+Từ|起价
+Phân bổ giá theo kho|按仓库分配价格
+Giá theo kho còn hàng; báo giá cuối được xác nhận ở bước thanh toán|价格按有库存的仓库计算，最终报价在结算时确认
 Khám phá danh mục|浏览商品分类
 Trang chủ|首页
 Danh mục|商品分类

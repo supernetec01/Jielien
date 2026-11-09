@@ -72,6 +72,11 @@ const sections = [
   { id: "media-editor", label: "Thư viện ảnh", permission: "media.read" },
   { id: "cms-editor", label: "Tin tức & SEO", permission: "content.read" },
   { id: "returns-editor", label: "Đổi trả hàng", permission: "returns.manage" },
+  {
+    id: "warehouse-editor",
+    label: "Quản lý nhiều kho",
+    permission: "inventory.read",
+  },
   { id: "documents-editor", label: "Phiếu kho", permission: "inventory.read" },
   { id: "audit-tools", label: "Lọc & xuất nhật ký", permission: "audit.read" },
   {
@@ -97,7 +102,11 @@ const sections = [
     permission: "promotions.manage",
   },
   { id: "users", label: "Tài khoản & Phân quyền", permission: "users.manage" },
-  { id: "products", label: "Giá & trạng thái SKU", permission: "catalog.read" },
+  {
+    id: "products",
+    label: "Giá mặc định & trạng thái SKU",
+    permission: "catalog.read",
+  },
   { id: "orders", label: "Đơn hàng", permission: "orders.read" },
   {
     id: "inventory",
@@ -190,6 +199,7 @@ const navigationGroups = [
       "taxonomy-editor",
       "products",
       "inventory",
+      "warehouse-editor",
       "documents-editor",
       "returns-editor",
       "import-editor",
@@ -291,7 +301,7 @@ function dashboardMarkup(stats) {
 }
 
 function productsMarkup() {
-  return `<section class="panel">${header("Sản phẩm & SKU", "Quản lý giá và trạng thái bán theo từng quy cách.", refreshButton())}<div class="table-controls"><label class="table-filter-label">Tìm sản phẩm<input id="product-search" type="search" placeholder="Tìm tên sản phẩm, SKU, thương hiệu…" aria-label="Tìm sản phẩm quản trị"></label><label class="table-filter-label">Trạng thái bán<select id="product-status" aria-label="Lọc trạng thái sản phẩm"><option value="">Tất cả trạng thái</option><option value="active">Đang bán</option><option value="inactive">Ngừng bán</option><option value="draft">Bản nháp</option></select></label></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Sản phẩm / quy cách</th><th scope="col">Giá bán</th><th scope="col">Có thể bán</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="product-table-body">${productTable(productRows)}</tbody></table></div></section>`;
+  return `<section class="panel">${header("Sản phẩm & SKU", "Giá mặc định dùng cho kho chưa đặt giá riêng. Giá bán thực tế được quản lý tại mục Quản lý nhiều kho.", refreshButton())}<div class="table-controls"><label class="table-filter-label">Tìm sản phẩm<input id="product-search" type="search" placeholder="Tìm tên sản phẩm, SKU, thương hiệu…" aria-label="Tìm sản phẩm quản trị"></label><label class="table-filter-label">Trạng thái bán<select id="product-status" aria-label="Lọc trạng thái sản phẩm"><option value="">Tất cả trạng thái</option><option value="active">Đang bán</option><option value="inactive">Ngừng bán</option><option value="draft">Bản nháp</option></select></label></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Sản phẩm / quy cách</th><th scope="col">Giá bán</th><th scope="col">Có thể bán</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="product-table-body">${productTable(productRows)}</tbody></table></div></section>`;
 }
 function productTable(rows) {
   return (
@@ -431,30 +441,55 @@ function auditMarkup() {
   return `<section class="panel">${header("Nhật ký thao tác", "Lịch sử thay đổi do máy chủ ghi nhận.", refreshButton())}<div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Thời gian</th><th scope="col">Thao tác / đối tượng</th><th scope="col">Người thực hiện</th><th scope="col">Thông tin</th></tr></thead><tbody>${auditRows.map((log) => `<tr><td style="white-space:nowrap">${date(log.createdAt)}</td><td><span class="log-action">${escape(log.action)}</span><span class="log-entity">${escape(log.entityType)} #${escape(log.entityId)}</span></td><td>${log.actorId == null ? "Hệ thống" : "Tài khoản #" + escape(log.actorId)}</td><td><button class="text-button" data-audit="${escape(log.id)}">Xem chi tiết</button></td></tr>`).join("") || noRows(4, "Chưa có thao tác được ghi nhận.")}</tbody></table></div></section>`;
 }
 function staffTable(rows) {
-  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>${rows.map((u) => `<tr><td>${escape(u.full_name)}<br>${escape(u.email)}<br>${escape(u.phone)}<br><small>Đăng ký: ${date(u.created_at)}</small></td><td>${escape(u.roles.map((r) => roleLabels[r] || r).join(", "))}</td><td>${u.status==='active'?'Hoạt động':'Vô hiệu hóa'}</td><td>${u.roles.includes('customer')?`<button data-customer="${Number(u.id)}">Xem khách hàng</button>`:''}<button data-staff="${Number(u.id)}">Phân quyền</button></td></tr>`).join("")}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>${rows.map((u) => `<tr><td>${escape(u.full_name)}<br>${escape(u.email)}<br>${escape(u.phone)}<br><small>Đăng ký: ${date(u.created_at)}</small></td><td>${escape(u.roles.map((r) => roleLabels[r] || r).join(", "))}</td><td>${u.status === "active" ? "Hoạt động" : "Vô hiệu hóa"}</td><td>${u.roles.includes("customer") ? `<button data-customer="${Number(u.id)}">Xem khách hàng</button>` : ""}<button data-staff="${Number(u.id)}">Phân quyền</button></td></tr>`).join("")}</tbody></table></div>`;
 }
 
-async function openCustomer(id,page=1){
-  const version=++viewVersion,content=$('#admin-content');
-  content.innerHTML='<section class="panel" role="status">Đang tải khách hàng…</section>';
-  try{
-    const data=await api(`/api/admin/customers/${id}?page=${page}`);if(version!==viewVersion)return;
-    const c=data.customer;
-    content.innerHTML=`<section class="panel customer-profile"><div class="content-header"><div><h1>Thông tin khách hàng</h1><p>Hồ sơ, địa chỉ đã lưu và đơn đặt bằng tài khoản. Đơn mua không đăng nhập được xem ở mục Đơn hàng.</p></div><button id="back-to-users" class="secondary">Quay lại danh sách</button></div><div class="detail-split"><div><h2>${escape(c.full_name)}</h2><p>Điện thoại: ${escape(c.phone)}</p><p>Email: ${escape(c.email||'Chưa cung cấp')}</p><p>Trạng thái: ${c.status==='active'?'Hoạt động':'Vô hiệu hóa'}</p><p>Ngày đăng ký: ${date(c.created_at)}</p>${c.is_demo?'<p>Tài khoản từ bản demo cũ; cần xác minh trước khi hỗ trợ chuyển sang sử dụng thường.</p>':''}</div><div><h2>Tổng quan đơn hàng</h2><p>Số đơn: ${Number(data.summary.orders)}</p><p>Tổng giá trị đơn không hủy: ${money(data.summary.total)}</p></div></div><h2>Địa chỉ nhận hàng</h2><div class="customer-addresses">${data.addresses.map(a=>`<article class="panel"><h3>${escape(a.recipient_name)}${a.is_default?' · Mặc định':''}</h3><p>${escape(a.phone)}</p><p>${escape(a.address_detail)}, ${escape(a.district)}, ${escape(a.province)}</p></article>`).join('')||'<p>Chưa có địa chỉ đã lưu.</p>'}</div><h2>Lịch sử đơn hàng</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Mã đơn</th><th>Ngày đặt</th><th>Trạng thái</th><th>Tổng tiền</th><th>Đã thu</th></tr></thead><tbody>${data.orders.map(o=>`<tr><td>${escape(o.order_number)}</td><td>${date(o.created_at)}</td><td>${badge(o.status)}</td><td>${money(o.grand_total)}</td><td>${money(o.collected)}</td></tr>`).join('')||'<tr><td colspan="5">Chưa có đơn hàng bằng tài khoản này.</td></tr>'}</tbody></table></div><div class="actions">${page>1?`<button data-customer="${id}" data-customer-page="${page-1}">Trang trước</button>`:''}<span>Trang ${page}</span>${page*20<Number(data.summary.orders)?`<button data-customer="${id}" data-customer-page="${page+1}">Trang sau</button>`:''}</div>${c.status==='active'&&c.recovery_allowed?`<section class="dialog-section"><h2>Hỗ trợ khôi phục mật khẩu</h2><p>Chỉ dùng sau khi đã xác minh người sở hữu qua quy trình hỗ trợ; biết số điện thoại/email không đủ. Link dùng một lần trong 30 phút; khi đặt lại sẽ đăng xuất mọi phiên cũ.${c.is_demo?' Hoàn tất link hỗ trợ cũng chuyển tài khoản demo cũ sang tài khoản khách hàng thường.':''}</p><form id="customer-support-form" data-customer-id="${id}"><label class="role-option"><input name="ownershipConfirmed" type="checkbox" required> Tôi đã xác minh người yêu cầu là chủ tài khoản.</label><div class="field"><label for="support-current-password">Mật khẩu admin hiện tại</label><input id="support-current-password" name="currentPassword" type="password" autocomplete="current-password" required></div><div class="form-error" role="alert"></div><button class="primary">Tạo link hỗ trợ một lần</button><div id="support-link-result" role="status"></div></form></section>`:''}</section>`;
-    prepareMobileTables();content.focus();
-  }catch(e){if(version===viewVersion)content.innerHTML=`<section class="panel"><p class="form-error" role="alert">${escape(e.message)}</p><button id="back-to-users">Quay lại danh sách</button></section>`;}
+async function openCustomer(id, page = 1) {
+  const version = ++viewVersion,
+    content = $("#admin-content");
+  content.innerHTML =
+    '<section class="panel" role="status">Đang tải khách hàng…</section>';
+  try {
+    const data = await api(`/api/admin/customers/${id}?page=${page}`);
+    if (version !== viewVersion) return;
+    const c = data.customer;
+    content.innerHTML = `<section class="panel customer-profile"><div class="content-header"><div><h1>Thông tin khách hàng</h1><p>Hồ sơ, địa chỉ đã lưu và đơn đặt bằng tài khoản. Đơn mua không đăng nhập được xem ở mục Đơn hàng.</p></div><button id="back-to-users" class="secondary">Quay lại danh sách</button></div><div class="detail-split"><div><h2>${escape(c.full_name)}</h2><p>Điện thoại: ${escape(c.phone)}</p><p>Email: ${escape(c.email || "Chưa cung cấp")}</p><p>Trạng thái: ${c.status === "active" ? "Hoạt động" : "Vô hiệu hóa"}</p><p>Ngày đăng ký: ${date(c.created_at)}</p>${c.is_demo ? "<p>Tài khoản từ bản demo cũ; cần xác minh trước khi hỗ trợ chuyển sang sử dụng thường.</p>" : ""}</div><div><h2>Tổng quan đơn hàng</h2><p>Số đơn: ${Number(data.summary.orders)}</p><p>Tổng giá trị đơn không hủy: ${money(data.summary.total)}</p></div></div><h2>Địa chỉ nhận hàng</h2><div class="customer-addresses">${data.addresses.map((a) => `<article class="panel"><h3>${escape(a.recipient_name)}${a.is_default ? " · Mặc định" : ""}</h3><p>${escape(a.phone)}</p><p>${escape(a.address_detail)}, ${escape(a.district)}, ${escape(a.province)}</p></article>`).join("") || "<p>Chưa có địa chỉ đã lưu.</p>"}</div><h2>Lịch sử đơn hàng</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Mã đơn</th><th>Ngày đặt</th><th>Trạng thái</th><th>Tổng tiền</th><th>Đã thu</th></tr></thead><tbody>${data.orders.map((o) => `<tr><td>${escape(o.order_number)}</td><td>${date(o.created_at)}</td><td>${badge(o.status)}</td><td>${money(o.grand_total)}</td><td>${money(o.collected)}</td></tr>`).join("") || '<tr><td colspan="5">Chưa có đơn hàng bằng tài khoản này.</td></tr>'}</tbody></table></div><div class="actions">${page > 1 ? `<button data-customer="${id}" data-customer-page="${page - 1}">Trang trước</button>` : ""}<span>Trang ${page}</span>${page * 20 < Number(data.summary.orders) ? `<button data-customer="${id}" data-customer-page="${page + 1}">Trang sau</button>` : ""}</div>${c.status === "active" && c.recovery_allowed ? `<section class="dialog-section"><h2>Hỗ trợ khôi phục mật khẩu</h2><p>Chỉ dùng sau khi đã xác minh người sở hữu qua quy trình hỗ trợ; biết số điện thoại/email không đủ. Link dùng một lần trong 30 phút; khi đặt lại sẽ đăng xuất mọi phiên cũ.${c.is_demo ? " Hoàn tất link hỗ trợ cũng chuyển tài khoản demo cũ sang tài khoản khách hàng thường." : ""}</p><form id="customer-support-form" data-customer-id="${id}"><label class="role-option"><input name="ownershipConfirmed" type="checkbox" required> Tôi đã xác minh người yêu cầu là chủ tài khoản.</label><div class="field"><label for="support-current-password">Mật khẩu admin hiện tại</label><input id="support-current-password" name="currentPassword" type="password" autocomplete="current-password" required></div><div class="form-error" role="alert"></div><button class="primary">Tạo link hỗ trợ một lần</button><div id="support-link-result" role="status"></div></form></section>` : ""}</section>`;
+    prepareMobileTables();
+    content.focus();
+  } catch (e) {
+    if (version === viewVersion)
+      content.innerHTML = `<section class="panel"><p class="form-error" role="alert">${escape(e.message)}</p><button id="back-to-users">Quay lại danh sách</button></section>`;
+  }
 }
 
-root.addEventListener('submit',async event=>{
-  const form=event.target;if(form.id!=='customer-support-form')return;event.preventDefault();
-  const button=form.querySelector('button');if(button.disabled||!form.reportValidity())return;
-  button.disabled=true;form.querySelector('.form-error').textContent='';
-  try{
-    const data=Object.fromEntries(new FormData(form));
-    const result=await api(`/api/admin/customers/${form.dataset.customerId}/recovery`,{method:'POST',body:{currentPassword:data.currentPassword,ownershipConfirmed:data.ownershipConfirmed==='on'}});
-    form.elements.currentPassword.value='';
-    $('#support-link-result').innerHTML=`<p>Link chỉ dành cho khách hàng vừa xác minh. Không gửi vào nhóm công khai. Hết hạn: ${date(result.expiresAt)}</p><label>Link đặt lại mật khẩu<input readonly class="customer-recovery-link" value="${escape(new URL(result.path,location.origin).href)}"></label>`;
-  }catch(e){form.querySelector('.form-error').textContent=e.message;}finally{if(button.isConnected)button.disabled=false;}
+root.addEventListener("submit", async (event) => {
+  const form = event.target;
+  if (form.id !== "customer-support-form") return;
+  event.preventDefault();
+  const button = form.querySelector("button");
+  if (button.disabled || !form.reportValidity()) return;
+  button.disabled = true;
+  form.querySelector(".form-error").textContent = "";
+  try {
+    const data = Object.fromEntries(new FormData(form));
+    const result = await api(
+      `/api/admin/customers/${form.dataset.customerId}/recovery`,
+      {
+        method: "POST",
+        body: {
+          currentPassword: data.currentPassword,
+          ownershipConfirmed: data.ownershipConfirmed === "on",
+        },
+      },
+    );
+    form.elements.currentPassword.value = "";
+    $("#support-link-result").innerHTML =
+      `<p>Link chỉ dành cho khách hàng vừa xác minh. Không gửi vào nhóm công khai. Hết hạn: ${date(result.expiresAt)}</p><label>Link đặt lại mật khẩu<input readonly class="customer-recovery-link" value="${escape(new URL(result.path, location.origin).href)}"></label>`;
+  } catch (e) {
+    form.querySelector(".form-error").textContent = e.message;
+  } finally {
+    if (button.isConnected) button.disabled = false;
+  }
 });
 async function renderView(view, { focus = true } = {}) {
   const selected = sections.find((section) => section.id === view);
@@ -722,9 +757,18 @@ async function mutation(form) {
   }
 }
 root.addEventListener("click", (event) => {
-  const customer=event.target.closest('[data-customer]');
-  if(customer){void openCustomer(Number(customer.dataset.customer),Number(customer.dataset.customerPage||1));return;}
-  if(event.target.closest('#back-to-users')){void renderView('users');return;}
+  const customer = event.target.closest("[data-customer]");
+  if (customer) {
+    void openCustomer(
+      Number(customer.dataset.customer),
+      Number(customer.dataset.customerPage || 1),
+    );
+    return;
+  }
+  if (event.target.closest("#back-to-users")) {
+    void renderView("users");
+    return;
+  }
   if (event.target.closest("#new-staff")) {
     showDialog(
       "Tạo tài khoản nhân viên",
