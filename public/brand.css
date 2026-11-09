@@ -1,11 +1,324 @@
-:root{--brand-green:#86B529;--brand-green-hover:#739C20;--brand-navy:#0B1B34;--brand-navy-2:#142943;--brand-soft-green:#F2F7E6;--surface:#fff;--canvas:#F7F9FC;--text-main:#0B1B34;--text-muted:#64748B;--border:#E3E9EE;--focus:#4A77B8;--accent:var(--brand-navy);--accent-dark:var(--brand-navy-2);--accent-light:var(--brand-soft-green)}
-body{font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;color:var(--text-main)}
-.brand-logo{display:block;width:128px;height:96px;object-fit:contain;background:white;border-radius:10px}
-:focus-visible{outline:3px solid var(--focus)!important;outline-offset:3px}
-button,a,input,select{touch-action:manipulation}button.primary,.primary{background:var(--brand-green)!important;color:var(--brand-navy)!important;font-weight:700;min-height:44px}
-.site-footer{background:var(--brand-navy);color:white}.site-header{border-top:4px solid var(--brand-navy)}
-.product-card,.panel{border-radius:16px;box-shadow:0 3px 16px #0b1b3408}.product-card{transition:transform .15s,box-shadow .15s}.product-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px #0b1b3414}
-.editor-grid{display:grid;grid-template-columns:2fr 1fr;gap:24px}.editor-form{display:grid;gap:16px}.editor-form label{display:grid;gap:6px;font-weight:600}.editor-form textarea{min-height:110px}.editor-form input,.editor-form textarea,.editor-form select{width:100%;min-width:0}.editor-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}.editor-note{color:var(--text-muted)}.news-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.news-card{padding:24px;border:1px solid var(--border);background:white;border-radius:16px}.news-card img{width:100%;aspect-ratio:16/9;object-fit:cover}.article-body{max-width:760px;margin:auto;line-height:1.8;font-size:17px;overflow-wrap:anywhere}.article-body img{max-width:100%;height:auto}.article-body table{display:block;overflow:auto}.article-body h1{line-height:1.25}.gallery{display:flex;gap:12px;overflow:auto}.gallery img{width:120px;height:120px;object-fit:contain}.field-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.form-result{white-space:pre-wrap;overflow-wrap:anywhere}.brand-news-link{padding:10px;display:inline-block;font-weight:700}
-@media(max-width:768px){.editor-grid,.field-row{grid-template-columns:1fr}.news-grid{grid-template-columns:1fr}.brand-logo{width:90px;height:68px}.editor-toolbar button{min-height:44px}.article-body{font-size:16px}.panel{padding:16px}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
-.content-block,.sku-line{padding:16px;border:1px solid var(--border);border-radius:12px;margin:12px 0;min-width:0}.editor-form legend{font-weight:700;padding:0 6px}.editor-form button{justify-self:start;min-height:44px}.editor-toolbar input{min-width:0;max-width:100%}.editor-form pre,pre{max-width:100%;overflow:auto}
+/* be-vietnam-pro-latin-600-normal */
+@font-face {
+  font-family: "Be Vietnam Pro";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(/fonts/be-vietnam-pro-latin-600-normal.woff2) format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+/* be-vietnam-pro-vietnamese-600-normal */
+@font-face {
+  font-family: "Be Vietnam Pro";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(/fonts/be-vietnam-pro-vietnamese-600-normal.woff2) format("woff2");
+  unicode-range:
+    U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1,
+    U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329,
+    U+1EA0-1EF9, U+20AB;
+}
+
+/* be-vietnam-pro-latin-700-normal */
+@font-face {
+  font-family: "Be Vietnam Pro";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(/fonts/be-vietnam-pro-latin-700-normal.woff2) format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+/* be-vietnam-pro-vietnamese-700-normal */
+@font-face {
+  font-family: "Be Vietnam Pro";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(/fonts/be-vietnam-pro-vietnamese-700-normal.woff2) format("woff2");
+  unicode-range:
+    U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1,
+    U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329,
+    U+1EA0-1EF9, U+20AB;
+}
+/* Shared design tokens: local fonts, Vietnamese first, WCAG AA text pairs. */
+:root {
+  --navy: #0b1b34;
+  --green: #86b529;
+  --green-700: #52730d;
+  --green-800: #476410;
+  --green-50: #f2f7e6;
+  --bg: #f6f8fb;
+  --text: #0b1b34;
+  --success: #166534;
+  --warning: #92400e;
+  --danger: #b91c1c;
+  --info: #1d4ed8;
+  --font-heading:
+    "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fs-12: 0.75rem;
+  --fs-14: 0.875rem;
+  --fs-16: 1rem;
+  --fs-18: 1.125rem;
+  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;
+  --fs-32: 2rem;
+  --fs-40: 2.5rem;
+  --lh-body: 1.6;
+  --lh-heading: 1.25;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-1: 0 1px 2px #0b1b340f;
+  --shadow-2: 0 6px 18px #0b1b3414;
+  --shadow-3: 0 16px 40px #0b1b3424;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+  --bottom-nav-height: 64px;
+}
+.ui-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+}
+:root {
+  --brand-green: #86b529;
+  --brand-green-hover: #739c20;
+  --brand-navy: #0b1b34;
+  --brand-navy-2: #142943;
+  --brand-soft-green: #f2f7e6;
+  --surface: #fff;
+  --canvas: #f7f9fc;
+  --text-main: #0b1b34;
+  --text-muted: #55627a;
+  --border: #e3e9ee;
+  --focus: #4a77b8;
+  --accent: var(--brand-navy);
+  --accent-dark: var(--brand-navy-2);
+  --accent-light: var(--brand-soft-green);
+}
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Arial,
+    sans-serif;
+  color: var(--text-main);
+}
+.brand-logo {
+  display: block;
+  width: 128px;
+  height: 96px;
+  object-fit: contain;
+  background: white;
+  border-radius: 10px;
+}
+:focus-visible {
+  outline: 3px solid var(--focus) !important;
+  outline-offset: 3px;
+}
+button,
+a,
+input,
+select {
+  touch-action: manipulation;
+}
+button.primary,
+.primary {
+  background: var(--brand-green) !important;
+  color: var(--brand-navy) !important;
+  font-weight: 700;
+  min-height: 44px;
+}
+.site-footer {
+  background: var(--brand-navy);
+  color: white;
+}
+.site-header {
+  border-top: 4px solid var(--brand-navy);
+}
+.product-card,
+.panel {
+  border-radius: 16px;
+  box-shadow: 0 3px 16px #0b1b3408;
+}
+.product-card {
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px #0b1b3414;
+}
+.editor-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+.editor-form {
+  display: grid;
+  gap: 16px;
+}
+.editor-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+.editor-form textarea {
+  min-height: 110px;
+}
+.editor-form input,
+.editor-form textarea,
+.editor-form select {
+  width: 100%;
+  min-width: 0;
+}
+.editor-toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.editor-note {
+  color: var(--text-muted);
+}
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.news-card {
+  padding: 24px;
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 16px;
+}
+.news-card img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+.article-body {
+  max-width: 760px;
+  margin: auto;
+  line-height: 1.8;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.article-body img {
+  max-width: 100%;
+  height: auto;
+}
+.article-body table {
+  display: block;
+  overflow: auto;
+}
+.article-body h1 {
+  line-height: 1.25;
+}
+.gallery {
+  display: flex;
+  gap: 12px;
+  overflow: auto;
+}
+.gallery img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+}
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.form-result {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.brand-news-link {
+  padding: 10px;
+  display: inline-block;
+  font-weight: 700;
+}
+@media (max-width: 768px) {
+  .editor-grid,
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+  .news-grid {
+    grid-template-columns: 1fr;
+  }
+  .brand-logo {
+    width: 90px;
+    height: 68px;
+  }
+  .editor-toolbar button {
+    min-height: 44px;
+  }
+  .article-body {
+    font-size: 16px;
+  }
+  .panel {
+    padding: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+.content-block,
+.sku-line {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: 12px 0;
+  min-width: 0;
+}
+.editor-form legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+.editor-form button {
+  justify-self: start;
+  min-height: 44px;
+}
+.editor-toolbar input {
+  min-width: 0;
+  max-width: 100%;
+}
+.editor-form pre,
+pre {
+  max-width: 100%;
+  overflow: auto;
+}
