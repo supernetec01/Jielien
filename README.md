@@ -2,6 +2,7 @@
 
 Bản demo hợp nhất trên nhánh `main`, với giao diện cửa hàng và Admin theo bộ thiết kế Jielien. Chưa triển khai công khai. Có catalog cha/SKU/media, tài khoản nhân viên do admin tạo, CMS duyệt/xuất bản và SEO HTML, CSV, phiếu kho/đổi trả, backup database + media.
 
+- **[File theo dõi tập trung: chức năng chưa triển khai, còn thiếu gì và bạn cần cung cấp thông tin nào](docs/CHUC_NANG_CHUA_TRIEN_KHAI.md)** — cập nhật theo bản `main` hợp nhất ngày 09/11/2026; ưu tiên đọc trước các backlog/QA cũ.
 - [Frontend V3: phạm vi F1–F8, API, migration và chạy bản PR](docs/frontend-v3/README.md)
 - [Giao diện Admin và cải tiến sử dụng theo phản hồi](docs/ADMIN_USABILITY.md)
 - [Chạy nhanh bản demo mới trên Windows](docs/DEMO_QUICKSTART.md)
@@ -119,6 +120,12 @@ Với đơn cũ chưa giao, tồn thực có mới bằng tồn khả dụng SQL
 
 Backup PostgreSQL bằng `pg_dump`, khôi phục vào database khác để kiểm tra trước khi thay bản vận hành. Không copy thư mục data PG đang chạy như một bản backup logic. Tên/tokens/địa chỉ khách không được đưa vào log, Git hoặc báo cáo test.
 
+## Tài khoản khách hàng
+
+Đăng ký không OTP: nhập họ tên, số điện thoại, mật khẩu và email tùy chọn để tạo tài khoản và đăng nhập ngay. Không cần SMS/email để đăng ký; các biến `AUTH_VERIFICATION_*` cũ không còn được dùng.
+
+Quên mật khẩu dùng link một lần gửi tới email đã lưu; tài khoản chỉ có số điện thoại cần admin xác minh và hỗ trợ. Admin xem hồ sơ, địa chỉ và đơn hàng tại Tài khoản & Phân quyền → Xem khách hàng. Guest vẫn mua hàng với đủ thông tin nhận hàng. Xem [cấu hình email, nâng cấp và thao tác hỗ trợ](docs/REGISTRATION.md) và [kết quả kiểm thử mới](docs/qa/CUSTOMER-ACCOUNT-RESULTS.md).
+
 ## Kiểm thử
 
 ```sh
@@ -127,13 +134,14 @@ npm run test:browser      # 14 nhóm luồng storefront
 npm run test:management   # tài khoản và quản trị thực qua trình duyệt
 npm run test:account      # sửa hồ sơ, địa chỉ, mật khẩu và phục hồi giỏ lỗi
 npm run test:bank         # chuyển khoản/VietQR và đối soát qua giao diện
+npm run test:customer-flows # đăng ký, reset, hồ sơ khách admin và guest checkout
 ```
 
 Browser tests cần Chromium (mặc định `/usr/bin/chromium`, đổi qua `CHROMIUM_PATH`). Tất cả test tạo schema PostgreSQL tạm, server cổng ngẫu nhiên, rồi dọn dẹp; không dùng đơn live, không tác động cổng 3000/3001. Kiểm cả mất response sau COMMIT và retry, cạnh tranh tồn/lượt mã, snapshot, phiên/cookie/CSRF, quyền sở hữu đơn/địa chỉ, UI mobile và lỗi tài nguyên.
 
 ## Phạm vi còn lại
 
-Đây là bản phát triển có luồng xử lý nội bộ. Chuyển khoản/VietQR dùng đối soát thủ công; chưa kết nối cổng thanh toán hoặc xác minh ngân hàng tự động, giao hàng, OTP/email/SMS, chưa có hoàn trả/lô hạn dùng/đồng bộ sàn/tích điểm/livestream. Quản trị hiện sửa SKU, xử lý đơn và điều chỉnh kho; CRUD đầy đủ danh mục/sản phẩm cha/media/quyền nhân viên thuộc các bước tiếp theo. Không có bên bán thực tế tự giao đơn thử nghiệm.
+Đây là bản phát triển có luồng xử lý nội bộ. Chuyển khoản/VietQR dùng đối soát thủ công; chưa kết nối cổng thanh toán hoặc xác minh ngân hàng tự động, giao hàng hay SMS. Adapter email khôi phục đã có nhưng cần cấu hình Resend, xác thực tên miền và thử gửi thật trước khi vận hành. Các phạm vi thương mại còn lại xem tài liệu release/nâng cấp bên dưới. Không có bên bán thực tế tự giao đơn thử nghiệm.
 
 ## Cấu trúc
 

@@ -1,0 +1,9 @@
+
+> jielien-baby-store@3.0.0 test:admin-catalog
+> node tests/admin-catalog-layout.browser.mjs
+
+PASS: attribute editor, readable SKU controls and no overflow at 320px
+PASS: attribute editor, readable SKU controls and no overflow at 375px
+PASS: attribute editor, readable SKU controls and no overflow at 768px
+PASS: attribute editor, readable SKU controls and no overflow at 1440px
+PASS: attribute editor, readable SKU controls and no overflow at 1920px

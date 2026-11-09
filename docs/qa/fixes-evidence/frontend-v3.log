@@ -1,0 +1,17 @@
+
+> jielien-baby-store@3.0.0 test:frontend-v3
+> node tests/frontend-v3.browser.mjs
+
+PASS 1: home matches V3 slots/categories, real mobile image selected and catalog requests are bounded
+PASS 2: home tabs and category URLs fetch database-filtered SKU results
+PASS 3: real variant selection updates SKU and guest cart survives reload with server quote
+PASS 4: out-of-stock SKU cannot be purchased or added through the UI
+PASS 5: automated WCAG A/AA checks on the hydrated storefront pass
+PASS 6: V3 home/catalog across nine viewports; detail/cart/account/SSR journal on mobile/tablet/desktop have no overflow
+PASS 7: Studio edits slot/mobile/sort and persists to public poster; staff never gets public Admin links
+PASS 8: Admin-assigned banner_manager role can use Studio through account without settings/users access
+PASS 9: mobile fallback and optional-content outage preserve usable, private storefront
+PASS 10: slow/error catalog has safe SSR controls, visible retry and no fake success
+PASS 11: many database categories remain navigable with touch at 320px without overflowing
+PASS 12: no browser JavaScript exceptions
+V3 browser complete: 12 checks passed.

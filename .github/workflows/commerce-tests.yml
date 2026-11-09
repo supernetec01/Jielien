@@ -39,6 +39,7 @@ jobs:
       - run: npm run test:browser
       - run: npm run test:management
       - run: npm run test:account
+      - run: npm run test:customer-flows
       - run: npm run test:bank
       - run: npm run test:commerce
       - run: npm run test:admin-access
@@ -55,4 +56,5 @@ jobs:
           path: |
             docs/screenshots/upgrade
             docs/screenshots/admin-order-layout
+            docs/screenshots/customer-flows
           retention-days: 7

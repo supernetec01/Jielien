@@ -30,7 +30,7 @@ cd Jielien
 npm run local:start
 ```
 
-`local:start` tự tạo `.env.local` nếu thiếu và build phiên bản mới. Không cần `npm install` để chạy Docker. Với bản đang dùng, giữ file cấu hình và volume cũ; không cần xóa/reset database để xem giao diện mới. App tự áp dụng migration còn thiếu. Lần nâng cấp giao diện này không thêm migration.
+`local:start` tự tạo `.env.local` nếu thiếu và build phiên bản mới. Không cần `npm install` để chạy Docker. Với bản đang dùng, giữ file cấu hình và volume cũ; không cần xóa/reset database. App tự áp dụng migration còn thiếu, gồm `018_customer_recovery.sql` của luồng khôi phục mật khẩu mới. Đăng ký không OTP, không cần dịch vụ SMS/email. Xem [REGISTRATION.md](REGISTRATION.md) và [công việc còn thiếu/thông tin cần chuẩn bị](CHUC_NANG_CHUA_TRIEN_KHAI.md).
 
 - Website: http://localhost:3001
 - Tài khoản: http://localhost:3001/tai-khoan

@@ -1,0 +1,16 @@
+✔ catalog creates three real SKUs, publishes with media, handles concurrency and preserves stock transactions (1178.619656ms)
+✔ admin creates employee username; CMS revisions, permissions, publication, redirect and scheduled jobs are real (2054.736307ms)
+✔ local initialization generates a unique stable database password and preserves native configuration and data (23.713239ms)
+✔ complete receiving instructions copy from native configuration without copying unrelated secrets (3.671509ms)
+✔ partial bank configuration stays disabled and existing local receiving settings are never overwritten (5.884259ms)
+✔ invalid existing database configuration is rejected without replacing its password or file (2.222334ms)
+✔ concurrent initialization preserves the one created configuration (2.897698ms)
+✔ LAN bind and port validation preserves existing database configuration (7.083492ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3501.230601

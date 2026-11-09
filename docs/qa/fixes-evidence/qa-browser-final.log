@@ -1,0 +1,8 @@
+
+> jielien-baby-store@3.0.0 test:qa-fixes
+> node tests/qa-fixes.browser.mjs
+
+PASS: admin settings persist into the public storefront after reload and render as text
+PASS: OTP page has no session before proof, handles wrong code, fits 5 viewports and issues session after valid code
+PASS: verified customer can log out and log back in
+PASS: optional settings outage preserves storefront navigation; no JavaScript exceptions

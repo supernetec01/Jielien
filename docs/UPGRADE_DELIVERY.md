@@ -1,6 +1,6 @@
 # Bàn giao nâng cấp giao diện Jielien
 
-> Hồ sơ của lượt UX ban đầu. Trạng thái sau tích hợp V3/LAN và production mới xem [RELEASE_READINESS.md](RELEASE_READINESS.md). Các dòng về nhánh chưa push và migration trong hồ sơ này là lịch sử, không phải trạng thái bản tích hợp.
+> Hồ sơ của lượt UX ban đầu. Trạng thái hiện tại và thông tin chủ cửa hàng cần cung cấp được quản lý tập trung ở [CHUC_NANG_CHUA_TRIEN_KHAI.md](CHUC_NANG_CHUA_TRIEN_KHAI.md). Các dòng về nhánh chưa push, chưa có reset email, giới hạn đăng nhập và số migration địa chỉ bên dưới là lịch sử; không dùng chúng để triển khai lại phần đã có hoặc sửa migration cũ.
 
 Đối chiếu `docs/UPGRADE_SPEC.md` và audit UI/UX. Nhánh: `feature/ux-upgrade-phase1`.
 

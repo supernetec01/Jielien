@@ -1,0 +1,15 @@
+PASS 1: homepage, banner switching and keyboard-close category menu
+PASS 2: Vietnamese search without accents returns matching products
+PASS 3: category/brand/price filters and ascending price sorting
+PASS 4: pagination and browser Back restore the listing route
+PASS 5: product direct reload, information tabs, cart quantity and server totals
+PASS 6: invalid coupon preserves total and valid MEBE50 deducts exactly 50,000đ
+PASS 7: invalid phone blocks submission; API failure keeps cart, immutable form and retry available
+PASS 8: lost response after commit recovers same order, immutable retry and stock reserved once
+PASS 9: successful COD order, escaped customer/note, empty cart and confirmation reload
+PASS 10: lookup rejects wrong phone and returns the stored order with correct phone
+PASS 11: wishlist add, persistence and remove
+PASS 12: mobile/tablet home, listing, detail, cart, lookup and policy have no overflow or hidden listing products
+PASS 13: all eight saved products remain visible on mobile and tablet
+PASS 14: no JavaScript exceptions or broken local assets
+Browser E2E complete: 14 checks passed.

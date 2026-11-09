@@ -1,5 +1,7 @@
 # Jielien International — bản demo commerce/CMS
 
+Danh sách công việc còn thiếu và thông tin cần từ chủ cửa hàng hiện được quản lý tại [CHUC_NANG_CHUA_TRIEN_KHAI.md](CHUC_NANG_CHUA_TRIEN_KHAI.md). Các bằng chứng/mốc kiểm thử của tài liệu này thuộc các đợt bàn giao trước; chức năng tài khoản hiện tại xem REGISTRATION.md.
+
 Các nhánh LAN, commerce/CMS và phân quyền Admin đã được hợp nhất vào `main` theo yêu cầu chủ dự án. Bản nâng cấp giao diện tiếp nối được ghi tại [INTERFACE_REFRESH.md](INTERFACE_REFRESH.md); chạy từ `main` theo [DEMO_QUICKSTART.md](DEMO_QUICKSTART.md). Không tự xuất bản website công khai hoặc thay database máy công ty. Bộ đặc tả gốc giữ nguyên tại `docs/commerce-spec`; task theo dõi tại `specs/001-jielien-commerce/tasks.md`. Spec Kit chính thức đã cài; xem `SPEC_KIT_SETUP.md`.
 
 ## Chức năng có thể dùng
@@ -57,7 +59,7 @@ Không đổi ID variant/order_number, không tính lại order_items, không đ
 3. CMS: editor hỗ trợ paragraph, H2/H3, quote, list, image; chưa có table/video/FAQ/product block phong phú hoặc diff revision trực quan. Preview yêu cầu session mọi request, không phát bearer URL cho người khác. Related products dùng product parent IDs; taxonomy/SEO editor nâng cao còn cần cải thiện UX.
 4. Merchandising/analytics: chưa có collection CMS, chart/top SKU/channel, cost/profit/refund report, social analytics/Search Console. Chỉ công bố số liệu từ DB đang có; không suy diễn GMV thành tiền đã thu.
 5. QA bên ngoài: Windows PowerShell 5.1/Docker Desktop thực, firewall/Private profile/VLAN và PC→PC LAN; chuyên môn nội dung sản phẩm/chính sách, manual accessibility và load/capacity production. Lab không chứng minh Core Web Vitals p75 hoặc thứ hạng Google.
-6. Provider-dependent/out of scope: tự động nhận thanh toán/hoàn tiền, carrier API, OTP/email password reset, sàn/TikTok/Shopee, public TLS/domain. Không dựng mock success hoặc mở Internet.
+6. Provider-dependent/out of scope: tự động nhận thanh toán/hoàn tiền, carrier API, sàn/TikTok/Shopee, public TLS/domain. Email password reset đã có code qua Resend, còn cần cấu hình và thử gửi thật; OTP đăng ký đã được chủ cửa hàng bỏ. Email báo đơn là chức năng riêng chưa triển khai. Không dựng mock success hoặc mở Internet.
 
 Các mục này được nêu công khai để review phần còn lại, không bị ẩn bằng nút trống hoặc thông báo thành công giả.
 

@@ -1,0 +1,10 @@
+
+> jielien-baby-store@3.0.0 test:customer-flows
+> node tests/customer-account.browser.mjs
+
+PASS 1: customer registration creates a session without OTP or a messaging provider
+PASS 2: admin sees customer profile, saved address and account orders; five viewport widths fit
+PASS 3: forgot/reset uses the sandbox email link, clears token from URL, validates confirmation and accepts the new password
+PASS 4: phone-only customer can recover through an admin-issued one-time link after ownership confirmation and admin reauthentication
+PASS 5: guest checkout requires shipping details, succeeds without a session and does not attach by matching phone
+PASS 6: no browser JavaScript exceptions

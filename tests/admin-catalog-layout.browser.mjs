@@ -92,10 +92,14 @@ try {
     .locator('[data-editor-action="attribute-value-remove"]')
     .last()
     .click();
+  const attributeSaved = page.waitForResponse(
+    (r) =>
+      r.url().includes("/api/admin/catalog/attributes/") &&
+      r.request().method() === "PATCH",
+  );
   await form.locator("button.primary").click();
-  await page
-    .locator('[data-editor-action="taxonomy-tab:attributes"]')
-    .waitFor();
+  assert.equal((await attributeSaved).status(), 200);
+  await page.locator('[data-tax-kind="attributes"][data-tax-id=""]').waitFor();
   await page
     .getByRole("button", { name: "Sửa " + oldName, exact: true })
     .click();

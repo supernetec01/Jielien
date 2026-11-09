@@ -105,3 +105,10 @@ test('LAN bind and port validation preserves existing database configuration',as
  assert.equal(await readFile(path,'utf8'),source);
  }
 });
+
+test('obsolete SMS/demo settings do not block normal local signup configuration',async t=>{
+ const directory=await fixture(t);const {path}=await initializeLocal({directory,env:{}});
+ const source=(await readFile(path,'utf8'))+'\nAUTH_VERIFICATION_MODE=demo\n';
+ await writeFile(path,source);assert.equal((await initializeLocal({directory,env:{}})).created,false);
+ assert.equal(await readFile(path,'utf8'),source);
+});

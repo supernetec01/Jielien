@@ -1,0 +1,10 @@
+HTTP 401 /api/auth/me
+PASS 1: admin username login opens authenticated admin
+PASS 2: product editor persists parent and three individually priced SKUs
+PASS 3: verified upload and gallery allow publishing actual product
+PASS 4: admin creates company employee without a customer/admin default grant
+PASS 5: CMS UI creates structured content, submits, approves and publishes with SEO
+PASS 6: published article is server-rendered and readable without CMS login
+PASS 7: home/catalog/news/article fit 320, 375, 768 and 1440px, screenshots saved
+PASS 8: no browser JavaScript exceptions
+Commerce browser complete: 8 checks passed.
