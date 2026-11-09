@@ -1,0 +1,40 @@
+import {once} from 'node:events';
+import {writeFile,mkdir} from 'node:fs/promises';
+import {chromium} from 'playwright-core';
+import {createApp} from '../server.mjs';
+import {createAuth} from '../lib/auth.mjs';
+import {createTestDatabase,closeServer} from './support/database.mjs';
+await mkdir('work/qa',{recursive:true});
+const db=await createTestDatabase();let app;const results=[];
+const record=(id,title,expected,actual,ok)=>{results.push({id,title,expected,actual,status:ok?'Pass':'Fail'});console.log(id,ok?'PASS':'FAIL',title,JSON.stringify(actual));};
+try {
+ app=await createApp({pool:db.pool,legacyPath:null});app.listen(0,'127.0.0.1');await once(app,'listening');const base=`http://127.0.0.1:${app.address().port}`;
+ const auth=createAuth(db.pool),password='QaDemoPassword!2026';await auth.ensureAdmin({email:'admin@qa.test',phone:'0987654321',password});
+ const admin=await auth.login({identifier:'admin@qa.test',password});
+ const req=async(path,body,method='POST',session,extra={})=>{const r=await fetch(base+path,{method,headers:{'Content-Type':'application/json',...(session?{Cookie:`jielien_session=${session.token}`,'X-CSRF-Token':session.csrfToken}:{}),...extra},...(body===undefined?{}:{body:JSON.stringify(body)})});const text=await r.text();let data;try{data=JSON.parse(text)}catch{data=text}return {status:r.status,data,headers:Object.fromEntries(r.headers)};};
+ const signup={fullName:'Khách QA',phone:'0911111111',email:'Buyer+qa@EXAMPLE.test',password};
+ let r=await req('/api/auth/register',signup);const user={token:r.headers['set-cookie'].split(';')[0].split('=')[1],csrfToken:r.data.csrfToken};record('QA01','Đăng ký Unicode và email dấu +',201,r.status,r.status===201);
+ record('QA02','Cookie HttpOnly và SameSite',true,r.headers['set-cookie'].replace(/jielien_session=[^;]+/,'jielien_session=[REDACTED]'),/HttpOnly/.test(r.headers['set-cookie'])&&/SameSite=Lax/.test(r.headers['set-cookie']));
+ r=await req('/api/auth/register',{...signup,email:signup.email.toLowerCase(),phone:'0911111112'});record('QA03','Email trùng không phân biệt hoa thường',409,r.status,r.status===409);
+ record('QA04','Đăng ký không tiết lộ tài khoản tồn tại','Thông báo không phân biệt tồn tại',{status:r.status,data:r.data},r.status!==409);
+ r=await req('/api/auth/register',{...signup,phone:'0911111113',email:'x@qa.test',password:'short'});record('QA05','Chặn mật khẩu ngắn',400,r.status,r.status===400);
+ r=await req('/api/auth/register',{...signup,phone:'0911111113',email:'x@qa.test',password:'短'.repeat(25)});record('QA06','Chặn mật khẩu quá 72 byte',400,r.status,r.status===400);
+ r=await req('/api/auth/register',{...signup,phone:'+84911111113',email:'x@qa.test'});record('QA07','Chuẩn hóa số +84',201,r.status,r.status===201);
+ r=await req('/api/auth/login',{identifier:signup.email.toLowerCase(),password});record('QA08','Đăng nhập email viết thường',200,r.status,r.status===200);
+ const wrong=await req('/api/auth/login',{identifier:signup.email,password:'wrong'}),absent=await req('/api/auth/login',{identifier:'missing@qa.test',password:'wrong'});record('QA09','Thông báo login sai đồng nhất',true,{wrong:wrong.data,absent:absent.data},JSON.stringify(wrong.data)===JSON.stringify(absent.data)&&wrong.status===401);
+ r=await req('/api/auth/login',{identifier:signup.phone,password},'POST',undefined,{Origin:'https://other.test'});record('QA10','Chặn cross-origin login',403,r.status,r.status===403);
+ r=await req('/api/admin/users',undefined,'GET',user);record('QA11','User không đọc được danh sách quản trị',403,r.status,r.status===403);
+ r=await req('/api/account/profile',{fullName:'Đổi tên'},'PATCH',user,{'X-CSRF-Token':'wrong'});record('QA12','Chặn CSRF hồ sơ',403,r.status,r.status===403);
+ r=await req('/api/cart',null,'PUT',user);record('QA13','JSON null giỏ hàng trả lỗi đầu vào',400,{status:r.status,data:r.data},r.status===400);
+ r=await req('/api/admin/catalog/products',null,'POST',admin);record('QA14','JSON null catalog trả lỗi đầu vào',400,{status:r.status,data:r.data},r.status===400);
+ r=await req('/api/admin/cms/articles',{title:'Bài QA',slug:'bai-qa',tagIds:'bad'},'POST',admin);record('QA15','tagIds sai kiểu trả lỗi đầu vào',400,{status:r.status,data:r.data},r.status===400);
+ r=await req('/api/news?page=1.5',undefined,'GET');record('QA16','Phân trang tin tức số lẻ được xử lý', '200 chuẩn hóa hoặc 400',{status:r.status,data:r.data},[200,400].includes(r.status));
+ r=await req('/api/admin/settings/site',{key:'companyName',value:'QA COMPANY CHECK'},'PATCH',admin);record('QA17','Lưu cấu hình công ty',200,r.status,r.status===200);
+ const site=await req('/api/site',undefined,'GET');
+ const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});let homeContains;
+ try {const page=await browser.newPage();await page.goto(base);await page.waitForResponse(r=>r.url().endsWith('/api/site')).catch(()=>{});await page.locator('.product-card').first().waitFor();homeContains=(await page.locator('body').innerText()).includes('QA COMPANY CHECK');await page.locator('footer').screenshot({path:'work/qa/company-footer.png'});}finally{await browser.close();}
+ record('QA18','Tên công ty đã lưu hiển thị trang chủ',true,{apiSaved:JSON.stringify(site.data).includes('QA COMPANY CHECK'),homeContains},homeContains);
+ r=await req('/api/auth/logout',{},'POST',user);record('QA19','Đăng xuất thành công',204,r.status,r.status===204);r=await req('/api/auth/me',undefined,'GET',user);record('QA20','Session đã logout bị thu hồi',401,r.status,r.status===401);
+ r=await req('/api/account/password',{currentPassword:password,newPassword:'QaNewPassword!2026'},'POST',admin);record('QA21','Đổi mật khẩu admin',204,r.status,r.status===204);r=await req('/api/auth/me',undefined,'GET',admin);record('QA22','Thu hồi phiên admin sau đổi mật khẩu',401,r.status,r.status===401);
+ const loginStatuses=[];for(let i=0;i<13;i++)loginStatuses.push((await req('/api/auth/login',{identifier:signup.phone,password})).status);record('QA23','Không khóa đăng nhập hợp lệ theo tổng request IP','Tất cả 200',loginStatuses,loginStatuses.every(x=>x===200));
+} finally {await writeFile('work/qa/probe-results.json',JSON.stringify(results,null,2));await closeServer(app);await db.cleanup();}
