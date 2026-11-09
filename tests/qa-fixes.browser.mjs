@@ -4,7 +4,6 @@ import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright-core";
 import { createApp } from "./support/app.mjs";
 import { createAuth } from "../lib/auth.mjs";
-import { verifySignupPage } from "./support/registration.mjs";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
 const db = await createTestDatabase();
 let app, browser;
@@ -91,42 +90,22 @@ try {
   await page.locator("#email").fill("qa-browser-buyer@example.test");
   await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
-  await page.locator("#verification-form").waitFor();
-  assert.equal(
-    (await page.request.get(base + "/api/auth/me")).status(),
-    401,
-    "pending signup has no session",
-  );
-  const id = await page
-    .locator("#verification-form")
-    .getAttribute("data-challenge");
-  await app.flushRegistrationOutbox();
-  const code = app.testRegistrationMessages.get(id).code;
-  await page
-    .locator("#verification-code")
-    .fill(code === "000000" ? "111111" : "000000");
-  await page
-    .locator("#verification-email-code")
-    .fill(app.testRegistrationMessages.get(id).emailCode);
-  await page.locator("#verify-submit").click();
-  await page
-    .locator("#verification-error")
-    .filter({ hasText: /không hợp lệ/ })
-    .waitFor();
+  await page.locator('#profile-form').waitFor();
+  assert.equal((await page.request.get(base+'/api/auth/me')).status(),200,'registration creates a customer without OTP');
+  assert.equal(await page.locator('#verification-form').count(),0);
   for (const width of [320, 375, 768, 1440, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     assert.ok(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth + 1,
       ),
-      `OTP width ${width}`,
+      `Account width ${width}`,
     );
     await page.screenshot({
-      path: `${out}/verification-${width}.png`,
+      path: `${out}/account-${width}.png`,
       fullPage: true,
     });
   }
-  await verifySignupPage(page, app);
   await page.locator("#profile-form").waitFor();
   assert.ok(
     (await context.cookies()).some(
@@ -134,7 +113,7 @@ try {
     ),
   );
   console.log(
-    "PASS: OTP page has no session before proof, handles wrong code, fits 5 viewports and issues session after valid code",
+    "PASS: customer registration requires no OTP, fits five viewports and creates a customer session",
   );
   await page.goto(base + "/tai-khoan");
   await page.locator("#logout").click();
@@ -143,7 +122,7 @@ try {
   await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
   await page.locator("#profile-form").waitFor();
-  console.log("PASS: verified customer can log out and log back in");
+  console.log("PASS: registered customer can log out and log back in");
   await page.route("**/api/site", (route) => route.abort());
   await page.goto(base);
   await page.locator("h1").first().waitFor();

@@ -24,18 +24,14 @@ export function validateProductionConfig(env) {
     errors.push("JIELIEN_DEMO_DATA: phải tắt trước khi mở bán.");
   if (env.DEMO_MODE === "true")
     errors.push("DEMO_MODE: phải tắt trước khi mở bán.");
-  if(env.AUTH_VERIFICATION_MODE && env.AUTH_VERIFICATION_MODE!=='provider')
-    errors.push('AUTH_VERIFICATION_MODE: production chỉ được dùng provider.');
   if (env.COOKIE_SECURE === "false")
     errors.push("COOKIE_SECURE: không được tắt ở production.");
   if (env.NODE_ENV && env.NODE_ENV !== "production")
     errors.push("NODE_ENV: dùng production cho website công khai.");
-  try {
-    const delivery=new URL(env.AUTH_VERIFICATION_WEBHOOK_URL);
-    if(delivery.protocol!=='https:'||delivery.username||delivery.password||delivery.hash||!env.AUTH_VERIFICATION_WEBHOOK_TOKEN)throw Error();
-  } catch {
-    errors.push('AUTH_VERIFICATION_WEBHOOK_*: cần bridge HTTPS và bearer token để mở đăng ký có xác minh SMS/email.');
-  }
+  if (!env.RESEND_API_KEY || !env.PASSWORD_RESET_FROM_EMAIL)
+    errors.push(
+      "Email recovery: cần RESEND_API_KEY và PASSWORD_RESET_FROM_EMAIL để gửi link khôi phục mật khẩu.",
+    );
   const bank = [
     "BANK_BIN",
     "BANK_NAME",

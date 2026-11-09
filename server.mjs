@@ -8,8 +8,7 @@ import { createPool } from "./lib/database.mjs";
 import { createStore } from "./db/store.mjs";
 import { createAuth } from "./lib/auth.mjs";
 import { createLoginLimiter } from "./lib/login-limiter.mjs";
-import { createRegistration, registrationDelivery as configuredRegistrationDelivery } from "./lib/registration.mjs";
-import { registrationDemoEnabled, requireDemoLocalHost } from "./lib/registration-demo.mjs";
+import { createPasswordRecovery, recoveryDelivery as configuredRecoveryDelivery } from "./lib/password-recovery.mjs";
 import { createCartService } from "./lib/cart.mjs";
 import {createCommerce} from "./lib/commerce-routes.mjs";
 import {createSeo,seoConfig} from "./lib/seo.mjs";
@@ -249,13 +248,9 @@ export async function createApp({
   mediaDirectory,
   seoConfiguration,
   loginLimitOptions,
-  registrationDelivery,
-  registrationClock,
-  registrationEnvironment = process.env,
+  passwordRecoveryDelivery,
+  recoveryClock,
 } = {}) {
-  const registrationDemo=registrationDemoEnabled(registrationEnvironment);
-  if(registrationDelivery===undefined)registrationDelivery=registrationDemo?null:configuredRegistrationDelivery(registrationEnvironment);
-  if(registrationDemo&&registrationDelivery)throw Error('Demo mode cannot use a real verification delivery adapter.');
   const pool = externalPool || createPool();
   let store;
   try {
@@ -268,20 +263,19 @@ export async function createApp({
   const indexing=seoConfig(seoConfiguration||process.env);
   const seo=createSeo({pool,store,cms:commerce.cms,config:indexing,publicCatalog:commerce.publicCatalog,ops:commerce.ops});
   const publisher=setInterval(()=>commerce.cms.runDue().catch(e=>console.error("CMS scheduler:",e.code||e.name)),30000); publisher.unref();
-  const auth = createAuth(pool,{allowDemoAccounts:registrationDemo}),
+  const auth = createAuth(pool),
     carts = createCartService(pool),
     rates = new Map();
   const loginLimiter = await createLoginLimiter(pool,loginLimitOptions);
-  const registration=await createRegistration(pool,auth,{deliver:registrationDelivery,clock:registrationClock,demo:registrationDemo});
-  let deliveryJob=Promise.resolve();
-  let deliveryBusy=false;
-  const flushRegistrations=()=>{
+  const recovery=await createPasswordRecovery(pool,auth,{delivery:passwordRecoveryDelivery===undefined?configuredRecoveryDelivery():passwordRecoveryDelivery,clock:recoveryClock});
+  let deliveryJob=Promise.resolve(),deliveryBusy=false;
+  const flushRecovery=()=>{
     if(deliveryBusy)return deliveryJob;
     deliveryBusy=true;
-    deliveryJob=registration.flush().catch(e=>console.error('Registration worker:',e.code||e.name)).finally(()=>{deliveryBusy=false;});
+    deliveryJob=recovery.flush().catch(e=>console.error('Recovery worker:',e.code||e.name)).finally(()=>{deliveryBusy=false;});
     return deliveryJob;
   };
-  const registrationTimer=setInterval(flushRegistrations,5000);registrationTimer.unref();
+  const recoveryTimer=setInterval(flushRecovery,5000);recoveryTimer.unref();
   function rateLimit(req, kind, max) {
     const now = Date.now(),
       key = kind + ":" + req.socket.remoteAddress;
@@ -371,11 +365,9 @@ export async function createApp({
           const isRegister=path.endsWith('register');
           if(isRegister)rateLimit(req,'register',30);
           if(isRegister){
-            if(registrationDemo)requireDemoLocalHost(req);
-            const result=await registration.begin(body);
-            json(res,202,result);
-            void flushRegistrations();
-            return;
+            const result=await auth.register(body);
+            res.setHeader('Set-Cookie',sessionCookie(req,result.token));
+            return json(res,201,{user:result.user,csrfToken:result.csrfToken,expiresAt:result.expiresAt});
           }
           const lease=await loginLimiter.reserve(req.socket.remoteAddress,body.identifier);
           const result = await auth.login(body);
@@ -387,13 +379,13 @@ export async function createApp({
             expiresAt: result.expiresAt,
           });
         }
-        if(req.method==='POST'&&path==='/api/auth/register/verify'){
-          sameOrigin(req);
-          if(registrationDemo)requireDemoLocalHost(req);
-          rateLimit(req,'registration-verify',30);
-          const result=await registration.verify(await readBody(req));
-          res.setHeader('Set-Cookie',sessionCookie(req,result.token));
-          return json(res,201,{user:result.user,csrfToken:result.csrfToken,expiresAt:result.expiresAt});
+        if(req.method==='POST'&&path==='/api/auth/password/forgot'){
+          sameOrigin(req);rateLimit(req,'password-forgot',5);
+          const result=await recovery.forgot(await readBody(req));json(res,202,result);void flushRecovery();return;
+        }
+        if(req.method==='POST'&&path==='/api/auth/password/reset'){
+          sameOrigin(req);rateLimit(req,'password-reset',10);
+          await recovery.reset(await readBody(req));res.setHeader('Set-Cookie',sessionCookie(req,'',true));res.writeHead(204);return res.end();
         }
         if (req.method === "POST" && path === "/api/auth/logout") {
           requireCsrf(req, session);
@@ -576,6 +568,16 @@ export async function createApp({
             requirePermission(session,"users.manage");
             return json(res,200,await auth.listUsers());
           }
+          const supportMatch=path.match(/^\/api\/admin\/customers\/(\d+)\/recovery$/);
+          if(req.method==='POST'&&supportMatch){
+            requirePermission(session,'users.manage');
+            return json(res,201,await recovery.support(user.id,Number(supportMatch[1]),await readBody(req)));
+          }
+          const customerMatch=path.match(/^\/api\/admin\/customers\/(\d+)$/);
+          if(req.method==='GET'&&customerMatch){
+            requirePermission(session,'users.manage');
+            return json(res,200,await auth.customerDetail(user.id,Number(customerMatch[1]),{page:url.searchParams.get('page')||1}));
+          }
           const staffMatch=path.match(/^\/api\/admin\/users\/(\d+)$/);
           if (req.method === "PATCH" && staffMatch) {
             requirePermission(session,"users.manage");
@@ -718,9 +720,9 @@ export async function createApp({
       });
     }
   });
-  server.flushRegistrationOutbox=flushRegistrations;
-  server.registrationIdle=()=>deliveryJob;
-  server.on("close",()=>{clearInterval(publisher);clearInterval(registrationTimer);});
+  server.flushRecoveryOutbox=flushRecovery;
+  server.recoveryIdle=()=>deliveryJob;
+  server.on("close",()=>{clearInterval(publisher);clearInterval(recoveryTimer);});
   if (!externalPool)
     server.on("close", () => {
       deliveryJob.finally(()=>pool.end()).catch(() => {});
@@ -736,13 +738,13 @@ if (
   if (!Number.isInteger(port) || port < 1 || port > 65535)
     throw new Error("PORT must be an integer from 1 to 65535.");
   const app = await createApp();
-  const bind=registrationDemoEnabled(process.env)&&process.env.AUTH_DEMO_CONTAINER_LOCAL!=='true'?'127.0.0.1':'0.0.0.0';
+  const bind="0.0.0.0";
   app.listen(port, bind, () =>
     console.log(`Jielien PostgreSQL storefront listening on port ${port}`),
   );
   for (const signal of ["SIGTERM", "SIGINT"])
     process.once(signal, () => {
-      app.close(async () => {await app.registrationIdle();process.exit(0);});
+      app.close(async () => {await app.recoveryIdle();process.exit(0);});
       app.closeIdleConnections();
     });
 }

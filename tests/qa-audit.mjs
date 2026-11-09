@@ -9,6 +9,7 @@ const child = spawn(
     "tests/cms-validation.test.mjs",
     "tests/auth-rate-limit.test.mjs",
     "tests/registration.test.mjs",
+    "tests/customer-recovery.test.mjs",
   ],
   { cwd: root, stdio: "inherit" },
 );

@@ -119,11 +119,11 @@ Với đơn cũ chưa giao, tồn thực có mới bằng tồn khả dụng SQL
 
 Backup PostgreSQL bằng `pg_dump`, khôi phục vào database khác để kiểm tra trước khi thay bản vận hành. Không copy thư mục data PG đang chạy như một bản backup logic. Tên/tokens/địa chỉ khách không được đưa vào log, Git hoặc báo cáo test.
 
-## Đăng ký có xác minh
+## Tài khoản khách hàng
 
-**Thử trên localhost chưa có SMS/email:** thêm `AUTH_VERIFICATION_MODE=demo` vào `.env.local`, giữ `JIELIEN_BIND_IP=127.0.0.1`, rồi chạy `npm run local:start`. Mã demo sẽ hiện trên trang đăng ký; tài khoản được gắn nhãn demo và không dùng được trong chế độ provider. Xem hướng dẫn chi tiết và điều kiện chặn production trong [REGISTRATION.md](docs/REGISTRATION.md).
+Đăng ký không OTP: nhập họ tên, số điện thoại, mật khẩu và email tùy chọn để tạo tài khoản và đăng nhập ngay. Không cần SMS/email để đăng ký; các biến `AUTH_VERIFICATION_*` cũ không còn được dùng.
 
-Đăng ký public nay cần mã xác minh số điện thoại và thêm mã email nếu cung cấp email; không còn tự cấp phiên ngay sau submit. Tài khoản cũ tiếp tục đăng nhập như trước. Cấu hình `AUTH_VERIFICATION_WEBHOOK_URL` và `AUTH_VERIFICATION_WEBHOOK_TOKEN` qua môi trường an toàn để kết nối bridge SMS/email; thiếu cấu hình thì đăng ký trả 503, không bỏ qua xác minh. Xem [hướng dẫn tích hợp và giới hạn](docs/REGISTRATION.md) và [kết quả sửa 4 bug QA](docs/qa/FIX-RESULTS.md).
+Quên mật khẩu dùng link một lần gửi tới email đã lưu; tài khoản chỉ có số điện thoại cần admin xác minh và hỗ trợ. Admin xem hồ sơ, địa chỉ và đơn hàng tại Tài khoản & Phân quyền → Xem khách hàng. Guest vẫn mua hàng với đủ thông tin nhận hàng. Xem [cấu hình email, nâng cấp và thao tác hỗ trợ](docs/REGISTRATION.md) và [kết quả kiểm thử mới](docs/qa/CUSTOMER-ACCOUNT-RESULTS.md).
 
 ## Kiểm thử
 
@@ -133,13 +133,14 @@ npm run test:browser      # 14 nhóm luồng storefront
 npm run test:management   # tài khoản và quản trị thực qua trình duyệt
 npm run test:account      # sửa hồ sơ, địa chỉ, mật khẩu và phục hồi giỏ lỗi
 npm run test:bank         # chuyển khoản/VietQR và đối soát qua giao diện
+npm run test:customer-flows # đăng ký, reset, hồ sơ khách admin và guest checkout
 ```
 
 Browser tests cần Chromium (mặc định `/usr/bin/chromium`, đổi qua `CHROMIUM_PATH`). Tất cả test tạo schema PostgreSQL tạm, server cổng ngẫu nhiên, rồi dọn dẹp; không dùng đơn live, không tác động cổng 3000/3001. Kiểm cả mất response sau COMMIT và retry, cạnh tranh tồn/lượt mã, snapshot, phiên/cookie/CSRF, quyền sở hữu đơn/địa chỉ, UI mobile và lỗi tài nguyên.
 
 ## Phạm vi còn lại
 
-Đây là bản phát triển có luồng xử lý nội bộ. Chuyển khoản/VietQR dùng đối soát thủ công; chưa kết nối cổng thanh toán hoặc xác minh ngân hàng tự động, giao hàng, OTP/email/SMS, chưa có hoàn trả/lô hạn dùng/đồng bộ sàn/tích điểm/livestream. Quản trị hiện sửa SKU, xử lý đơn và điều chỉnh kho; CRUD đầy đủ danh mục/sản phẩm cha/media/quyền nhân viên thuộc các bước tiếp theo. Không có bên bán thực tế tự giao đơn thử nghiệm.
+Đây là bản phát triển có luồng xử lý nội bộ. Chuyển khoản/VietQR dùng đối soát thủ công; chưa kết nối cổng thanh toán hoặc xác minh ngân hàng tự động, giao hàng hay SMS. Adapter email khôi phục đã có nhưng cần cấu hình Resend, xác thực tên miền và thử gửi thật trước khi vận hành. Các phạm vi thương mại còn lại xem tài liệu release/nâng cấp bên dưới. Không có bên bán thực tế tự giao đơn thử nghiệm.
 
 ## Cấu trúc
 

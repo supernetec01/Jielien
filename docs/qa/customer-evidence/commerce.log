@@ -1,0 +1,19 @@
+
+> jielien-baby-store@3.0.0 test:commerce
+> node tests/commerce.browser.mjs
+
+HTTP 401 /api/auth/me
+PASS 1: admin username login opens authenticated admin
+PASS 2: product editor persists parent and three individually priced SKUs
+PASS 3: verified upload and gallery allow publishing actual product
+PASS 4: admin creates company employee without a customer/admin default grant
+PASS 5: draft autosave persists to server without replacing the editing form
+PASS 6: CMS UI creates structured content, submits, approves and publishes with SEO
+PASS 7: new dashboard shortcuts open real permission-gated editors
+PASS 8: banner live preview persists a published banner through API
+PASS 9: editing existing banner updates storefront and fits mobile workspace
+PASS 10: published article is server-rendered and readable without CMS login
+PASS 11: home/catalog/news/article fit 320, 375, 768 and 1440px, screenshots saved
+PASS 12: company settings persist and render in the hydrated storefront footer
+PASS 13: no browser JavaScript exceptions
+Commerce browser complete: 13 checks passed.

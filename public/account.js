@@ -34,39 +34,18 @@ let viewVersion = 0;
 let notificationTimer;
 let authBusy = false;
 let addressRows = [];
-let pendingSignup = null;
-let signupChallenge = null;
-let resendAt = 0;
-let resendTimer;
-let resendBusy = false;
-
-function renderVerification(result) {
-  signupChallenge = result.challengeId;
-  resendAt = Date.now() + result.resendAfter * 1000;
-  const demoPanel = result.demoCodes ? `<aside id="demo-verification-codes" role="note"><p><strong>CHẾ ĐỘ DEMO LOCALHOST</strong> — Không gửi tin nhắn thật và không xác minh quyền sở hữu số/email.</p><p>Mã SMS demo: <strong data-demo-code="sms">${escape(result.demoCodes.code)}</strong></p>${result.demoCodes.emailCode ? `<p>Mã email demo: <strong data-demo-code="email">${escape(result.demoCodes.emailCode)}</strong></p>` : ''}<p>Nhập các mã trên để hoàn tất tài khoản thử nghiệm.</p></aside>` : '';
-  root.innerHTML = `<section class="panel auth-form-panel"><h1>${result.demoCodes ? 'Tạo tài khoản demo' : 'Xác minh số điện thoại'}</h1>${demoPanel}${result.demoCodes?"":`<p>${escape(result.message)}</p>`}<p>${result.emailVerificationRequired&&!result.demoCodes?"Nhập thêm mã được gửi tới email bạn đã cung cấp. ":""}Mã có hiệu lực trong 5 phút. Nếu bạn đã có tài khoản, hãy quay lại đăng nhập.</p><form id="verification-form" data-challenge="${escape(result.challengeId)}"><div class="field"><label for="verification-code">Mã xác minh 6 chữ số</label><input id="verification-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></div>${result.emailVerificationRequired?'<div class="field"><label for="verification-email-code">Mã xác minh email 6 chữ số</label><input id="verification-email-code" name="emailCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></div>':""}<div id="verification-error" class="form-error" role="alert"></div><button class="primary" id="verify-submit">${result.demoCodes?"Tạo tài khoản demo":"Xác minh và tạo tài khoản"}</button></form><button type="button" class="secondary" id="resend-signup" disabled>Gửi lại mã</button> <button type="button" class="secondary" id="cancel-signup">Quay lại đăng nhập</button></section>`;
-  clearInterval(resendTimer);
-  const tick = () => {
-    const button = $("#resend-signup");
-    if (!button) { clearInterval(resendTimer); return; }
-    const left = Math.max(0, Math.ceil((resendAt-Date.now())/1000));
-    button.disabled = resendBusy || left > 0;
-    button.textContent = left ? `Gửi lại mã (${left}s)` : "Gửi lại mã";
-  };
-  tick(); resendTimer = setInterval(tick,1000);
-  $("#verification-code").focus();
-}
-
+let recoveryMode=['forgot','reset'].includes(new URLSearchParams(location.search).get('mode'))?new URLSearchParams(location.search).get('mode'):null;
+let resetToken=recoveryMode==='reset'?new URLSearchParams(location.hash.slice(1)).get('token'):null;
+if(resetToken)history.replaceState(null,'',location.pathname+'?mode=reset');
 async function completeAuth(result) {
-  pendingSignup = null; signupChallenge = null; clearInterval(resendTimer);
-  authMode = 'login';
-  user = result.user; csrfToken = result.csrfToken || "";
-  const redirect = safeRedirect();
-  if (redirect) { location.assign(redirect); return; }
-  accountShell(); await renderView("profile");
-  notify("Đăng nhập thành công.");
+  authMode='login';user=result.user;csrfToken=result.csrfToken||'';
+  const redirect=safeRedirect();if(redirect){location.assign(redirect);return;}
+  accountShell();await renderView('profile');notify('Đăng nhập thành công.');
 }
-
+function renderRecovery(){
+  const reset=recoveryMode==='reset';
+  root.innerHTML=`<section class="panel auth-form-panel"><h1>${reset?'Đặt lại mật khẩu':'Quên mật khẩu'}</h1><p>${reset?'Chọn mật khẩu mới. Sau khi hoàn tất, mọi phiên cũ sẽ được đăng xuất.':'Nhập số điện thoại hoặc email. Link khôi phục chỉ được gửi tới email đã lưu; tài khoản chỉ có số điện thoại cần cửa hàng xác minh và hỗ trợ.'}</p>${reset&&!resetToken?'<p class="form-error" role="alert">Thiếu mã khôi phục. Hãy mở lại link trong email hoặc yêu cầu link mới.</p>':`<form id="recovery-form">${reset?'<div class="field"><label for="reset-password">Mật khẩu mới</label><input id="reset-password" name="newPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div><div class="field"><label for="reset-confirmation">Nhập lại mật khẩu</label><input id="reset-confirmation" name="confirmation" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div>':'<div class="field"><label for="recovery-identifier">Số điện thoại hoặc email</label><input id="recovery-identifier" name="identifier" autocomplete="username" required maxlength="200"></div>'}<div id="recovery-error" class="form-error" role="alert"></div><button class="primary">${reset?'Lưu mật khẩu mới':'Yêu cầu link khôi phục'}</button><p id="recovery-message" role="status"></p></form>`}<button type="button" class="secondary" id="back-to-login">Quay lại đăng nhập</button>${reset?'<button type="button" class="secondary" id="forgot-password">Yêu cầu link mới</button>':''}</section>`;
+}
 async function api(path, { method = "GET", body } = {}) {
   const headers = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -115,7 +94,7 @@ function safeRedirect() {
     : null;
 }
 function authMarkup() {
-  return `<section class="auth-layout"><div class="auth-intro"><span class="eyebrow">JIELIEN INTERNATIONAL</span><h1>Mỗi lần ghé,<br>thêm một chút<br>yêu thương.</h1><p>Đăng nhập để quản lý địa chỉ nhận hàng<br>và theo dõi những đơn hàng của bạn.</p><div class="auth-heart" aria-hidden="true">♡</div><div class="intro-list">✓ Lưu địa chỉ cho những lần mua sau<br>✓ Xem lịch sử và trạng thái đơn hàng<br>✓ Thông tin cá nhân được quản lý trong tài khoản</div></div><div class="auth-form-panel"><div class="tabs" role="tablist" aria-label="Đăng nhập hoặc đăng ký"><button class="${authMode === "login" ? "active" : ""}" id="auth-login-tab" data-auth-mode="login" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "login"}" tabindex="${authMode === "login" ? 0 : -1}">Đăng nhập</button><button class="${authMode === "register" ? "active" : ""}" id="auth-register-tab" data-auth-mode="register" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "register"}" tabindex="${authMode === "register" ? 0 : -1}">Tạo tài khoản</button></div><div id="auth-panel" role="tabpanel" aria-labelledby="auth-${authMode}-tab"><form id="auth-form">${authMode === "register" ? '<div class="field"><label for="fullName">Họ và tên <span class="required">*</span></label><input id="fullName" name="fullName" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên của bạn"></div><div class="field"><label for="phone">Số điện thoại <span class="required">*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" placeholder="Email của mẹ"></div>' : '<div class="field"><label for="identifier">Tên đăng nhập, số điện thoại hoặc email</label><input id="identifier" name="identifier" autocomplete="username" required maxlength="200" placeholder="Tên đăng nhập / số điện thoại / email"></div>'}<div class="field"><label for="password">Mật khẩu <span class="required">*</span></label><input id="password" name="password" type="password" autocomplete="${authMode === "register" ? "new-password" : "current-password"}" required minlength="${authMode === "register" ? 10 : 1}" maxlength="72" placeholder="${authMode === "register" ? "Tối thiểu 10 ký tự" : "Mật khẩu của mẹ"}">${authMode === "register" ? "<small>Tối thiểu 10 ký tự, tối đa 72 byte UTF-8; chữ có dấu có thể chiếm nhiều byte.</small>" : ""}</div><label class="check-label"><input type="checkbox" id="show-password"> Hiển thị mật khẩu</label><div id="auth-error" class="form-error" role="alert"></div><button class="primary" id="auth-submit">${authMode === "register" ? "Tạo tài khoản →" : "Đăng nhập →"}</button></form><p class="form-note">${authMode === "register" ? "Khi đăng ký, mẹ đồng ý với " : "Thông tin tài khoản được bảo vệ theo "}<a href="/chinh-sach/bao-mat">chính sách thông tin cá nhân</a>. Không dùng mật khẩu của dịch vụ khác cho tài khoản thử nghiệm.</p></div></div></section>`;
+  return `<section class="auth-layout"><div class="auth-intro"><span class="eyebrow">JIELIEN INTERNATIONAL</span><h1>Mỗi lần ghé,<br>thêm một chút<br>yêu thương.</h1><p>Đăng nhập để quản lý địa chỉ nhận hàng<br>và theo dõi những đơn hàng của bạn.</p><div class="auth-heart" aria-hidden="true">♡</div><div class="intro-list">✓ Lưu địa chỉ cho những lần mua sau<br>✓ Xem lịch sử và trạng thái đơn hàng<br>✓ Thông tin cá nhân được quản lý trong tài khoản</div></div><div class="auth-form-panel"><div class="tabs" role="tablist" aria-label="Đăng nhập hoặc đăng ký"><button class="${authMode === "login" ? "active" : ""}" id="auth-login-tab" data-auth-mode="login" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "login"}" tabindex="${authMode === "login" ? 0 : -1}">Đăng nhập</button><button class="${authMode === "register" ? "active" : ""}" id="auth-register-tab" data-auth-mode="register" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "register"}" tabindex="${authMode === "register" ? 0 : -1}">Tạo tài khoản</button></div><div id="auth-panel" role="tabpanel" aria-labelledby="auth-${authMode}-tab"><form id="auth-form">${authMode === "register" ? '<div class="field"><label for="fullName">Họ và tên <span class="required">*</span></label><input id="fullName" name="fullName" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên của bạn"></div><div class="field"><label for="phone">Số điện thoại <span class="required">*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" placeholder="Email của bạn"><small>Dùng email bạn kiểm soát để nhận link khôi phục mật khẩu.</small></div>' : '<div class="field"><label for="identifier">Tên đăng nhập, số điện thoại hoặc email</label><input id="identifier" name="identifier" autocomplete="username" required maxlength="200" placeholder="Tên đăng nhập / số điện thoại / email"></div>'}<div class="field"><label for="password">Mật khẩu <span class="required">*</span></label><input id="password" name="password" type="password" autocomplete="${authMode === "register" ? "new-password" : "current-password"}" required minlength="${authMode === "register" ? 10 : 1}" maxlength="72" placeholder="${authMode === "register" ? "Tối thiểu 10 ký tự" : "Mật khẩu của mẹ"}">${authMode === "register" ? "<small>Tối thiểu 10 ký tự, tối đa 72 byte UTF-8; chữ có dấu có thể chiếm nhiều byte.</small>" : ""}</div><label class="check-label"><input type="checkbox" id="show-password"> Hiển thị mật khẩu</label><div id="auth-error" class="form-error" role="alert"></div><button class="primary" id="auth-submit">${authMode === "register" ? "Tạo tài khoản →" : "Đăng nhập →"}</button></form>${authMode==='login'?'<button type="button" class="secondary" id="forgot-password">Quên mật khẩu?</button>':''}<p class="form-note">${authMode === "register" ? "Khi đăng ký, mẹ đồng ý với " : "Thông tin tài khoản được bảo vệ theo "}<a href="/chinh-sach/bao-mat">chính sách thông tin cá nhân</a>. Không dùng mật khẩu của dịch vụ khác cho tài khoản thử nghiệm.</p></div></div></section>`;
 }
 function renderAuth(focus = false) {
   root.innerHTML = authMarkup();
@@ -208,11 +187,6 @@ async function submitAuth(form) {
       method: "POST",
       body: data,
     });
-    if (authMode === "register") {
-      pendingSignup = data;
-      renderVerification(result);
-      return;
-    }
     await completeAuth(result);
   } catch (error) {
     if ($("#auth-error")) $("#auth-error").textContent = error.message;
@@ -244,15 +218,20 @@ async function openOrder(id) {
 }
 root.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (event.target.id === "verification-form") {
-    const form = event.target,button=$("#verify-submit");
-    if(button.disabled || !form.reportValidity())return;
-    button.disabled=true;$("#verification-error").textContent="";
-    try {
-      const result=await api('/api/auth/register/verify',{method:'POST',body:{challengeId:signupChallenge,code:form.elements.code.value,emailCode:form.elements.emailCode?.value}});
-      await completeAuth(result);
-    } catch(error) { if($("#verification-error"))$("#verification-error").textContent=error.message; }
-    finally { if(button.isConnected)button.disabled=false; }
+  if(event.target.id==='recovery-form'){
+    const form=event.target,button=form.querySelector('button'),error=$('#recovery-error');
+    if(button.disabled||!form.reportValidity())return;
+    const data=Object.fromEntries(new FormData(form));error.textContent='';
+    if(recoveryMode==='reset'&&(data.newPassword!==data.confirmation||new TextEncoder().encode(data.newPassword).byteLength>72)){error.textContent='Mật khẩu nhập lại phải khớp; tối đa 72 byte UTF-8.';return;}
+    button.disabled=true;
+    try{
+      if(recoveryMode==='reset'){
+        await api('/api/auth/password/reset',{method:'POST',body:{token:resetToken,newPassword:data.newPassword}});
+        resetToken=null;recoveryMode=null;user=null;csrfToken='';authMode='login';history.replaceState(null,'',location.pathname);renderAuth();notify('Đã đặt lại mật khẩu. Vui lòng đăng nhập lại.');
+      }else{
+        const result=await api('/api/auth/password/forgot',{method:'POST',body:{identifier:data.identifier}});$('#recovery-message').textContent=result.message;
+      }
+    }catch(e){if(error.isConnected)error.textContent=e.message;}finally{if(button.isConnected)button.disabled=false;}
     return;
   }
   if (["profile-form", "password-form"].includes(event.target.id)) {
@@ -331,17 +310,9 @@ root.addEventListener("submit", async (event) => {
     }
   }
 });
-root.addEventListener('click',async event=>{
-  if(event.target.id==='cancel-signup'){
-    pendingSignup=null;signupChallenge=null;clearInterval(resendTimer);authMode='login';renderAuth(true);
-  }
-  if(event.target.id==='resend-signup'&&pendingSignup&&!resendBusy&&Date.now()>=resendAt){
-    resendBusy=true;
-    const button=event.target;button.disabled=true;
-    try{renderVerification(await api('/api/auth/register',{method:'POST',body:pendingSignup}));}
-    catch(error){if($("#verification-error"))$("#verification-error").textContent=error.message;}
-    finally{resendBusy=false;if(button.isConnected)button.disabled=false;}
-  }
+root.addEventListener('click',event=>{
+  if(event.target.id==='forgot-password'){recoveryMode='forgot';resetToken=null;renderRecovery();}
+  if(event.target.id==='back-to-login'){recoveryMode=null;resetToken=null;authMode='login';history.replaceState(null,'',location.pathname);renderAuth(true);}
 });
 root.addEventListener("click", async (event) => {
   const edit = event.target.closest("[data-edit-address]");
@@ -441,6 +412,7 @@ $("#order-dialog").addEventListener("click", (event) => {
   if (event.target.closest("[data-close-dialog]")) $("#order-dialog").close();
 });
 async function init() {
+  if(recoveryMode){renderRecovery();return;}
   root.innerHTML =
     '<div class="loading" role="status">Đang kiểm tra phiên đăng nhập…</div>';
   try {

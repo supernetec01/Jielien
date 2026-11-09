@@ -120,18 +120,7 @@ async function fixture(t, { http = false } = {}) {
     csrfToken: result.data.csrfToken,
     user: result.data.user,
   });
-  const registerVerified = async body => {
-    const begin = await request('/api/auth/register',body);
-    assert.equal(begin.status,202);
-    assert.equal(begin.headers.get('set-cookie'),null);
-    await server.flushRegistrationOutbox();
-    return request('/api/auth/register/verify',{
-      challengeId:begin.data.challengeId,
-      code:server.testRegistrationMessages.get(begin.data.challengeId).code,
-      emailCode:server.testRegistrationMessages.get(begin.data.challengeId).emailCode,
-    });
-  };
-  return { ...database, store, auth, request, sessionFrom, base, registerVerified };
+  return { ...database, store, auth, request, sessionFrom, base };
 }
 
 test("accounts hash passwords and session tokens; customer cannot bootstrap admin; expiry and revocation are enforced", async (t) => {
@@ -232,9 +221,9 @@ test("address ownership and one-default constraint hold for two customers", asyn
 });
 
 test("HTTP sessions use HttpOnly cookies, enforce CSRF and isolate account orders and addresses", async (t) => {
-  const { request, sessionFrom, registerVerified } = await fixture(t, { http: true });
+  const { request, sessionFrom } = await fixture(t, { http: true });
   assert.equal((await request("/api/auth/me")).status, 401);
-  const registration = await registerVerified({
+  const registration = await request("/api/auth/register", {
     ...userBody(1),
     roles: ["admin"],
   });
@@ -291,7 +280,7 @@ test("HTTP sessions use HttpOnly cookies, enforce CSRF and isolate account order
   assert.equal(mine.data.orders.length, 1);
   assert.equal(mine.data.orders[0].id, number);
   assert.equal(mine.data.orders[0].token, undefined);
-  const b = sessionFrom(await registerVerified(userBody(2)));
+  const b = sessionFrom(await request("/api/auth/register", userBody(2)));
   assert.equal(
     (await request("/api/orders/" + number, undefined, { session: b })).status,
     404,

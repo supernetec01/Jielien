@@ -106,20 +106,9 @@ test('LAN bind and port validation preserves existing database configuration',as
  }
 });
 
-test('local demo signup preserves database settings and refuses LAN/public/provider combinations',async t=>{
+test('obsolete SMS/demo settings do not block normal local signup configuration',async t=>{
  const directory=await fixture(t);const {path}=await initializeLocal({directory,env:{}});
- const original=await readFile(path,'utf8');
- const demo=original+'\nAUTH_VERIFICATION_MODE=demo\n';
- await writeFile(path,demo);
- assert.equal((await initializeLocal({directory,env:{}})).created,false);
- assert.equal(await readFile(path,'utf8'),demo);
- for(const source of [
-   demo.replace('JIELIEN_BIND_IP=127.0.0.1','JIELIEN_BIND_IP=0.0.0.0'),
-   demo+'PUBLIC_BASE_URL=https://shop.example.org\n',
-   demo+'AUTH_VERIFICATION_WEBHOOK_URL=https://provider.example.org\n',
- ]){
-   await writeFile(path,source);
-   await assert.rejects(initializeLocal({directory,env:{}}),/localhost/);
-   assert.equal(await readFile(path,'utf8'),source);
- }
+ const source=(await readFile(path,'utf8'))+'\nAUTH_VERIFICATION_MODE=demo\n';
+ await writeFile(path,source);assert.equal((await initializeLocal({directory,env:{}})).created,false);
+ assert.equal(await readFile(path,'utf8'),source);
 });

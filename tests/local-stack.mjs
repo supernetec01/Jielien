@@ -125,16 +125,11 @@ try {
       password: "Test-Only-Docker-Password-2026",
     }),
   });
-  assert.equal(register.status, 503, 'signup requires a configured verification provider');
-  assert.equal(register.headers.get('set-cookie'),null);
-  await docker(['exec','-T','app','node','--input-type=module','-e',
-    `import {createPool} from './lib/database.mjs';import {createAuth} from './lib/auth.mjs';const p=createPool();try{await createAuth(p).register({fullName:'Docker Test Buyer',phone:'0912345678',password:'Test-Only-Docker-Password-2026'});}finally{await p.end();}`]);
-  const buyerLogin=await fetch(base+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifier:'0912345678',password:'Test-Only-Docker-Password-2026'})});
-  assert.equal(buyerLogin.status,200);
-  const session = await buyerLogin.json();
-  const cookie = buyerLogin.headers.get("set-cookie").split(";", 1)[0];
-  assert.ok(buyerLogin.headers.get("set-cookie").includes("HttpOnly"));
-  assert.ok(!buyerLogin.headers.get("set-cookie").includes("; Secure"));
+  assert.equal(register.status,201,'customer registration does not require an OTP provider');
+  const session = await register.json();
+  const cookie = register.headers.get("set-cookie").split(";", 1)[0];
+  assert.ok(register.headers.get("set-cookie").includes("HttpOnly"));
+  assert.ok(!register.headers.get("set-cookie").includes("; Secure"));
   const products = (await (await fetch(base + "/api/products")).json())
     .products;
   const product = products.find((item) => item.id === 1);
@@ -168,7 +163,7 @@ try {
   assert.equal(order.transfer.accountNumber, "0000000000");
   assert.ok(order.transfer.qrDataUrl.startsWith("data:image/svg+xml;base64,"));
   console.log(
-    "PASS: Docker Node24/PostgreSQL17 requires verification for signup and supports fixture login, CSRF checkout and locally generated VietQR.",
+    "PASS: Docker Node24/PostgreSQL17 supports no-OTP registration, CSRF checkout and locally generated VietQR.",
   );
   await docker([
     "exec",

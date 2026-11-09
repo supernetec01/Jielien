@@ -5,17 +5,15 @@ const valid = {
   SITE_DOMAIN: "shop.example.org",
   ACME_EMAIL: "operator@example.org",
   POSTGRES_PASSWORD: "a".repeat(32),
-  AUTH_VERIFICATION_WEBHOOK_URL: 'https://verification.example.org/send',
-  AUTH_VERIFICATION_WEBHOOK_TOKEN: 'fixture-only-not-a-real-secret',
+  RESEND_API_KEY:'fixture-only-not-a-real-secret',
+  PASSWORD_RESET_FROM_EMAIL:'no-reply@example.org',
 };
 test("public deployment configuration rejects unsafe or incomplete prerequisites without exposing credentials", () => {
   assert.deepEqual(validateProductionConfig(valid), []);
   for (const patch of [
     { SITE_DOMAIN: "http://localhost:3001" },
-    { AUTH_VERIFICATION_MODE: 'demo' },
-    { AUTH_VERIFICATION_WEBHOOK_URL: '' },
-    { AUTH_VERIFICATION_WEBHOOK_TOKEN: '' },
-    { AUTH_VERIFICATION_WEBHOOK_URL: 'http://verification.example.org/send' },
+    { RESEND_API_KEY: "" },
+    { PASSWORD_RESET_FROM_EMAIL: "" },
     { SITE_DOMAIN: "shop.example.test" },
     { SITE_DOMAIN: "example.org/path" },
     { POSTGRES_PASSWORD: "short" },

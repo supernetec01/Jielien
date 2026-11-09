@@ -1,30 +1,54 @@
-# Đăng ký có xác minh — cấu hình và vận hành
+# Tài khoản khách hàng và khôi phục mật khẩu
 
-Đăng ký public không còn tạo tài khoản/phiên ngay. Đăng ký mới và thông tin đã tồn tại nhận cùng HTTP 202 và thông báo chung. Sau khi chứng minh quyền sở hữu số điện thoại (và email nếu cung cấp), hệ thống mới tạo customer và cấp cookie HttpOnly. Tài khoản hiện có giữ nguyên mật khẩu/quyền/phiên; không tự đánh dấu số/email cũ là đã xác minh.
+## Đăng ký không OTP
 
-## Chuẩn bị dịch vụ gửi mã
+Khách nhập họ tên, số điện thoại Việt Nam và mật khẩu; email không bắt buộc. Đăng ký thành công tạo tài khoản `customer` và đăng nhập ngay. Không thuê SMS, không cần cấu hình email để đăng ký. Hệ thống kiểm tra định dạng và trùng thông tin, không coi số điện thoại/email nhập vào là đã xác minh quyền sở hữu. Request không thể tự cấp quyền nhân viên/admin.
 
-Ứng dụng cung cấp adapter webhook HTTPS để kết nối một bridge gửi SMS/email. Bridge là thành phần bên ngoài cần cấu hình với nhà cung cấp bạn chọn; repo không chứa tài khoản SMS hay gửi email/SMS thật mặc định.
+`POST /api/auth/register` trả HTTP 201 cùng user, CSRF token và cookie HttpOnly. Thông tin trùng trả 409; vì vậy luồng đăng ký không che giấu việc định danh đã tồn tại. Endpoint OTP `/api/auth/register/verify` đã bỏ (404). Các biến `AUTH_VERIFICATION_*` và `AUTH_DEMO_*` cũ không còn được dùng; có thể xóa các dòng đó khỏi cấu hình sau khi cập nhật. Giữ nguyên cấu hình database và volume.
 
-Đặt qua cấu hình an toàn của server hoặc file môi trường được Git ignore:
+## Đổi và quên mật khẩu
 
-- `AUTH_VERIFICATION_WEBHOOK_URL`: URL HTTPS của bridge, không chứa user/password trong URL.
-- `AUTH_VERIFICATION_WEBHOOK_TOKEN`: bearer token riêng, không đưa lên Git hoặc chat.
+- Đã đăng nhập: đổi mật khẩu vẫn cần mật khẩu hiện tại.
+- Quên mật khẩu: nhập số điện thoại hoặc email. Với tài khoản khách hợp lệ có email, link chỉ gửi đến **email đang lưu**, không gửi tới địa chỉ tùy ý trong request.
+- Tài khoản chỉ có số điện thoại, email không nhận được thư hoặc chưa cấu hình gửi email: liên hệ cửa hàng để xác minh và hỗ trợ. Chỉ biết số điện thoại/email không đủ để đổi mật khẩu.
 
-Compose local/production đã truyền hai biến vào app. Nếu dùng native Node, cấp vào môi trường tiến trình. Khởi động lại/rebuild app sau khi cập nhật source/cấu hình. `npm run production:check` kiểm tra đầu vào; không chứng minh provider gửi/nhận thành công.
+API `POST /api/auth/password/forgot` nhận `{identifier}` và trả 202 cùng thông báo chung cho tài khoản có/không tồn tại, nhân viên, tài khoản chỉ có số điện thoại và trường hợp chưa cấu hình email. HTTP 202 không xác nhận thư đã tới hộp thư. Có giới hạn theo IP; tài khoản nhận tối đa 5 yêu cầu/giờ, cách nhau ít nhất 60 giây.
 
-**Chế độ provider thiếu cấu hình:** đăng ký trả 503 giống nhau cho mọi định danh; không tạo pending/user hay phiên. Đăng nhập tài khoản cũ và guest checkout vẫn hoạt động. Không có OTP mặc định hoặc endpoint xem OTP của provider. Trước khi bật cho người dùng cần kiểm thử bridge/provider sandbox rồi staging end-to-end.
+Link dùng một lần trong 30 phút. Link mới vô hiệu link cũ. `POST /api/auth/password/reset` nhận `{token,newPassword}`; thành công trả 204, thu hồi mọi phiên cũ và yêu cầu đăng nhập lại. Thay mật khẩu, email, vai trò hoặc khóa tài khoản có thể làm link mất hiệu lực. Luồng này chỉ áp dụng cho khách hàng, không khôi phục admin/nhân viên. Token nằm trong fragment URL, bị xóa khỏi thanh địa chỉ ngay khi trang đọc và chỉ giữ trong bộ nhớ; nếu tải lại trang, hãy mở lại link gốc trong email. Không lưu token/mật khẩu vào localStorage.
 
-## Thử đăng ký trên localhost, không cần SMS/email
+## Bật gửi email thật (Resend)
 
-Chế độ demo là tùy chọn riêng, không tự bật khi provider lỗi. Với Docker Desktop, mở `.env.local`, thêm/chỉnh:
+Chỉ cần phần này khi muốn khách tự nhận link qua email. Tạo tài khoản Resend, xác thực tên miền gửi thư bằng các bản ghi DNS mà nhà cung cấp yêu cầu, tạo API key gửi email với quyền tối thiểu và đặt trong file môi trường bị Git ignore hoặc secret của server:
 
 ```dotenv
-AUTH_VERIFICATION_MODE=demo
-JIELIEN_BIND_IP=127.0.0.1
+PUBLIC_BASE_URL=https://ten-mien-cua-ban.vn
+RESEND_API_KEY=<API key riêng, không commit>
+PASSWORD_RESET_FROM_EMAIL=Jielien <support@ten-mien-cua-ban.vn>
 ```
 
-Giữ nguyên mật khẩu database, URL database và volume. `PUBLIC_BASE_URL`/các biến webhook để trống trong chế độ này; không đặt URL/token giả. Không tạo dòng trùng tên trong file. Sau đó chạy PowerShell:
+Thay các giá trị mẫu trước khi dùng. `PUBLIC_BASE_URL` phải là origin HTTPS tin cậy, không chứa đường dẫn, query hoặc thông tin đăng nhập. Compose production lấy origin từ `SITE_DOMAIN`; không thêm URL localhost vào cấu hình production. Compose local truyền các biến trên nếu được cấp. Không cấu hình nửa chừng: để cả API key và email gửi trống khi chưa dùng, vì chỉ đặt một biến sẽ khiến app từ chối khởi động.
+
+Rebuild/khởi động lại app sau khi cập nhật. `npm run production:check` yêu cầu cấu hình email để sẵn sàng vận hành công khai, nhưng không chứng minh DNS hay thư được giao thành công. Trước khi mở cho khách, thử trên staging bằng hộp thư do bạn kiểm soát, kiểm tra spam, quota, tên miền gửi và link quay về đúng website. Bộ test repo dùng sender sandbox, không gửi email thật.
+
+Worker trong app đọc outbox mỗi 5 giây, gửi bằng REST API Resend, timeout 5 giây, không theo redirect, có idempotency key và tối đa 5 lượt thử trong thời hạn link. Các replica chia sẻ lease 30 giây và claim bằng `SKIP LOCKED`. Không có SMS bridge hoặc endpoint public xem token.
+
+Database lưu hash token; payload outbox chứa link được mã hóa AES-GCM và xóa sau khi gửi thành công/hết lượt thử. Khóa mã hóa hiện nằm trong cùng database nên backup vẫn là dữ liệu nhạy cảm, chưa tách KMS. Cần theo dõi outbox pending/dead và log lỗi tổng quát; không log payload hay link để debug.
+
+## Admin xem và hỗ trợ khách hàng
+
+Vào **Admin → Tài khoản & Phân quyền → Xem khách hàng**. Người có quyền `users.manage` xem tên, điện thoại, email, trạng thái, ngày tạo, địa chỉ đã lưu và lịch sử đơn đặt bằng tài khoản (20 đơn/trang). Tổng giá trị tính trên đơn không hủy; không phải số tiền đã thu. Không trả mật khẩu/hash/token. Đơn guest xem trong mục Đơn hàng.
+
+Khi khách không tự khôi phục được, admin phải xác minh người yêu cầu qua quy trình hỗ trợ của cửa hàng, tích xác nhận và nhập lại mật khẩu admin. Sau đó tạo link một lần, chuyển riêng cho đúng người đã xác minh. Không xác nhận quyền sở hữu chỉ bằng việc người yêu cầu biết số điện thoại/email. API yêu cầu quyền, CSRF, mật khẩu admin hiện tại và ghi nhật ký; không cho reset tài khoản có quyền nhân viên/admin.
+
+Tài khoản `is_demo=true` từ phiên bản OTP demo cũ không tự được mở lại chỉ vì bỏ cấu hình OTP. Admin có thể dùng quy trình hỗ trợ trên; chỉ khi link được dùng thành công, tài khoản mới chuyển thành customer thường và phiên cũ bị thu hồi. Không tự ghi nhận số/email đã xác minh, không reset database để chuyển đổi.
+
+## Mua không cần tài khoản
+
+Guest checkout được giữ nguyên, bắt buộc tên người nhận, số điện thoại, địa chỉ chi tiết, tỉnh/thành phố và khu vực. Không tự tạo tài khoản hoặc gắn đơn guest vào tài khoản chỉ vì trùng số điện thoại/email. Đơn có tài khoản chỉ được liên kết bằng phiên đăng nhập hợp lệ.
+
+## Cập nhật trên Windows
+
+Trong thư mục repo, giữ/commit thay đổi local trước khi pull nếu có xung đột:
 
 ```powershell
 git fetch origin
@@ -33,55 +57,8 @@ git pull --ff-only origin feature/jielien-commerce-cms
 npm.cmd run local:start
 ```
 
-Mở `http://localhost:3001/tai-khoan?mode=register`, điền thông tin demo rồi submit. Trang kế tiếp hiển thị nhãn **CHẾ ĐỘ DEMO LOCALHOST**, mã SMS thử nghiệm và mã email thử nghiệm nếu có email. Nhập đúng các mã đang hiển thị để tạo tài khoản; không dùng mã cố định. Mã vẫn hết hạn, giới hạn lần thử, chống dùng lại và có cooldown gửi lại như luồng thật. Không có tin nhắn nào được gửi hoặc đưa vào outbox.
+Mở `http://localhost:3001/tai-khoan?mode=register`. `local:start` rebuild và tự áp dụng migration mới `018_customer_recovery.sql`. Không xóa volume, `.env.local` hay lịch sử migration 015–017. Đăng ký và guest checkout hoạt động khi chưa có Resend. Trên localhost chưa cấu hình email, dùng quy trình admin hỗ trợ để kiểm tra link reset; không có hộp thư/route xem email thử trong app.
 
-Tài khoản tạo theo cách này được đánh dấu `is_demo=true`, không ghi nhận số/email đã xác minh thật. Chỉ ứng dụng đang ở chế độ demo mới chấp nhận đăng nhập/phiên của các tài khoản đó; chuyển về provider thì các tài khoản và phiên demo bị từ chối, kể cả khi dùng chung database. Tài khoản cũ không phải demo vẫn hoạt động. Dùng số/email thử riêng; tài khoản demo không được tự chuyển thành tài khoản thật chỉ bằng đổi cấu hình.
+## Kiểm thử
 
-Backend từ chối demo nếu NODE_ENV không phải development, bind được cấu hình khác 127.0.0.1, có URL public/indexing hoặc có provider thật. Các request đăng ký demo chỉ chấp nhận Host localhost/127.0.0.1/::1 và vẫn kiểm tra Origin. Local helper từ chối bind LAN; compose production luôn dùng provider; production:check cũng từ chối chế độ demo.
-
-Nếu chạy Node native thay Docker: cấp `NODE_ENV=development` và `AUTH_VERIFICATION_MODE=demo` trong môi trường; `npm start` mặc định bind 127.0.0.1 trong chế độ demo. Các cờ `AUTH_DEMO_LOCAL_BIND`/`AUTH_DEMO_CONTAINER_LOCAL` do compose local truyền để kiểm tra published bind; không dùng chúng để mở demo ra LAN/public. Không có xác minh quyền sở hữu thật trong chế độ demo.
-
-Để quay về dùng thật, đặt `AUTH_VERIFICATION_MODE=provider`, cấu hình bridge bên dưới rồi rebuild/khởi động lại. Tài khoản/phiên demo không thể dùng trong provider mode. Không reset database hay xóa lịch sử migration để đổi chế độ.
-
-## Contract bridge
-
-App gửi `POST`, `Content-Type: application/json`, `Authorization: Bearer <token>`, `Idempotency-Key: <challengeId>`, timeout 5 giây và không đi theo redirect. Payload:
-
-```json
-{
-  "id": "opaque-challenge-id",
-  "phone": "0912345678",
-  "code": "6-digit-sms-code",
-  "email": "buyer@example.test",
-  "emailCode": "6-digit-email-code",
-  "purpose": "signup",
-  "expiresAt": 1800000000000
-}
-```
-
-Email/emailCode là null nếu không cung cấp email. Mỗi mã phải gửi **riêng tới đúng kênh**: code chỉ SMS tới phone, emailCode chỉ email tới email; không gộp hai mã vào SMS hoặc một email vì sẽ mất bằng chứng sở hữu độc lập. Không gửi nếu đã quá expiresAt. Response 2xx chỉ sau khi đã tiếp nhận bền vững cả hai yêu cầu gửi; lỗi trả non-2xx để app retry.
-
-Bridge cần dùng idempotency bền vững theo `(id,channel)`, bảo vệ endpoint bằng token, che OTP/số/email trong access/error log và không gọi dịch vụ thật trong test. Một kênh đã gửi và kênh kia lỗi thì retry không được gửi lặp kênh đã thành công. Đây là at-least-once delivery, không hứa exactly-once chỉ bằng HTTP.
-
-Worker chạy trong app, poll 5 giây, lease 30 giây, retry backoff tối đa 5 lượt trong thời hạn mã. Các replica claim bằng SKIP LOCKED và cập nhật có kiểm tra generation attempt. Payload outbox mã hóa AES-GCM bằng key riêng trong bảng nội bộ; OTP kiểm tra bằng HMAC ràng buộc challenge/recipient/kênh. Mã không lưu plaintext trong database. Khi bridge chấp nhận, payload bị xóa; challenge cũ được dọn sau 24 giờ quá hạn.
-
-DB backup có cả khóa mã hóa trong bảng nội bộ nên phải bảo vệ backup như dữ liệu nhạy cảm; chưa tách khóa sang KMS. Cần giám sát outbox pending/dead, lỗi bridge, độ trễ gửi và quota/chi phí nhà cung cấp. Không log payload để debug.
-
-## Contract API
-
-- `POST /api/auth/register`: họ tên, số VN bắt buộc, email tùy chọn và mật khẩu. HTTP 202 có message/challengeId/expiresIn/resendAfter/emailVerificationRequired, không Set-Cookie và không userId. Cờ emailVerificationRequired chỉ phản ánh email trong request, không phản ánh tài khoản tồn tại.
-- `POST /api/auth/register/verify`: challengeId, code và emailCode nếu có email. HTTP 201 + cookie/session chỉ sau khi mọi mã đúng; lỗi trả 400/invalid_verification chung. Mỗi challenge dùng một lần, có hiệu lực 5 phút và tối đa 5 lượt thử.
-- Gửi lại: gọi lại register từ giao diện sau 60 giây. Challenge cũ cùng số bị vô hiệu; tối đa 5 yêu cầu/15 phút theo từng số/email. Việc yêu cầu lại không đổi mật khẩu tài khoản cũ. Rate limit IP độc lập vẫn áp dụng.
-- Sau reload trang nhập mã, người dùng có thể bắt đầu lại sau cooldown; mật khẩu/pending signup không lưu vào localStorage hoặc sessionStorage.
-
-Các API nội bộ `createAuth(...).register` phục vụ fixture/import được ủy quyền, không được mở thành endpoint public khác. `phone_verified_at`/`email_verified_at` của tài khoản legacy vẫn null. Việc đổi email trong hồ sơ vẫn có chính sách xác thực lại bằng mật khẩu như trước; nếu email thay đổi, cờ xác minh được xóa. Xác minh lại email sau cập nhật hồ sơ, quên/reset mật khẩu và MFA là các hạng mục tiếp theo, chưa được triển khai trong đợt sửa 4 bug này.
-
-## Giới hạn đăng nhập
-
-PostgreSQL lưu quota theo key HMAC, không lưu raw identifier/IP trong bảng rate limit. Các tiến trình dùng cùng DB chia sẻ quota; không cần Redis. Mặc định tối đa 120 request/IP/phút và 15 thất bại hoặc request đang kiểm tra trên cặp IP + định danh/15 phút. Login thành công chỉ nhả quota của chính lượt đó, không xóa lỗi của người khác; lỗi DB không làm bỏ qua limiter. HTTP 429 có Retry-After.
-
-Forwarded IP từ client không được tin mặc định. Khi app ở sau proxy, remoteAddress có thể là IP của proxy: ngân sách burst khi đó áp dụng chung; cần kiểm tra tải và cấu hình kiến trúc proxy trước public. Đợt này không tự tin X-Forwarded-For để đổi giới hạn. Các ngưỡng có thể inject qua createApp(loginLimitOptions) khi chạy service theo entrypoint riêng; CLI hiện dùng mặc định trên.
-
-## Chạy kiểm thử
-
-`npm test` gồm test registration, CMS và login quota; `npm run test:qa-fixes` kiểm tra storefront setting và signup thật qua Chromium với provider sandbox inject trong tests/support/app.mjs. Test sandbox không có route lấy mã public và không được import từ production server.
+`npm test` kiểm tra API, migration, chống dùng lại link, thu hồi phiên, race condition và phân quyền. `npm run test:customer-flows` kiểm tra các luồng mới qua Chromium, cùng viewport 320/375/768/1440/1920px. Dùng database/schema thử riêng; sender inject trong test không gửi thư thật. Xem [kết quả bàn giao](qa/CUSTOMER-ACCOUNT-RESULTS.md).
