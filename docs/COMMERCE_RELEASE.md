@@ -75,3 +75,7 @@ Kết quả chính xác và hạn chế nằm tại `docs/validation/RESULTS.md`
 | Toàn bộ đặc tả 3 giai đoạn | CHƯA hoàn thành | Xem bảng đầy đủ tại UPGRADE_DELIVERY.md, không đánh đồng bản UI với các tích hợp vận hành |
 
 Không thay migration cũ hoặc xuất bản môi trường công khai. Font WOFF2 phục vụ cục bộ, giấy phép OFL. Kết quả tại validation/UX_UPGRADE_RESULTS.md.
+
+## Sửa khung Admin và chi tiết đơn
+
+Sidebar giữ đầy đủ phần tài khoản trong viewport; chi tiết đơn rộng, thông tin người nhận/đơn/thanh toán lớn hơn và chia nhóm. Xem [ADMIN_ORDER_LAYOUT.md](ADMIN_ORDER_LAYOUT.md). Chỉ thay giao diện, không có migration hoặc thay đổi xử lý tiền/tồn. Email báo đơn và tạo đơn hộ nhân viên mới ở mức [đề xuất](proposals/ORDER_EMAIL_NOTIFICATION.md), chưa gửi email.

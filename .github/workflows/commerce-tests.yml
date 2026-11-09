@@ -44,11 +44,15 @@ jobs:
       - run: npm run test:admin-access
       - run: npm run test:usability
       - run: npm run test:frontend-v3
+      - run: npm run test:admin-layout
+      - run: npm run test:admin-catalog
       - run: npm run test:upgrade
       - run: npm run test:contrast
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: fixture-browser-screenshots
-          path: docs/screenshots/upgrade
+          path: |
+            docs/screenshots/upgrade
+            docs/screenshots/admin-order-layout
           retention-days: 7
