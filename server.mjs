@@ -7,6 +7,7 @@ import { timingSafeEqual } from "node:crypto";
 import { createPool } from "./lib/database.mjs";
 import { createStore } from "./db/store.mjs";
 import { createAuth } from "./lib/auth.mjs";
+import { createLoginLimiter } from "./lib/login-limiter.mjs";
 import { createCartService } from "./lib/cart.mjs";
 import {createCommerce} from "./lib/commerce-routes.mjs";
 import {createSeo,seoConfig} from "./lib/seo.mjs";
@@ -245,6 +246,7 @@ export async function createApp({
   bankConfig,
   mediaDirectory,
   seoConfiguration,
+  loginLimitOptions,
 } = {}) {
   const pool = externalPool || createPool();
   let store;
@@ -261,6 +263,7 @@ export async function createApp({
   const auth = createAuth(pool),
     carts = createCartService(pool),
     rates = new Map();
+  const loginLimiter = await createLoginLimiter(pool,loginLimitOptions);
   function rateLimit(req, kind, max) {
     const now = Date.now(),
       key = kind + ":" + req.socket.remoteAddress;
@@ -346,15 +349,14 @@ export async function createApp({
           (path === "/api/auth/register" || path === "/api/auth/login")
         ) {
           sameOrigin(req);
-          rateLimit(
-            req,
-            path.endsWith("register") ? "register" : "login",
-            path.endsWith("register") ? 5 : 15,
-          );
           const body = await readBody(req);
+          const isRegister=path.endsWith('register');
+          if(isRegister)rateLimit(req,'register',5);
+          const lease=isRegister?null:await loginLimiter.reserve(req.socket.remoteAddress,body.identifier);
           const result = path.endsWith("register")
             ? await auth.register(body)
             : await auth.login(body);
+          if(lease)await loginLimiter.success(lease);
           res.setHeader("Set-Cookie", sessionCookie(req, result.token));
           return json(res, path.endsWith("register") ? 201 : 200, {
             user: result.user,
@@ -678,6 +680,7 @@ export async function createApp({
         error.status <= 599;
       if (!exposed)
         console.error("Request failed:", error.code || error.name || "unknown");
+      if(error.status===429&&Number.isInteger(error.retryAfter))res.setHeader('Retry-After',String(error.retryAfter));
       json(res, exposed ? error.status : 500, {
         error: exposed ? error.error || "request_error" : "internal_error",
         message: exposed ? error.message : "Có lỗi xảy ra. Vui lòng thử lại.",
