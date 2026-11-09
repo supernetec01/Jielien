@@ -64,3 +64,14 @@ Các mục này được nêu công khai để review phần còn lại, không 
 ## Kiểm chứng
 
 Kết quả chính xác và hạn chế nằm tại `docs/validation/RESULTS.md`. Screenshot chứa dữ liệu test giả trong `docs/screenshots/commerce/`. Load lab có cấu hình/mẫu đo ở `docs/validation/load.json`; không phải cam kết tải production. Hướng dẫn triển khai/cutover/backup/rollback ở `COMMERCE_WINDOWS.md`.
+
+## UX upgrade tiếp nối
+
+| Phần | Trạng thái | Bằng chứng |
+|---|---|---|
+| Mua hàng/mobile | Đã triển khai phần UI: chọn quy cách tại chỗ, mini-cart, thanh mua/checkout, bộ lọc dialog | tests/ui-upgrade.browser.mjs; docs/screenshots/upgrade |
+| Cài đặt liên hệ/chính sách | Đã triển khai form Admin, validation và version từng trường; không seed thông tin giả vận hành | tests/ui-upgrade.test.mjs; test:upgrade |
+| Báo cáo | Thêm series ngày/so sánh/top SKU/trạng thái từ SQL thật; còn thiếu các phần B1/B4 trong spec | lib/operations.mjs; public/report-visuals.js |
+| Toàn bộ đặc tả 3 giai đoạn | CHƯA hoàn thành | Xem bảng đầy đủ tại UPGRADE_DELIVERY.md, không đánh đồng bản UI với các tích hợp vận hành |
+
+Không thay migration cũ hoặc xuất bản môi trường công khai. Font WOFF2 phục vụ cục bộ, giấy phép OFL. Kết quả tại validation/UX_UPGRADE_RESULTS.md.

@@ -87,6 +87,7 @@ async function register(page, base, identity) {
   await page.locator('[data-auth-mode="register"]').click();
   await page.locator("#fullName").fill(identity.name);
   await page.locator("#phone").fill(identity.phone);
+  if (await page.locator(".checkout-extras").count()) await page.locator(".checkout-extras").evaluate(el=>el.open=true);
   await page.locator("#email").fill(identity.email);
   await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
@@ -103,6 +104,7 @@ async function checkout(page, base) {
   await page.locator('input[name="payment"][value="cod"]').waitFor();
   await page.locator("#name").fill("Người mua kiểm thử");
   await page.locator("#phone").fill("0912345678");
+  if (await page.locator(".checkout-extras").count()) await page.locator(".checkout-extras").evaluate(el=>el.open=true);
   await page.locator("#email").fill("bank-buyer@example.test");
   await page.locator("#province").fill("TP Hồ Chí Minh");
   await page.locator("#district").fill("Phường Bến Nghé");

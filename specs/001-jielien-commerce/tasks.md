@@ -81,3 +81,16 @@ Link to exact git files or diff, migration number, tests name/result, screenshot
 `[x]` chỉ đánh dấu phạm vi thực thi của task có code và evidence cloud; không thay thế phê duyệt release/UAT. Các task `[ ]` đã có thể được triển khai một phần, không đồng nghĩa thiếu toàn bộ. T020 giữ JPEG gốc, chưa asset transparent chuẩn; T023/T027 còn full accessibility/visual review; T050/T053/T054/T055/T057 còn catalog/media/taxonomy/import nâng cao; T106 chưa workflow hoàn tiền; T107 chưa tracking/timeline nâng cao; T154 còn editor UX/filter theo author sâu hơn; T200/T202/T203 còn collections/nav/settings/reporting nâng cao; T250–252 còn manual UAT và đánh giá accessibility/security ngoài cloud. Không mở public trong checkpoint này.
 
 Liên kết evidence theo feature: [bảng release](../../docs/COMMERCE_RELEASE.md), [kết quả test](../../docs/validation/RESULTS.md), [Windows/cutover/rollback](../../docs/COMMERCE_WINDOWS.md). Bản đặc tả gốc trong docs/commerce-spec giữ nguyên để phân biệt yêu cầu với kết quả thực hiện.
+
+## UX upgrade (đối chiếu docs/UPGRADE_SPEC.md)
+
+- [x] Biến thiết kế, font local có giấy phép và kiểm tra tương phản cặp màu chính.
+- [x] Chọn quy cách trong SPA, thanh mua mobile và mini-cart báo giá server.
+- [x] Bộ lọc mobile dialog; tổng tiền/nút đặt hàng cố định; optional fields thu gọn.
+- [x] Form liên hệ/chính sách Admin, validation, version và ẩn kênh trống.
+- [x] Báo cáo SVG theo dữ liệu thật, so sánh kỳ trước, top SKU, trạng thái.
+- [x] Kiểm thử hồi quy và ảnh fixture trên 5 độ rộng.
+- [ ] Đạt toàn bộ tiêu chí S1–S9, B1–B5 (các phần còn thiếu được liệt kê trong UPGRADE_DELIVERY.md).
+- [ ] Địa chỉ chuẩn tỉnh/phường-xã + migration ward và chuyển đổi tương thích.
+- [ ] Bulk/in đơn, vận chuyển, SMTP, review moderation, thanh toán tự động, analytics.
+- [ ] Lô/hạn dùng/FEFO và các mục dài hạn cần thiết kế riêng.

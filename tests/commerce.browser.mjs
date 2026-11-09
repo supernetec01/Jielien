@@ -307,12 +307,9 @@ try {
   await bannerPage.close();
   pass("editing existing banner updates storefront and fits mobile workspace");
   await page.locator('[data-section="settings-editor"]').click();
-  await page.locator('#setting-form [name="key"]').selectOption("companyName");
-  await page
-    .locator('#setting-form [name="value"]')
-    .fill("Jielien Test Company");
-  await page.locator("#setting-form button").click();
-  await page.getByText("companyName: Jielien Test Company").waitFor();
+  await page.locator('#company-form [name="companyName"]').fill("Jielien Test Company");
+  await page.locator('#company-form button').click();
+  await page.waitForFunction(()=>document.querySelector('#company-form [name="companyName"]')?.value==='Jielien Test Company' && !document.querySelector('#company-form button').disabled);
   await page.goto(base + "/tin-tuc/bai-viet-cms-that");
   await page
     .locator("h1")

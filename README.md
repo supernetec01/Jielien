@@ -153,3 +153,9 @@ lib/vietqr.mjs            local NAPAS/EMVCo payload, CRC and bank configuration
 ```
 
 Triển khai LAN, phân quyền và backup: xem [LAN_DEPLOYMENT.md](docs/LAN_DEPLOYMENT.md).
+
+## Nâng cấp trải nghiệm mua sắm và Admin
+
+Chi tiết phần đã làm và backlog: [UPGRADE_DELIVERY.md](docs/UPGRADE_DELIVERY.md), đối chiếu [đặc tả](docs/UPGRADE_SPEC.md). Admin → Cấu hình công ty có form hotline/Zalo/Messenger, địa chỉ, giờ làm việc và chính sách; để trống kênh chưa dùng. Ví dụ trong placeholder không được lưu tự động. `DEMO_MODE=true` bật nhãn kiểm thử ở website; mặc định tắt nhãn, không thay đổi catalog mẫu thành hàng thật. Không bật nhận đơn thật chỉ vì nhãn đã tắt.
+
+`npm run test:upgrade` kiểm tra trải nghiệm mới bằng Chromium và schema PostgreSQL tạm; `npm run test:contrast` kiểm tra tương phản các cặp màu thiết kế chính. Không cần migration mới cho bản này.

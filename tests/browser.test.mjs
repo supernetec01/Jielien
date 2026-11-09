@@ -236,6 +236,7 @@ try {
   const maliciousName = "<img src=x onerror=window.__xss=1>";
   await page.locator("#name").fill(maliciousName);
   await page.locator("#phone").fill("123");
+  if (await page.locator(".checkout-extras").count()) await page.locator(".checkout-extras").evaluate(el=>el.open=true);
   await page.locator("#email").fill("test@example.com");
   await page.locator("#province").fill("TP Hồ Chí Minh");
   await page.locator("#district").fill("Quận 1");

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env server.mjs",
     "start": "node --env-file-if-exists=.env server.mjs",
-    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs tests/commerce.test.mjs tests/commerce-upgrade.test.mjs tests/admin-visibility.test.mjs",
+    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs tests/commerce.test.mjs tests/commerce-upgrade.test.mjs tests/admin-visibility.test.mjs tests/ui-upgrade.test.mjs",
     "test:browser": "node tests/browser.test.mjs",
     "db:backup": "node scripts/backup.mjs",
     "db:local": "bash scripts/dev-postgres.sh",
@@ -30,7 +30,9 @@
     "test:commerce": "node tests/commerce.browser.mjs",
     "test:load": "node tests/commerce-load.mjs",
     "test:admin-access": "node tests/admin-access.browser.mjs",
-    "test:usability": "node tests/usability.browser.mjs"
+    "test:usability": "node tests/usability.browser.mjs",
+    "test:upgrade": "node tests/ui-upgrade.browser.mjs",
+    "test:contrast": "node scripts/check-contrast.mjs"
   },
   "engines": {
     "node": ">=24.11.0"
