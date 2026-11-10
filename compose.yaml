@@ -26,7 +26,8 @@ services:
       DATABASE_URL: ${LOCAL_DATABASE_URL:?Run npm run local:init first}
       PORT: "3001"
       NODE_ENV: development
-      COOKIE_SECURE: "false"
+      COOKIE_SECURE: ${JIELIEN_COOKIE_SECURE:-false}
+      DEMO_MODE: ${JIELIEN_DEMO_MODE:-false}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       SEO_INDEXING_ENABLED: ${SEO_INDEXING_ENABLED:-false}
       RESEND_API_KEY: ${RESEND_API_KEY:-}

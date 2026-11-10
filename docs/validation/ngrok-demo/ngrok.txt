@@ -1,0 +1,16 @@
+
+> jielien-baby-store@3.0.0 test:ngrok
+> node --test tests/ngrok-demo.test.mjs
+
+✔ demo tunnel selects only loopback ports and preserves ngrok HTTPS/Host defaults (2.648132ms)
+✔ health and token failures prevent tunnel creation; secrets are redacted (1.529432ms)
+✔ successful ngrok adapter exposes only HTTPS and closes listeners (1.030828ms)
+✔ public Host and HTTPS Origin work for login and CSRF without rewriting Host or exposing insecure cookies (1029.229635ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1270.902325

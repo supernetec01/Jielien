@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env server.mjs",
     "start": "node --env-file-if-exists=.env server.mjs",
-    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs tests/commerce.test.mjs tests/commerce-upgrade.test.mjs tests/admin-visibility.test.mjs tests/frontend-v3.test.mjs tests/checkout-key.test.mjs tests/ui-upgrade.test.mjs tests/production-config.test.mjs tests/cms-validation.test.mjs tests/auth-rate-limit.test.mjs tests/registration.test.mjs tests/customer-recovery.test.mjs tests/warehouse-catalog.test.mjs",
+    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs tests/commerce.test.mjs tests/commerce-upgrade.test.mjs tests/admin-visibility.test.mjs tests/frontend-v3.test.mjs tests/checkout-key.test.mjs tests/ui-upgrade.test.mjs tests/production-config.test.mjs tests/cms-validation.test.mjs tests/auth-rate-limit.test.mjs tests/registration.test.mjs tests/customer-recovery.test.mjs tests/warehouse-catalog.test.mjs tests/ngrok-demo.test.mjs",
     "test:browser": "node tests/browser.test.mjs",
     "db:backup": "node scripts/backup.mjs",
     "db:local": "bash scripts/dev-postgres.sh",
@@ -40,6 +40,9 @@
     "test:customer-flows": "node tests/customer-account.browser.mjs",
     "test:admin-layout": "node tests/admin-order-layout.browser.mjs",
     "test:storefront-language": "node tests/storefront-language.browser.mjs",
+    "demo:ngrok": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.ngrok scripts/ngrok-demo.mjs",
+    "demo:server": "node --env-file-if-exists=.env --env-file-if-exists=.env.ngrok scripts/ngrok-demo-server.mjs",
+    "test:ngrok": "node --test tests/ngrok-demo.test.mjs",
     "test:warehouse": "node tests/warehouse-catalog.browser.mjs",
     "test:admin-catalog": "node tests/admin-catalog-layout.browser.mjs"
   },
@@ -47,6 +50,7 @@
     "node": ">=24.11.0"
   },
   "devDependencies": {
+    "@ngrok/ngrok": "1.7.0",
     "axe-core": "4.11.0",
     "playwright-core": "1.58.2"
   },

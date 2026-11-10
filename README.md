@@ -172,3 +172,7 @@ Chi tiết phần đã làm và backlog: [UPGRADE_DELIVERY.md](docs/UPGRADE_DELI
 ## Website riêng: tích hợp nhánh và production
 
 Xem [RELEASE_READINESS.md](docs/RELEASE_READINESS.md) để biết bản gộp V3 + UX + sửa checkout LAN, kết quả kiểm thử mới, thông tin cần chuẩn bị và điều kiện mở bán. Có stack HTTPS riêng `compose.production.yaml`, `npm run production:check` (nạp môi trường bảo mật trước) và `npm run db:backup:production`. Không dùng compose local với cookie không Secure làm cấu hình public. Merge/push Git không đồng nghĩa đã triển khai.
+
+### Demo công khai bằng ngrok
+
+Dùng `npm run demo:ngrok` để mở website đang chạy tại cổng 3001 (hoặc cổng cấu hình). Cần tài khoản/token ngrok riêng; xem [NGROK_DEMO.md](docs/NGROK_DEMO.md) để cấu hình Windows/cloud, HTTPS và cách dừng link.

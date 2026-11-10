@@ -82,3 +82,7 @@ Lệnh dừng giữ dữ liệu. Backup tùy nhu cầu demo: `npm run db:backup`
 Kiểm thử phát triển cần `npm ci`, PostgreSQL test riêng và `DATABASE_URL` tương ứng; `npm test` tạo schema tạm. Các test trình duyệt cần Chrome/Chromium và biến `CHROMIUM_PATH` trỏ đến file thực thi. Không chạy script `db:local` (bash/cloud) trong PowerShell.
 
 Các chức năng thanh toán/vận chuyển chưa tích hợp nhà cung cấp thật vẫn có giới hạn nêu tại [COMMERCE_RELEASE.md](COMMERCE_RELEASE.md). Đây là bản demo hoạt động với backend, không phải xác nhận sẵn sàng vận hành thương mại.
+
+## Chia sẻ cho khách qua Internet bằng ngrok
+
+Đã có lệnh `npm run demo:ngrok` với SDK ngrok chính thức. Cài dependencies trên máy bằng `npm ci`, cấu hình token riêng trong `.env.ngrok`, chạy website và mở tunnel. Xem [hướng dẫn Windows/cloud và cách lấy URL HTTPS](NGROK_DEMO.md). Token không gửi qua chat hoặc commit Git.
