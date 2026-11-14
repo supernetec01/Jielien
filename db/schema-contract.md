@@ -106,3 +106,8 @@ Only one coupon is used per order in phase 1. `order_id` UNIQUE in redemptions p
 Phase 2/3 remain explicit backlog: OTP delivery, online payment gateways/refunds/invoices, batch/expiry stock, cross-warehouse transfer workflow, carriers/webhooks, full return workflow, member points, customer reviews, flash-sale quotas, dynamic bundles, CMS/media/livestream, multi-channel orders and translation API/cache. Their absence is preferable to claiming that unused placeholder tables implement those services.
 
 Backups and migration validation remain required before switching the live app: consistent SQLite backup including WAL, a single import transaction, comparison of all legacy IDs/totals/stock, FK and integrity checks, repeat-import verification and regression tests. The original SQLite file is not deleted by schema creation.
+# Bổ sung migration 020: đối soát thủ công
+
+`orders.bank_payment_due_at` và `orders.bank_payment_reported_at` là timestamp nullable; migration không backfill hoặc thay đổi giá trị cũ. Hạn được lưu cho đơn chuyển khoản mới khi bật cơ chế hết hạn. Đơn cũ có cột NULL được xét theo ngày tạo + TTL đang cấu hình khi cơ chế bật.
+
+`staff_notifications` là hàng đợi riêng gồm loại sự kiện, order_id, số tiền, event_key duy nhất, trạng thái/lần thử/mốc gửi. Không lưu Telegram token, tên, điện thoại, địa chỉ hoặc token truy cập đơn trong hàng đợi. Payments tiếp tục dùng trạng thái hiện có; sau đối soát thủ công amount là thực nhận, còn orders.grand_total và bank_transfer_details.amount giữ số phải thu gốc. Chi tiết chênh lệch/mã giao dịch được ghi trong payment_events và audit theo thao tác được xác nhận của nhân viên.

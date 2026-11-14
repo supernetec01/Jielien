@@ -1,3 +1,4 @@
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { chromium } from "playwright-core";
@@ -125,7 +126,7 @@ try {
   await admin.locator("#password").fill(password);
   await admin.locator("#auth-submit").click();
   await admin.waitForURL("**/quan-tri");
-  await admin.locator('[data-section="products"]').click();
+  await openAdminView(admin, "products");
   await admin.locator('[data-edit-variant="1"]').click();
   await admin.locator("#variant-price").fill("430000");
   await admin.locator("#variant-original-price").fill("499000");
@@ -157,7 +158,7 @@ try {
     430001,
   );
   pass("stale SKU UI receives conflict and reloads current data");
-  await admin.locator('[data-section="users"]').click();
+  await openAdminView(admin, "users");
   await admin.locator("#staff-search").fill("buyer@example.test");
   await admin.locator("[data-staff]").click();
   await admin.locator('input[name="roles"][value="viewer"]').check();
@@ -174,7 +175,7 @@ try {
     ).rowCount,
   );
   pass("admin searches accounts and grants staff role through confirmed UI");
-  await admin.locator('[data-section="orders"]').click();
+  await openAdminView(admin, "orders");
   await admin.locator(`[data-admin-order="${orderNumber}"]`).click();
   assert.ok(
     (await admin.locator("#admin-dialog").textContent()).includes("425.000đ"),
@@ -202,7 +203,7 @@ try {
   pass(
     "order state transitions, immutable old price and explicit COD collection work through UI",
   );
-  await admin.locator('[data-section="inventory"]').click();
+  await openAdminView(admin, "inventory");
   await admin.locator('[data-adjust-variant="1"]').first().click();
   await admin.locator("#quantityChange").fill("2");
   await admin.locator("#adjustReason").fill("Nhập bổ sung kiểm thử");
@@ -210,7 +211,7 @@ try {
   await admin.waitForFunction(
     () => !document.querySelector("#admin-dialog").open,
   );
-  await admin.locator('[data-section="audit"]').click();
+  await openAdminView(admin, "audit");
   await admin.locator("[data-audit]").first().waitFor();
   pass("inventory adjustment and audit history are usable");
   for (const p of [page, admin]) {

@@ -1,3 +1,7 @@
+import { readAdminFilters, adminFilterSearch, isLowStockAlert } from "/admin-filters.js";
+import { adminNav, adminNavGroups, resolveAdminRoute, normalizeAdminSearch, adminBadge } from "/admin-nav.js";
+import { logoutSession } from "/auth-session.js";
+let bankOnly = false;
 import { reportVisuals } from "/report-visuals.js";
 import { icon } from "/ui-icons.js";
 import { canAccessAdmin } from "/admin-access.js";
@@ -52,70 +56,9 @@ const transitions = {
   delivered: [],
   cancelled: [],
 };
-const sections = [
-  { id: "dashboard", label: "Tổng quan", permission: "dashboard.read" },
-  {
-    id: "redirects-editor",
-    label: "Chuyển hướng SEO",
-    permission: "seo.manage",
-  },
-  {
-    id: "catalog-editor",
-    label: "Sản phẩm cha & SKU",
-    permission: "catalog.read",
-  },
-  {
-    id: "taxonomy-editor",
-    label: "Danh mục & Thuộc tính",
-    permission: "catalog.read",
-  },
-  { id: "media-editor", label: "Thư viện ảnh", permission: "media.read" },
-  { id: "cms-editor", label: "Tin tức & SEO", permission: "content.read" },
-  { id: "returns-editor", label: "Đổi trả hàng", permission: "returns.manage" },
-  {
-    id: "warehouse-editor",
-    label: "Quản lý nhiều kho",
-    permission: "inventory.read",
-  },
-  { id: "documents-editor", label: "Phiếu kho", permission: "inventory.read" },
-  { id: "audit-tools", label: "Lọc & xuất nhật ký", permission: "audit.read" },
-  {
-    id: "operations-editor",
-    label: "Trạng thái vận hành",
-    permission: "settings.read",
-  },
-  { id: "reports-editor", label: "Báo cáo", permission: "reports.read" },
-  {
-    id: "settings-editor",
-    label: "Cấu hình công ty",
-    permission: "settings.read",
-  },
-  {
-    id: "banners-editor",
-    label: "Banner & Poster Studio",
-    permission: "banners.read",
-  },
-  { id: "import-editor", label: "CSV sản phẩm", permission: "catalog.read" },
-  {
-    id: "coupons-editor",
-    label: "Mã giảm giá",
-    permission: "promotions.manage",
-  },
-  { id: "users", label: "Tài khoản & Phân quyền", permission: "users.manage" },
-  {
-    id: "products",
-    label: "Giá mặc định & trạng thái SKU",
-    permission: "catalog.read",
-  },
-  { id: "orders", label: "Đơn hàng", permission: "orders.read" },
-  {
-    id: "inventory",
-    label: "Kho & tồn hàng",
-    permission: "inventory.read",
-  },
-  { id: "audit", label: "Nhật ký thao tác", permission: "audit.read" },
-];
+const sections = adminNav;
 const root = $("#admin-main");
+$(".header-back").insertAdjacentHTML("afterbegin", icon("external"));
 let user = null;
 let csrfToken = "";
 let activeView = "dashboard";
@@ -186,105 +129,137 @@ function noRows(cols, text = "Chưa có dữ liệu phù hợp.") {
   return `<tr><td colspan="${cols}" class="table-empty">${escape(text)}</td></tr>`;
 }
 function gate(message, login = false) {
-  root.innerHTML = `<section class="panel access-panel"><span class="access-icon" aria-hidden="true">♢</span><h1>${login ? "Đăng nhập để quản lý cửa hàng" : "Tài khoản chưa có quyền quản trị"}</h1><p>${escape(message)}</p><a href="/tai-khoan${login ? "?redirect=%2Fquan-tri" : ""}" class="primary">${login ? "Đăng nhập →" : "Về tài khoản"}</a><p class="small">Quyền truy cập được cấp bởi người vận hành. Đăng ký tài khoản khách hàng không tự cấp quyền quản trị.</p></section>`;
+  root.innerHTML = `<section class="panel access-panel"><span class="access-icon" aria-hidden="true">♢</span><h1>${login ? "Đăng nhập để quản lý cửa hàng" : "Tài khoản chưa có quyền quản trị"}</h1><p>${escape(message)}</p><a href="/tai-khoan${login ? "?redirect=" + encodeURIComponent(resolveAdminRoute(location.pathname) ? location.pathname + location.search : "/quan-tri") : ""}" class="primary">${login ? "Đăng nhập →" : "Về tài khoản"}</a><p class="small">Quyền truy cập được cấp bởi người vận hành. Đăng ký tài khoản khách hàng không tự cấp quyền quản trị.</p></section>`;
 }
-const navigationGroups = [
-  { title: "Tổng quan", icon: "chart", ids: ["dashboard", "reports-editor"] },
-  {
-    title: "Bán hàng & Kho",
-    icon: "box",
-    ids: [
-      "orders",
-      "catalog-editor",
-      "taxonomy-editor",
-      "products",
-      "inventory",
-      "warehouse-editor",
-      "documents-editor",
-      "returns-editor",
-      "import-editor",
-      "coupons-editor",
-    ],
-  },
-  {
-    title: "Nội dung & Website",
-    icon: "file",
-    ids: ["cms-editor", "media-editor", "banners-editor", "redirects-editor"],
-  },
-  {
-    title: "Quản lý hệ thống",
-    icon: "settings",
-    ids: [
-      "users",
-      "settings-editor",
-      "operations-editor",
-      "audit-tools",
-      "audit",
-    ],
-  },
-];
-const sectionIcons = {
-  dashboard: "grid",
-  orders: "receipt",
-  products: "tag",
-  inventory: "warehouse",
-  "catalog-editor": "box",
-  "taxonomy-editor": "grid",
-  "media-editor": "image",
-  "cms-editor": "news",
-  "banners-editor": "image",
-  "coupons-editor": "percent",
-  "inventory-docs": "warehouse",
-  "returns-editor": "return",
-  "reports-editor": "chart",
-  "audit-tools": "log",
-  audit: "log",
-  users: "users",
-  "settings-editor": "settings",
-  "operations-editor": "shield",
-  "redirects-editor": "external",
-};
-function shell() {
-  root.innerHTML = `<div class="admin-layout"><aside class="admin-sidebar"><div class="workspace-brand"><img src="/assets/jielien-logo.jpg" alt="Jielien International"><span>Không gian quản trị</span></div><label class="navigation-search">${icon("search")}<input id="admin-nav-search" type="search" aria-label="Tìm chức năng quản trị" placeholder="Tìm chức năng…"></label><nav id="workspace-navigation" class="side-nav" aria-label="Mục quản trị">${navigationGroups
-    .map((group) => {
-      const available = group.ids
-        .map((id) => sections.find((s) => s.id === id))
-        .filter((s) => s && has(s.permission));
-      return available.length
-        ? `<section class="navigation-group"><h2>${group.title}</h2>${available.map((s) => `<button data-section="${s.id}" class="${activeView === s.id ? "active" : ""}">${icon(sectionIcons[s.id] || group.icon)}<span>${s.label}</span></button>`).join("")}</section>`
-        : "";
-    })
-    .join(
-      "",
-    )}<p id="navigation-empty" hidden>Không tìm thấy chức năng.</p></nav><div class="admin-user"><span class="user-avatar">${escape((user.fullName || user.full_name || "A").slice(0, 1))}</span><div><b>${escape(user.fullName || user.full_name)}</b><small>Đã đăng nhập</small></div><a href="/tai-khoan" aria-label="Mở tài khoản">${icon("arrow")}</a></div></aside><div class="workspace-main"><div class="workspace-location"><button type="button" id="admin-menu-toggle" aria-expanded="false" aria-controls="workspace-navigation">${icon("menu")} Mục quản trị</button><span>Quản trị <span aria-hidden="true">/</span> <b id="workspace-current">Tổng quan</b></span><span class="workspace-session">Phiên đăng nhập được bảo vệ</span></div><section id="admin-content" tabindex="-1" aria-live="polite"></section></div></div>`;
-}
-root.addEventListener("input", (event) => {
-  if (event.target.id !== "admin-nav-search") return;
-  const normalize = (v) =>
-    v
-      .toLocaleLowerCase("vi")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/đ/g, "d");
-  const query = normalize(event.target.value.trim());
+const openedGroups = new Set();
+let pendingOrders;
+let routeVersion = 0;
+let ignoreDialogClose = false;
+function updateNavigation() {
+  const query = normalizeAdminSearch($("#admin-nav-search")?.value.trim() || "");
   let visible = 0;
-  root.querySelectorAll(".navigation-group").forEach((group) => {
-    let matches = 0;
-    group.querySelectorAll("[data-section]").forEach((button) => {
-      button.hidden = !normalize(button.textContent).includes(query);
-      if (!button.hidden) matches++;
-    });
-    group.hidden = matches === 0;
-    visible += matches;
+  $$("[data-section]", $("#workspace-navigation")).forEach(link => {
+    const item = adminNav.find(item => item.id === link.dataset.section);
+    link.hidden = !!query && !normalizeAdminSearch(item.label).includes(query);
+    if (!link.hidden) visible++;
+    const active = item.id === activeView;
+    link.classList.toggle("active", active);
+    if (active) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current");
+    const badge = link.querySelector(".nav-badge");
+    if (badge) { const value = adminBadge(pendingOrders); badge.textContent = value; badge.hidden = !value; }
+  });
+  $$("[data-navigation-group]").forEach(group => {
+    const id = group.dataset.navigationGroup;
+    const links = $$("[data-section]", group);
+    const matches = links.some(link => !link.hidden);
+    const active = links.some(link => link.dataset.section === activeView);
+    group.hidden = !matches;
+    group.classList.toggle("is-active", active);
+    const open = query ? matches : openedGroups.has(id);
+    group.classList.toggle("is-open", open);
+    group.querySelector(".navigation-folder").setAttribute("aria-expanded", String(open));
+    group.querySelector(".navigation-collapse").inert = !open;
+    const badge = group.querySelector(".nav-parent-badge");
+    const value = links.some(link => link.querySelector(".nav-badge")) ? adminBadge(pendingOrders) : "";
+    badge.textContent = value; badge.hidden = open || !value;
   });
   $("#navigation-empty").hidden = visible > 0;
+  $("#admin-nav-shortcut").hidden = !!query;
+}
+function updateBreadcrumb() {
+  const route = resolveAdminRoute(location.pathname);
+  const item = route?.item || adminNav.find(item => item.id === activeView);
+  if (!item) return;
+  $("#admin-breadcrumb ol").innerHTML = `<li><a href="/quan-tri" data-admin-home>Quản trị</a></li>${route?.detailId ? `<li><a href="${item.href + adminFilterSearch(item.id, readAdminFilters(item.id, location.search))}" data-admin-href title="${escape(item.label)}">${escape(item.label)}</a></li><li aria-current="page">Chi tiết</li>` : `<li aria-current="page" title="${escape(item.label)}">${escape(item.label)}</li>`}`;
+}
+async function refreshNavigationBadge(stats) {
+  if (!has("dashboard.read") || !has("orders.read")) return;
+  try { pendingOrders = (stats || (await api("/api/admin/dashboard")).stats)?.pendingOrders; }
+  catch { pendingOrders = undefined; }
+  if ($("#workspace-navigation")) updateNavigation();
+}
+function shell() {
+  const initial = resolveAdminRoute(location.pathname)?.item || sections.find(item => has(item.permission));
+  activeView = initial.id;
+  openedGroups.clear(); if (initial.group) openedGroups.add(initial.group);
+  const navLink = item => `<a href="${item.href}" data-section="${item.id}" title="${escape(item.label)}"><span class="nav-label">${escape(item.label)}</span>${item.badgeKey ? '<span class="nav-badge" hidden></span>' : ''}</a>`;
+  root.innerHTML = `<div class="admin-layout"><aside class="admin-sidebar"><a class="workspace-brand" href="/quan-tri" data-admin-home><img src="/assets/jielien-logo.jpg" alt="Jielien International"><div class="workspace-brand-label"><strong>JIELIEN</strong><span>Không gian quản trị</span></div></a><div class="navigation-search" role="search" aria-label="Tìm chức năng quản trị">${icon("search")}<input id="admin-nav-search" type="search" aria-label="Tìm chức năng quản trị" placeholder="Tìm chức năng..."><kbd id="admin-nav-shortcut">Ctrl K</kbd></div><nav id="workspace-navigation" class="side-nav" aria-label="Mục quản trị">${adminNavGroups.map(group => {
+    const items = adminNav.filter(item => item.group === group.id && has(item.permission));
+    return items.length ? `<section class="navigation-group" data-navigation-group="${group.id}"><button type="button" class="navigation-folder" aria-expanded="false" aria-controls="nav-children-${group.id}" title="${escape(group.label)}">${icon(group.icon)}<span class="nav-label">${escape(group.label)}</span><span class="nav-parent-badge" hidden></span>${icon("chevronDown", { className: "navigation-chevron" })}</button><div class="navigation-collapse" id="nav-children-${group.id}" inert><div class="navigation-clip"><div class="navigation-children">${items.map(navLink).join("")}</div></div></div></section>` : "";
+  }).join("")}${adminNav.filter(item => !item.group && has(item.permission)).map(navLink).join("")}<p id="navigation-empty" hidden>Không tìm thấy chức năng</p></nav></aside><div class="workspace-main"><section id="admin-content" tabindex="-1" aria-live="polite"></section></div></div>`;
+  $("#admin-menu-toggle").hidden = false;
+  $("#admin-menu-toggle").innerHTML = icon("menu");
+  $(".workspace-session").hidden = false;
+  $(".admin-account").hidden = false;
+  $(".user-avatar").textContent = (user.fullName || user.full_name || "A").slice(0, 1);
+  if (/Mac|iPhone|iPad|iPod/i.test(navigator.userAgentData?.platform || navigator.platform || "")) $("#admin-nav-shortcut").textContent = "⌘K";
+  updateNavigation();
+  updateBreadcrumb();
+}
+root.addEventListener("input", event => {
+  if (event.target.id === "admin-nav-search") updateNavigation();
 });
-root.addEventListener("click", (event) => {
-  const toggle = event.target.closest("#admin-menu-toggle");
-  if (toggle) {
-    const open = $(".admin-layout").classList.toggle("navigation-open");
-    toggle.setAttribute("aria-expanded", String(open));
-    if (open) $("#admin-nav-search").focus();
+function setMobileMenu(open) {
+  $(".admin-layout")?.classList.toggle("navigation-open", open);
+  $("#admin-menu-toggle").setAttribute("aria-expanded", String(open));
+  if (open) $("#admin-nav-search")?.focus();
+}
+function setAccountMenu(open, returnFocus = false) {
+  $("#admin-account-menu").hidden = !open;
+  $("#admin-account-toggle").setAttribute("aria-expanded", String(open));
+  if (open) $("#admin-account-menu [role=menuitem]").focus();
+  else if (returnFocus) $("#admin-account-toggle").focus();
+}
+document.addEventListener("click", async event => {
+  if (event.target.closest("#admin-menu-toggle")) {
+    setMobileMenu($("#admin-menu-toggle").getAttribute("aria-expanded") !== "true"); return;
+  }
+  if (event.target.closest("#admin-account-toggle")) {
+    setAccountMenu($("#admin-account-menu").hidden); return;
+  }
+  if (!$("#admin-account-menu").hidden && !event.target.closest(".admin-account")) setAccountMenu(false, true);
+  const logout = event.target.closest("#admin-logout");
+  if (logout) {
+    await logoutSession({ button: logout, api, notify, onSignedOut() {
+      user = null; csrfToken = ""; pendingOrders = undefined;
+      setAccountMenu(false); $(".admin-account").hidden = true; $(".workspace-session").hidden = true;
+      $("#admin-menu-toggle").hidden = true;
+      $("#admin-dialog").close();
+      gate("Bạn đã đăng xuất. Đăng nhập để tiếp tục quản lý cửa hàng.", true);
+    } }); return;
+  }
+  const link = event.target.closest("a[data-section], a[data-admin-home], a[data-admin-href]");
+  if (link && !event.defaultPrevented && event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+    event.preventDefault();
+    if (link.hasAttribute("data-admin-home")) void navigateAdmin("/quan-tri");
+    else void navigateAdmin(link.getAttribute("href"));
+  }
+});
+root.addEventListener("click", event => {
+  const folder = event.target.closest(".navigation-folder");
+  if (!folder) return;
+  const id = folder.closest("[data-navigation-group]").dataset.navigationGroup;
+  if (openedGroups.has(id)) openedGroups.delete(id); else openedGroups.add(id);
+  updateNavigation();
+});
+document.addEventListener("keydown", event => {
+  const search = $("#admin-nav-search");
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k" && search) {
+    event.preventDefault(); if (matchMedia("(max-width: 900px)").matches) setMobileMenu(true); search.focus(); return;
+  }
+  if (!$("#admin-account-menu").hidden) {
+    const items = $$("#admin-account-menu [role=menuitem]");
+    const index = items.indexOf(document.activeElement);
+    if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+      event.preventDefault(); items[event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : (index + (event.key === "ArrowUp" ? -1 : 1) + items.length) % items.length].focus(); return;
+    }
+    if (event.key === "Escape") { event.preventDefault(); setAccountMenu(false, true); return; }
+    if (event.key === "Tab") setAccountMenu(false);
+  }
+  if (event.target === search && event.key === "Escape") { event.preventDefault(); search.value = ""; updateNavigation(); search.blur(); }
+  if (event.target === search && event.key === "Enter") {
+    event.preventDefault(); const first = $("#workspace-navigation [data-section]:not([hidden])");
+    if (first) void navigateAdmin(first.getAttribute("href"));
   }
 });
 function header(title, text, button = "") {
@@ -294,10 +269,14 @@ function refreshButton() {
   return `<button class="secondary" id="refresh-view">${icon("refresh")} Làm mới</button>`;
 }
 function dashboardMarkup(stats) {
-  const quick = ["orders", "inventory", "catalog-editor", "reports-editor"]
-    .map((id) => sections.find((s) => s.id === id))
-    .filter((s) => s && has(s.permission));
-  return `${header("Tổng quan", "Một góc nhìn rõ ràng để bắt đầu ngày làm việc.", refreshButton())}<div class="dashboard-intro"><div><span class="page-eyebrow">JIELIEN WORKSPACE</span><h2>Chăm chút từng đơn hàng.<br>Quản lý cửa hàng chủ động hơn.</h2><p>Kiểm tra đơn, hàng hóa và kết quả kinh doanh từ dữ liệu đang có.</p></div>${icon("warehouse", { size: 64 })}</div><div class="stats-grid"><article class="stat-card"><span>ĐƠN CHỜ XÁC NHẬN</span><strong>${Number(stats.pendingOrders || 0).toLocaleString("vi-VN")}</strong><em>${Number(stats.orders || 0)} đơn được ghi nhận tổng cộng</em></article><article class="stat-card"><span>TIỀN ĐÃ THU</span><strong class="stat-money">${money(stats.revenue)}</strong><em>Các khoản thanh toán đã xác nhận</em></article><article class="stat-card"><span>SẢN PHẨM</span><strong>${Number(stats.products || 0)}</strong><em>${Number(stats.variants || 0)} SKU / quy cách</em></article><article class="stat-card"><span>CẢNH BÁO TỒN THẤP</span><strong>${Number(stats.lowStock || 0)}</strong><em>Kiểm tra hàng có thể bán</em></article></div><section class="panel"><div class="section-title"><div><h2>Công việc thường ngày</h2><p>Đi thẳng đến màn hình bạn cần.</p></div></div><div class="dashboard-shortcuts workspace-actions">${quick.map((s) => `<button class="workspace-action" data-workspace-section="${s.id}">${icon(sectionIcons[s.id])}<span>${s.label}</span>${icon("arrow")}</button>`).join("")}</div></section><div id="dashboard-insights"></div>`;
+  const href = id => adminNav.find(item => item.id === id).href + (id === "orders" ? "?status=pending" : id === "inventory" ? "?stock=alert" : "");
+  const kpis = [
+    { id: "orders", label: "ĐƠN CHỜ XÁC NHẬN", value: Number(stats.pendingOrders || 0).toLocaleString("vi-VN"), note: `${Number(stats.orders || 0)} đơn được ghi nhận tổng cộng`, icon: "bag", tone: "amber", highlighted: Number(stats.pendingOrders || 0) > 0 },
+    { id: "reports-editor", label: "TIỀN ĐÃ THU", value: money(stats.revenue), note: "Các khoản thanh toán đã xác nhận", icon: "wallet", tone: "green", money: true },
+    { id: "catalog-editor", label: "SẢN PHẨM", value: Number(stats.products || 0), note: `${Number(stats.variants || 0)} SKU / quy cách`, icon: "box", tone: "blue" },
+    { id: "inventory", label: "CẢNH BÁO TỒN THẤP", value: Number(stats.lowStock || 0), note: "Kiểm tra hàng có thể bán", icon: "alert", tone: "red" },
+  ];
+  return `<div class="dashboard-page">${header("Tổng quan", "Theo dõi đơn hàng, doanh thu và tồn kho.", refreshButton())}<div class="stats-grid">${kpis.map(kpi => `<a class="stat-card ${kpi.highlighted ? "has-pending" : ""}" href="${href(kpi.id)}" data-admin-href><span class="stat-label">${kpi.label}</span><span class="stat-icon stat-icon-${kpi.tone}">${icon(kpi.icon)}</span><strong class="${kpi.money ? "stat-money" : ""}">${kpi.value}</strong><em>${kpi.note}</em></a>`).join("")}</div><div id="dashboard-insights"></div></div>`;
 }
 
 function productsMarkup() {
@@ -338,14 +317,14 @@ function ordersMarkup() {
     .map(([key, label]) => `<option value="${key}">${label}</option>`)
     .join(
       "",
-    )}</select></label></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Mã đơn / thời gian</th><th scope="col">Người nhận</th><th scope="col">Tổng cộng</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="order-table-body">${orderTable(orderRows)}</tbody></table></div></section>`;
+    )}</select></label><label class="table-filter-label">Đối soát<select id="order-bank-filter"><option value="">Tất cả thanh toán</option><option value="pending" ${bankOnly ? "selected" : ""}>Chờ đối soát</option></select></label></div>${bankOnly ? '<p class="support-text">Đơn chuyển khoản còn chờ đối soát, sắp xếp cũ nhất trước.</p>' : ""}<div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Mã đơn / thời gian</th><th scope="col">Người nhận</th><th scope="col">Tổng cộng</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead><tbody id="order-table-body">${orderTable(orderRows)}</tbody></table></div></section>`;
 }
 function orderTable(rows) {
   return (
     rows
       .map(
         (order) =>
-          `<tr><td><b>${escape(order.id)}</b><div class="small muted">${date(order.createdAt)}</div></td><td>${escape(order.customer?.name)}<div class="small muted">${escape(order.customer?.phone)}</div></td><td class="price-cell">${money(order.total)}<div class="small muted" style="font-weight:400">${escape(paymentLabel(order.payment || "cod"))}</div></td><td>${badge(order.status)}</td><td><button class="secondary" data-admin-order="${escape(order.id)}">Xem / xử lý</button></td></tr>`,
+          `<tr><td><b>${escape(order.id)}</b><div class="small muted">${date(order.createdAt)}</div></td><td>${escape(order.customer?.name)}<div class="small muted">${escape(order.customer?.phone)}</div></td><td class="price-cell ${order.payment === "bank_transfer" && order.paymentStatus === "pending" ? "bank-reconciliation-cell" : ""}">${money(order.total)}<div class="small muted" style="font-weight:400">${escape(paymentLabel(order.payment || "cod"))}</div>${order.payment === "bank_transfer" && order.paymentStatus === "pending" && order.status !== "cancelled" ? `<div class="bank-reconcile-info"><div>Cần thu: ${money(order.total)} <button type="button" class="secondary" data-bank-copy="${order.total}" aria-label="Sao chép số tiền">Sao chép</button></div><div>Nội dung: ${escape(order.transfer?.reference || "—")} <button type="button" class="secondary" data-bank-copy="${escape(order.transfer?.reference || order.id)}" aria-label="Sao chép nội dung">Sao chép</button></div><div>Chờ ${Math.max(0, Math.floor((Date.now()-new Date(order.createdAt).getTime())/60000))} phút${order.transferReportedAt ? " · Khách báo đã chuyển khoản" : ""}</div></div>` : ""}</td><td>${badge(order.status)}</td><td><button class="secondary" data-admin-order="${escape(order.id)}">Xem / xử lý</button></td></tr>`,
       )
       .join("") || noRows(5)
   );
@@ -392,7 +371,7 @@ function inventoryMarkup() {
       ]),
     ).values(),
   ];
-  return `<section class="panel">${header("Kho & tồn hàng", "Có thể bán = tồn thực tế − lượng giữ cho đơn chưa xuất.", refreshButton())}<div class="table-controls"><label class="table-filter-label">Tìm sản phẩm / SKU<input id="inventory-search" type="search" placeholder="Tìm tên sản phẩm hoặc mã SKU…" aria-label="Tìm sản phẩm trong kho"></label><label class="table-filter-label">Kho hàng<select id="inventory-warehouse" aria-label="Lọc kho"><option value="">Tất cả kho</option>${warehouses.map((warehouse) => `<option value="${escape(warehouse.id)}">${escape(warehouse.name)}</option>`).join("")}</select></label><label class="table-filter-label">Tình trạng tồn<select id="inventory-stock"><option value="">Tất cả</option><option value="out">Hết hàng</option><option value="low">Sắp hết</option><option value="enough">Đủ hàng</option></select></label><label class="table-filter-label">Sắp xếp<select id="inventory-sort"><option value="">Theo sản phẩm</option><option value="available">Có thể bán tăng dần</option></select></label></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Sản phẩm / SKU</th><th scope="col">Kho</th><th scope="col">Tồn thực tế</th><th scope="col">Đang giữ</th><th scope="col">Có thể bán</th><th scope="col">Thao tác</th></tr></thead><tbody id="inventory-table-body">${inventoryTable(inventoryRows)}</tbody></table></div><p class="support-text">Kho hư hỏng được tách khỏi kho bán thông thường. Việc chuyển kho có thể cần nghiệp vụ riêng; biểu mẫu hiện tại chỉ ghi điều chỉnh tăng hoặc giảm tại một kho.</p></section>`;
+  return `<section class="panel">${header("Kho & tồn hàng", "Có thể bán = tồn thực tế − lượng giữ cho đơn chưa xuất.", refreshButton())}<div class="table-controls"><label class="table-filter-label">Tìm sản phẩm / SKU<input id="inventory-search" type="search" placeholder="Tìm tên sản phẩm hoặc mã SKU…" aria-label="Tìm sản phẩm trong kho"></label><label class="table-filter-label">Kho hàng<select id="inventory-warehouse" aria-label="Lọc kho"><option value="">Tất cả kho</option>${warehouses.map((warehouse) => `<option value="${escape(warehouse.id)}">${escape(warehouse.name)}</option>`).join("")}</select></label><label class="table-filter-label">Tình trạng tồn<select id="inventory-stock"><option value="">Tất cả</option><option value="alert">Cảnh báo tồn thấp</option><option value="out">Hết hàng</option><option value="low">Sắp hết</option><option value="enough">Đủ hàng</option></select></label><label class="table-filter-label">Sắp xếp<select id="inventory-sort"><option value="">Theo sản phẩm</option><option value="available">Có thể bán tăng dần</option></select></label></div><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Sản phẩm / SKU</th><th scope="col">Kho</th><th scope="col">Tồn thực tế</th><th scope="col">Đang giữ</th><th scope="col">Có thể bán</th><th scope="col">Thao tác</th></tr></thead><tbody id="inventory-table-body">${inventoryTable(inventoryRows)}</tbody></table></div><p class="support-text">Kho hư hỏng được tách khỏi kho bán thông thường. Việc chuyển kho có thể cần nghiệp vụ riêng; biểu mẫu hiện tại chỉ ghi điều chỉnh tăng hoặc giảm tại một kho.</p></section>`;
 }
 function inventoryTable(rows) {
   return (
@@ -421,7 +400,7 @@ function filterInventory() {
         (row) =>
           (!warehouse || String(row.warehouseId) === warehouse) &&
           (!state ||
-            (row.warehouseType !== "damaged" &&
+            (state === "alert" ? isLowStockAlert(row) : row.warehouseType !== "damaged" &&
               (state === "out"
                 ? row.available <= 0
                 : state === "low"
@@ -491,22 +470,18 @@ root.addEventListener("submit", async (event) => {
     if (button.isConnected) button.disabled = false;
   }
 });
-async function renderView(view, { focus = true } = {}) {
+async function renderView(view, { focus = true, fromRoute = false } = {}) {
   const selected = sections.find((section) => section.id === view);
   if (!selected || !has(selected.permission)) return;
   activeView = view;
+  if (!fromRoute && resolveAdminRoute(location.pathname)?.item.id !== view) history.pushState(null, "", selected.href);
+  if (selected.group) openedGroups.add(selected.group);
   document.title = selected.label + " | Jielien Admin";
-  $("#workspace-current").textContent = selected.label;
-  $(".admin-layout").classList.remove("navigation-open");
-  $("#admin-menu-toggle").setAttribute("aria-expanded", "false");
+  updateNavigation(); updateBreadcrumb(); setMobileMenu(false);
+  const filters = readAdminFilters(view, location.search);
+  if (view === "orders") bankOnly = filters.bankPending;
   const version = ++viewVersion;
   const content = $("#admin-content");
-  $$("[data-section]").forEach((button) => {
-    button.classList.toggle("active", button.dataset.section === view);
-    if (button.dataset.section === view)
-      button.setAttribute("aria-current", "page");
-    else button.removeAttribute("aria-current");
-  });
   content.setAttribute("aria-busy", "true");
   content.innerHTML =
     '<div class="panel loading">Đang tải dữ liệu cửa hàng…</div>';
@@ -521,14 +496,16 @@ async function renderView(view, { focus = true } = {}) {
     if (view === "dashboard") {
       const { stats = {} } = await api("/api/admin/dashboard");
       html = dashboardMarkup(stats);
+      void refreshNavigationBadge(stats);
     }
     if (view === "products") {
       ({ products: productRows = [] } = await api("/api/admin/products"));
       html = productsMarkup();
     }
     if (view === "orders") {
-      ({ orders: orderRows = [] } = await api("/api/admin/orders"));
+      ({ orders: orderRows = [] } = await api("/api/admin/orders" + adminFilterSearch("orders", filters)));
       html = ordersMarkup();
+      void refreshNavigationBadge();
     }
     if (view === "inventory") {
       ({ inventory: inventoryRows = [] } = await api("/api/admin/inventory"));
@@ -540,6 +517,8 @@ async function renderView(view, { focus = true } = {}) {
     }
     if (version !== viewVersion) return;
     content.innerHTML = html;
+    if (view === "orders") { $("#order-status").value = filters.status; filterOrders(); }
+    if (view === "inventory") { $("#inventory-stock").value = filters.stock; filterInventory(); }
     prepareMobileTables();
     if (!has("catalog.manage"))
       $$("[data-edit-variant]", content).forEach((e) => e.remove());
@@ -552,7 +531,7 @@ async function renderView(view, { focus = true } = {}) {
         api("/api/admin/reports/summary")
           .then(({ report }) => {
             if (version === viewVersion && insights.isConnected)
-              insights.innerHTML = reportVisuals(report, escape);
+              insights.innerHTML = reportVisuals(report, escape, { dashboard: true });
           })
           .catch(() => {
             if (insights.isConnected)
@@ -638,14 +617,14 @@ function paymentMarkup(order) {
   if (order.payment === "bank_transfer") {
     const transfer = order.transfer;
     const details = transfer
-      ? `<dl class="profile-grid"><div><dt>Ngân hàng</dt><dd>${escape(transfer.bankName)}</dd></div><div><dt>Tài khoản nhận</dt><dd>${escape(transfer.accountNumber)}</dd></div><div><dt>Chủ tài khoản</dt><dd>${escape(transfer.accountName)}</dd></div><div><dt>Nội dung chuyển khoản</dt><dd><b>${escape(transfer.reference)}</b></dd></div><div><dt>Số tiền cần đối soát</dt><dd><b>${money(order.total)}</b></dd></div></dl>`
+      ? `<dl class="profile-grid"><div><dt>Ngân hàng</dt><dd>${escape(transfer.bankName)}</dd></div><div><dt>Tài khoản nhận</dt><dd>${escape(transfer.accountNumber)}</dd></div><div><dt>Chủ tài khoản</dt><dd>${escape(transfer.accountName)}</dd></div><div><dt>Nội dung chuyển khoản</dt><dd><b>${escape(transfer.reference)}</b> <button type="button" class="secondary" data-bank-copy="${escape(transfer.reference)}">Sao chép nội dung</button></dd></div><div><dt>Số tiền cần đối soát</dt><dd><b>${money(order.total)}</b> <button type="button" class="secondary" data-bank-copy="${order.total}">Sao chép số tiền</button></dd></div></dl>`
       : "";
     const active =
-      Object.hasOwn(transitions, order.status) && order.status !== "cancelled";
+      Object.hasOwn(transitions, order.status) && order.status !== "cancelled" && !(order.paymentStatus === "pending" && order.paymentExpiresAt && new Date(order.paymentExpiresAt).getTime() <= Date.now());
     const confirm =
       active && order.paymentStatus === "pending"
-        ? `<p class="support-text">Đối chiếu sao kê ngân hàng: nhận đủ ${money(order.total)} và đúng nội dung đơn hàng trước khi xác nhận. Khách gửi yêu cầu đặt hàng hoặc ảnh chuyển khoản không tự làm đơn thành đã thanh toán.</p><form id="bank-transfer-form"><div id="bank-transfer-error" class="form-error" role="alert"></div><button class="primary">Xác nhận đã nhận chuyển khoản</button></form>`
-        : `<p class="support-text">${order.paymentStatus === "paid" ? "Khoản chuyển này đã được xác nhận. Lịch sử ghi nhận được lưu trong nhật ký hệ thống." : "Đơn không có khoản chuyển đang chờ xác nhận."}</p>`;
+        ? `<p class="support-text">Đối chiếu sao kê ngân hàng: nhận đủ ${money(order.total)} và đúng nội dung đơn hàng trước khi xác nhận. Khách gửi yêu cầu đặt hàng hoặc ảnh chuyển khoản không tự làm đơn thành đã thanh toán.</p><form id="bank-transfer-form"><label>Số tiền thực nhận (đồng)<input id="bank-received-amount" name="receivedAmount" type="number" min="0" step="1" required inputmode="numeric" placeholder="Nhập số tiền trên sao kê"></label><label>Mã giao dịch ngân hàng (khuyến khích)<input name="bankTransactionRef" maxlength="100" placeholder="Không nhập thông tin cá nhân"></label><p id="bank-amount-warning" class="form-error" role="alert" hidden>Số tiền thực nhận khác số phải thu. Kiểm tra thiếu/thừa tiền trước khi xác nhận.</p><label id="bank-mismatch-label" hidden><input type="checkbox" name="mismatchConfirmed"> Tôi đã kiểm tra, đồng ý đánh dấu đã thanh toán và xử lý phần chênh lệch riêng.</label><div id="bank-transfer-error" class="form-error" role="alert"></div><button class="primary">Xác nhận đã nhận chuyển khoản</button></form>`
+        : `<p class="support-text">${order.paymentStatus === "paid" ? "Khoản chuyển này đã được xác nhận. Lịch sử ghi nhận được lưu trong nhật ký hệ thống." : "Đơn đã hủy/hết hạn hoặc không còn chờ đối soát. Nếu đã nhận tiền, cần xử lý hoàn tiền hoặc tạo lại đơn; không xác nhận cho đơn này."}</p>`;
     return `<section class="dialog-section"><h3>Đối soát chuyển khoản ngân hàng</h3>${details}${confirm}</section>`;
   }
   if (
@@ -658,8 +637,17 @@ function paymentMarkup(order) {
 }
 function openOrder(number) {
   const order = orderRows.find((row) => row.id === number);
-  if (order)
-    showDialog("Đơn hàng " + number, orderDetail(order), "order", order);
+  if (order) {
+    if (!$("#admin-dialog").open) showDialog("Đơn hàng " + number, orderDetail(order), "order", order);
+    else {
+      dialogType = "order"; dialogItem = order;
+      $("#admin-dialog-title").textContent = "Đơn hàng " + number;
+      $("#admin-dialog-content").innerHTML = orderDetail(order);
+    }
+    const href = adminNav.find(item => item.id === "orders").href + "/" + encodeURIComponent(number) + adminFilterSearch("orders", readAdminFilters("orders", location.search));
+    if (location.pathname + location.search !== href) history.pushState(null, "", href);
+    updateBreadcrumb();
+  }
 }
 async function mutation(form) {
   if (mutationBusy || !form.reportValidity()) return;
@@ -737,7 +725,7 @@ async function mutation(form) {
         "/api/admin/orders/" +
           encodeURIComponent(dialogItem.id) +
           "/bank-transfer",
-        { method: "POST", body: {} },
+        { method: "POST", body: { receivedAmount: Number(data.receivedAmount), bankTransactionRef: data.bankTransactionRef || "", mismatchConfirmed: data.mismatchConfirmed === "on" } },
       );
     $("#admin-dialog").close();
     notify("Đã lưu thay đổi.");
@@ -799,13 +787,6 @@ root.addEventListener("click", (event) => {
     );
     return;
   }
-  const section = event.target.closest(
-    "[data-section], [data-workspace-section]",
-  );
-  if (section) {
-    renderView(section.dataset.section || section.dataset.workspaceSection);
-    return;
-  }
   if (event.target.closest("#refresh-view")) {
     renderView(activeView);
     return;
@@ -856,15 +837,28 @@ root.addEventListener("input", (event) => {
   if (event.target.id === "order-search") filterOrders();
   if (event.target.id === "inventory-search") filterInventory();
 });
+function updateFilterUrl(patch) {
+  const filters = { ...readAdminFilters(activeView, location.search), ...patch };
+  const item = adminNav.find(item => item.id === activeView);
+  const href = item.href + adminFilterSearch(activeView, filters);
+  if (location.pathname + location.search !== href) history.pushState(null, "", href);
+}
 root.addEventListener("change", (event) => {
+  if (event.target.id === "order-bank-filter") {
+    updateFilterUrl({ bankPending: event.target.value === "pending" });
+    void renderView("orders");
+  }
   if (event.target.id === "product-status") filterProducts();
-  if (event.target.id === "order-status") filterOrders();
+  if (event.target.id === "order-status") { updateFilterUrl({ status: event.target.value }); void renderView("orders"); }
   if (
     ["inventory-warehouse", "inventory-stock", "inventory-sort"].includes(
       event.target.id,
     )
   )
-    filterInventory();
+    {
+      if (event.target.id === "inventory-stock") updateFilterUrl({ stock: event.target.value });
+      filterInventory();
+    }
 });
 $("#admin-dialog").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -894,12 +888,13 @@ async function init() {
       return;
     }
     shell();
-    await renderView(
-      has("dashboard.read")
-        ? "dashboard"
-        : sections.find((s) => has(s.permission)).id,
-      { focus: false },
-    );
+    const linkedOrder = new URLSearchParams(location.search).get("order");
+    if (linkedOrder && has("orders.read")) history.replaceState(null, "", adminNav.find(item => item.id === "orders").href + "/" + encodeURIComponent(linkedOrder));
+    if (location.pathname === "/admin.html" || (location.pathname === "/quan-tri" && !has("dashboard.read"))) {
+      history.replaceState(null, "", sections.find(item => has(item.permission)).href);
+    }
+    await navigateAdmin(location.pathname + location.search, { historyMode: "none", focus: false });
+    if (activeView !== "dashboard" && activeView !== "orders") void refreshNavigationBadge();
   } catch (error) {
     if (error.status === 401) {
       gate(
@@ -915,3 +910,53 @@ root.addEventListener("click", (event) => {
 });
 const editors = createCommerceEditors({ root, api, has, escape, notify });
 init();
+
+document.addEventListener("input", event => {
+  if (!event.target.matches('#bank-transfer-form [name="receivedAmount"]')) return;
+  const form = event.target.form;
+  const mismatch = event.target.value !== "" && Number(event.target.value) !== Number(dialogItem?.total);
+  form.querySelector("#bank-amount-warning").hidden = !mismatch;
+  form.querySelector("#bank-mismatch-label").hidden = !mismatch;
+  form.elements.mismatchConfirmed.required = mismatch;
+  form.elements.mismatchConfirmed.checked = false;
+});
+document.addEventListener("click", async event => {
+  const copy = event.target.closest("[data-bank-copy]");
+  if (!copy) return;
+  try { await navigator.clipboard.writeText(copy.dataset.bankCopy); notify("Đã sao chép."); }
+  catch { notify("Chưa sao chép được. Bạn chọn và sao chép thông tin đang hiển thị."); }
+});
+
+async function navigateAdmin(href, { historyMode = "push", focus = true } = {}) {
+  if (!user) return;
+  const version = ++routeVersion;
+  const target = new URL(href, location.origin);
+  if (target.origin !== location.origin) return;
+  const nextUrl = target.pathname + target.search;
+  const route = resolveAdminRoute(target.pathname);
+  if (!route || !has(route.item.permission)) {
+    if (historyMode !== "none" && location.pathname + location.search !== nextUrl) history.pushState(null, "", nextUrl);
+    $("#admin-content").innerHTML = '<section class="panel"><h1>Không thể mở mục quản trị</h1><p>Đường dẫn không tồn tại hoặc tài khoản chưa có quyền truy cập.</p></section>';
+    return;
+  }
+  if ($("#admin-dialog").open) { ignoreDialogClose = true; $("#admin-dialog").close(); }
+  if (historyMode !== "none" && location.pathname + location.search !== nextUrl) history.pushState(null, "", nextUrl);
+  await renderView(route.item.id, { focus, fromRoute: true });
+  if (version !== routeVersion) return;
+  if (route.detailId) {
+    try {
+      const { order } = await api("/api/admin/orders/" + encodeURIComponent(route.detailId));
+      if (version !== routeVersion) return;
+      if (!orderRows.some(row => row.id === order.id)) orderRows.push(order);
+      openOrder(order.id);
+    } catch (error) { if (version === routeVersion) { notify(error.message); updateBreadcrumb(); } }
+  }
+}
+window.addEventListener("popstate", () => { void navigateAdmin(location.pathname + location.search, { historyMode: "none" }); });
+$("#admin-dialog").addEventListener("close", () => {
+  if (ignoreDialogClose) { ignoreDialogClose = false; return; }
+  const route = resolveAdminRoute(location.pathname);
+  if (user && route?.detailId && !$("#admin-dialog").open) {
+    history.replaceState(null, "", route.item.href + adminFilterSearch(route.item.id, readAdminFilters(route.item.id, location.search))); updateBreadcrumb();
+  }
+});

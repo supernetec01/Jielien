@@ -108,8 +108,8 @@ try {
     "http://" + (await docker(["port", "app", "3001"], true));
   let base = await url();
   assert.equal(
-    (await (await fetch(base + "/api/health")).json()).database,
-    "postgresql",
+    (await (await fetch(base + "/api/health")).json()).status,
+    "ok",
   );
   const methods = await (await fetch(base + "/api/payment-methods")).json();
   assert.equal(

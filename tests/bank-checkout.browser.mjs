@@ -1,3 +1,4 @@
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { chromium } from "playwright-core";
@@ -289,9 +290,10 @@ try {
   await admin.locator("#password").fill(password);
   await admin.locator("#auth-submit").click();
   await admin.waitForURL("**/quan-tri");
-  await admin.locator('[data-section="orders"]').click();
+  await openAdminView(admin, "orders");
   await admin.locator(`[data-admin-order="${order.id}"]`).click();
   await admin.locator("#bank-transfer-form button").waitFor();
+  await admin.locator('#bank-transfer-form [name="receivedAmount"]').fill(String(order.total));
   await admin.locator("#bank-transfer-form button").click();
   await admin.waitForFunction(
     () => !document.querySelector("#admin-dialog").open,
@@ -303,7 +305,7 @@ try {
     {
       method: "POST",
       csrfToken: adminSession.body.csrfToken,
-      body: { amount: 1 },
+      body: { receivedAmount: 1 },
     },
   );
   assert.equal(repeat.status, 200);

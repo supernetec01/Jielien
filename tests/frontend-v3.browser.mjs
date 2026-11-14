@@ -1,3 +1,4 @@
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { chromium } from "playwright-core";
@@ -249,7 +250,7 @@ try {
   ]);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(f.base + "/quan-tri");
-  await page.locator('[data-section="banners-editor"]').click();
+  await openAdminView(page, "banners-editor");
   await page.locator("#banner-form").waitFor();
   await page
     .locator('[data-editor-action="banner-edit:' + f.banners[1].id + '"]')
@@ -304,7 +305,7 @@ try {
     "Studio edits slot/mobile/sort and persists to public poster; staff never gets public Admin links",
   );
   await page.goto(f.base + "/quan-tri");
-  await page.locator('[data-section="users"]').click();
+  await openAdminView(page, "users");
   await page.locator("#new-staff").click();
   const staffForm = page.locator("#create-staff-form");
   await staffForm.locator('[name="fullName"]').fill("Banner staff UI");
@@ -342,7 +343,7 @@ try {
   await staffPage.locator("#profile-form").waitFor();
   await staffPage.locator('a[href="/quan-tri"]').click();
   await staffPage.waitForURL("**/quan-tri");
-  await staffPage.locator('[data-section="banners-editor"]').click();
+  await openAdminView(staffPage, "banners-editor");
   await staffPage.locator("#banner-form").waitFor();
   assert.equal(
     await staffPage.locator('[data-section="settings-editor"]').count(),

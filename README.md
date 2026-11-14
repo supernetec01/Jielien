@@ -1,5 +1,7 @@
 # Jielien International — Commerce & CMS PostgreSQL
 
+Bản thử Admin tổng hợp và bộ lọc URL: xem [hướng dẫn kéo nhánh feat/admin-url-filters và chạy bằng Docker](docs/TRY_ADMIN_UPDATE.md).
+
 Bản demo hợp nhất trên nhánh `main`, với giao diện cửa hàng và Admin theo bộ thiết kế Jielien. Chưa triển khai công khai. Có catalog cha/SKU/media, tài khoản nhân viên do admin tạo, CMS duyệt/xuất bản và SEO HTML, CSV, phiếu kho/đổi trả, backup database + media.
 
 - **[File theo dõi tập trung: chức năng chưa triển khai, còn thiếu gì và bạn cần cung cấp thông tin nào](docs/CHUC_NANG_CHUA_TRIEN_KHAI.md)** — cập nhật theo bản `main` hợp nhất ngày 09/11/2026; ưu tiên đọc trước các backlog/QA cũ.
@@ -47,6 +49,30 @@ npm run local:stop
 
 VietQR local cần đủ bốn biến `BANK_*` trong `.env.local`. Lần khởi tạo đầu chỉ sao chép thông tin nhận tiền hợp lệ, đầy đủ từ biến môi trường hoặc `.env`; nếu thiếu sẽ để trống và chỉ bật COD. Điền đủ rồi chạy lại `npm run local:start`; không đưa file cấu hình lên Git. Xem [hướng dẫn Windows](docs/LOCAL_WINDOWS.md) về chuyển dữ liệu cũ, cổng bị chiếm và cấu hình ngân hàng.
 
+### Chỉnh tài khoản nhận tiền trong Admin
+
+Vào **Quản trị → Quản lý hệ thống → Tài khoản nhận tiền**. Bạn có thể nhập/sửa **tên ngân hàng**, **mã ngân hàng VietQR (6 chữ số)**, **số tài khoản**, **tên chủ tài khoản** rồi bấm **Lưu tài khoản nhận tiền**. Mã VietQR khác mã chi nhánh và số tài khoản; nếu chưa xác nhận được mã, để trống và giữ ô **Bật thanh toán chuyển khoản cho đơn mới** ở trạng thái tắt. Thông tin chưa đủ vẫn lưu được dưới dạng nháp; không tạo QR bằng mã giả. **Hủy chỉnh sửa** tải lại thông tin đã lưu, không ghi thay đổi.
+
+Khi chưa từng lưu trong Admin, hệ thống đọc bốn biến `BANK_NAME`, `BANK_BIN`, `BANK_ACCOUNT_NUMBER`, `BANK_ACCOUNT_NAME` như trước. Sau khi lưu, cấu hình Admin được ưu tiên và có hiệu lực với đơn mới ngay, không cần khởi động lại. Đơn cũ và lần gửi lại cùng mã yêu cầu giữ nguyên thông tin nhận tiền/QR đã lưu. Tắt ô bật chuyển khoản rồi lưu để ngừng nhận đơn chuyển khoản mới; COD vẫn dùng được. Cấu hình dùng bảng `site_settings` hiện có, không cần migration hay xóa dữ liệu.
+
+Chỉ người có quyền xem cấu hình mới xem được màn hình; cần quyền sửa cấu hình để lưu. Kiểm tra phiên đăng nhập, CSRF và phiên bản dữ liệu vẫn được áp dụng. Nhật ký chỉ ghi người thao tác, thời gian và bật/tắt, không ghi số tài khoản hoặc tên chủ tài khoản. Thông tin ngân hàng không được đưa vào `/api/site` hay phần thông tin công ty công khai; khách chỉ nhận thông tin thanh toán trong đơn được phép xem. Không nhập mật khẩu ngân hàng, API key hoặc token SePay vào đây.
+
+Sau khi cập nhật source, rebuild stack Docker hiện có để có màn hình mới; chưa có triển khai tự động. Kiểm tra bằng tay: lưu nháp khi thiếu mã → tải lại thấy dữ liệu còn → điền đủ thông tin đã xác minh và bật → tạo đơn chuyển khoản thử → đổi thông tin và kiểm tra đơn cũ không đổi → tắt rồi kiểm tra đơn mới chỉ còn COD. Dùng dữ liệu thử, không cần chuyển tiền thật. `npm run test:bank` bao gồm kiểm tra API và trình duyệt cho cấu hình ngân hàng. Tích hợp webhook SePay chưa được thực hiện trong phần này.
+
+Xem [báo cáo cấu hình ngân hàng, danh sách file và kết quả kiểm thử](docs/validation/BANK_SETTINGS.md).
+
+### Đối soát thủ công và đơn quá hạn
+
+Admin → Đơn hàng → **Chờ đối soát** hiển thị đơn chuyển khoản cũ nhất trước, tiền cần thu, nội dung và dấu hiệu khách báo đã chuyển. Khi xác nhận, nhập số tiền thực nhận; mã giao dịch khuyến khích nhập. Chênh lệch cần tick xác nhận sau khi kiểm tra: đơn được đánh dấu đã thanh toán và nhân viên xử lý phần thiếu/thừa riêng. Báo cáo tiền đã thu dùng thực nhận; số phải thu và QR gốc của đơn được giữ nguyên.
+
+Tự hủy mặc định tắt: `ORDER_EXPIRY_ENABLED=false`, `BANK_TRANSFER_TTL_HOURS=24`. Chạy `npm run orders:expire -- --dry-run` để xem trước (chỉ đọc, không migration/hủy). Khi bật và khởi động lại, job mỗi 10 phút dùng advisory lock, kiểm tra lại từng đơn trong transaction rồi hủy qua luồng hiện có, lý do **Hết hạn thanh toán**. COD/paid không bị hủy. Đơn cũ chưa có hạn được xét theo ngày tạo + TTL; cần xem dry-run trước khi bật trên dữ liệu thật.
+
+Khách xem hạn/thời gian còn lại, sao chép thông tin và bấm **Tôi đã chuyển khoản** để báo nhân viên, tối đa một lần mỗi 5 phút; nút không xác nhận tiền. Đơn hủy/hết hạn chặn xác nhận và hướng dẫn hoàn tiền/tạo lại đơn.
+
+Telegram chỉ là thông báo nhân viên, không kết nối ngân hàng: mặc định `STAFF_NOTIFY_ENABLED=false`. Muốn bật, cấu hình `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `PUBLIC_BASE_URL` HTTPS riêng trong môi trường rồi khởi động lại. Tin chỉ có mã đơn, số tiền và link Admin. Gửi sau phản hồi, có timeout/hàng đợi thử lại; lỗi gửi không làm hỏng đặt hàng. Không đưa token vào code hoặc Admin.
+
+Xem [hướng dẫn kiểm tra, bật/tắt, migration và giới hạn](docs/validation/MANUAL_BANK_WORKFLOW.md). Chưa có deploy tự động; cần cập nhật source và rebuild Docker theo quy trình hiện có.
+
 ## Chạy trong môi trường đám mây đã chuẩn bị
 
 Cần **Node.js >=24.11** và PostgreSQL. Không chiếm hoặc dừng cổng **3000**.
@@ -63,6 +89,33 @@ Máy chủ mặc định `0.0.0.0:3001`. Dùng PostgreSQL cục bộ tại `/wor
 Với PostgreSQL bên ngoài, đặt `DATABASE_URL` qua cấu hình an toàn hoặc `.env` (đã Git ignore); `.env.example` chỉ chứa cấu hình phát triển không có mật khẩu. Không cần chạy db:local khi dùng server PostgreSQL riêng. Khi phục vụ qua HTTPS, đặt `COOKIE_SECURE=true`; `NODE_ENV=production` cũng bật cookie Secure. Không triển khai tài khoản có mật khẩu trên HTTP công khai.
 
 API cần Node/PostgreSQL và ổ đĩa bền vững; GitHub Pages không chạy backend này. Website chưa có URL công khai chỉ nhờ push GitHub.
+
+## Theo dõi lỗi Sentry và kiểm tra sức khỏe
+
+`GET /api/health` không cần đăng nhập, không cache. Máy chủ chạy `SELECT 1` vào PostgreSQL rồi trả `{status:"ok", time, version}`; khi không truy cập được database trả HTTP **503**, `status:"error"`, không trả chi tiết lỗi. `time` là giờ UTC dạng ISO; `version` là phiên bản ứng dụng trong `package.json`.
+
+Sentry mặc định **tắt**. Điền các biến bên dưới vào cấu hình riêng của máy chạy; không commit DSN/token/mật khẩu. Native dùng `.env`; Docker local dùng `.env.local`; production dùng biến môi trường của stack hiện có.
+
+| Biến | Ý nghĩa |
+|---|---|
+| `SENTRY_DSN_BACKEND` | DSN của project Sentry cho máy chủ. Để trống để tắt backend. |
+| `SENTRY_DSN_FRONTEND` | DSN HTTPS của project Sentry cho trình duyệt. Đây là cấu hình công khai, không phải token quản trị. Để trống để tắt frontend. |
+| `SENTRY_ENVIRONMENT` | Tên môi trường, ví dụ `development` hoặc `production`; không chứa dữ liệu cá nhân. |
+| `GIT_COMMIT` | SHA commit làm release. Checkout Git tự đọc HEAD nếu không điền; Docker không chứa `.git` nên cần điền SHA từ `git rev-parse HEAD` trước khi chạy/rebuild. Nếu cả hai đều thiếu, không gắn release. |
+
+`npm start`, `npm run dev`, `npm run demo:server` và Docker đã nạp `instrument.mjs` trước server. Nếu chạy Node trực tiếp, dùng `node --import ./instrument.mjs --env-file-if-exists=.env server.mjs`. Backend lấy mẫu trace ở tỷ lệ **5%** và ghi nhận lỗi 5xx/ngoại lệ chưa xử lý. Frontend tải SDK Sentry **11.12.0** từ `browser.sentry-cdn.com` chỉ khi có DSN hợp lệ; CSP chỉ thêm CDN và nơi nhận sự kiện tương ứng khi bật. Không bật session replay, theo dõi phiên, console breadcrumbs hoặc tự động thu dữ liệu người dùng. SDK/CDN không tải được thì website vẫn hoạt động.
+
+Bộ lọc chung cho hai phía chỉ giữ loại lỗi, tên file source cho phép và số dòng/cột; bỏ nội dung lỗi tự do, người dùng, request/body (bao gồm `/api/orders`, `/api/auth/*`), cookie, Authorization, URL/query/token, breadcrumbs và dữ liệu bổ sung. Trace chỉ giữ thời gian và mã kỹ thuật; tên request được thay bằng tên chung, bỏ span chi tiết. Cách này ưu tiên bảo vệ thông tin khách; nội dung chẩn đoán trong Sentry sẽ ít chi tiết hơn. Không upload source map hay gửi email/đơn hàng thật để thử lỗi.
+
+Tự kiểm tra:
+
+1. Để hai DSN trống, khởi động bằng `npm start` hoặc rebuild stack Docker hiện có. Mở trang chủ, tài khoản và giỏ hàng; các trang phải hoạt động bình thường.
+2. Mở `/api/health`: thấy `status: "ok"`, thời gian và phiên bản; DevTools → Network cho thấy HTTP 200 và `Cache-Control: no-store`.
+3. Muốn bật, điền DSN tương ứng, tên môi trường và commit rồi khởi động lại/rebuild. Kiểm tra trình duyệt chỉ tải SDK khi đã bật; `/api/site` không chứa DSN backend.
+4. Trên **môi trường thử nghiệm, không dùng dữ liệu thật**, mở Console và chạy `window.Sentry?.captureException(new Error("Kiem tra theo doi loi"))`. Kiểm tra Sentry có sự kiện với nội dung lỗi đã ẩn, không có thông tin khách/cookie/body. Nếu chặn CDN trong DevTools, trang vẫn mua sắm được.
+5. Chạy `npm run test:monitoring`: kiểm tra 200/503, bộ lọc và vận hành khi không có DSN. Test dùng schema riêng; không cần dừng database thật để giả lập lỗi.
+
+Để tắt: xóa giá trị của DSN tương ứng rồi khởi động lại/rebuild, tải lại trang. Health check tiếp tục hoạt động. Không có migration hay thay đổi cấu trúc database cho tính năng này. Hoàn tác code bằng quy trình Git/rebuild hiện có; không xóa database hoặc volume. Chưa cấu hình DSN hay triển khai thay cho chủ dự án.
 
 ## Các màn hình
 

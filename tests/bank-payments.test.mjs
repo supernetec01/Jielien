@@ -142,7 +142,7 @@ test("local VietQR uses the NAPAS transfer TLV structure, integral amount and CR
 test("bank transfers remain disabled without valid receiving configuration and create no order or reservation", async (t) => {
   const { store, pool } = await fixture(t, {});
   assert.equal(
-    store.paymentMethods().find((m) => m.id === "bank_transfer").enabled,
+    (await store.paymentMethods()).find((m) => m.id === "bank_transfer").enabled,
     false,
   );
   await assert.rejects(store.createOrder(request("bank-disabled-001")), {

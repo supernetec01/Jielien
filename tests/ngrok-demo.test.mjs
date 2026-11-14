@@ -77,7 +77,7 @@ test("health and token failures prevent tunnel creation; secrets are redacted", 
       env: {},
       request: async () => ({
         ok: true,
-        json: async () => ({ status: "ok", database: "postgresql" }),
+        json: async () => ({ status: "ok", time: new Date().toISOString(), version: "3.0.0" }),
       }),
       load: async () => {
         loaded = true;
@@ -100,7 +100,7 @@ test("successful ngrok adapter exposes only HTTPS and closes listeners", async (
     env: { NGROK_AUTHTOKEN: "fixture-token" },
     request: async () => ({
       ok: true,
-      json: async () => ({ status: "ok", database: "postgresql" }),
+      json: async () => ({ status: "ok", time: new Date().toISOString(), version: "3.0.0" }),
     }),
     load: async () => ({
       forward: async (options) => {
@@ -123,7 +123,7 @@ test("successful ngrok adapter exposes only HTTPS and closes listeners", async (
       env: { NGROK_AUTHTOKEN: "fixture-token" },
       request: async () => ({
         ok: true,
-        json: async () => ({ status: "ok", database: "postgresql" }),
+        json: async () => ({ status: "ok", time: new Date().toISOString(), version: "3.0.0" }),
       }),
       load: async () => ({
         forward: async () => ({

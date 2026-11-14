@@ -1,3 +1,4 @@
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -39,7 +40,7 @@ try {
   async function navigate(section) {
     const menu = page.locator("#admin-menu-toggle");
     if (await menu.isVisible()) await menu.click();
-    await page.locator(`[data-section="${section}"]`).click();
+    await openAdminView(page, section);
   }
   await navigate("taxonomy-editor");
   const categoryForm = page.locator('[data-tax-kind="categories"]');

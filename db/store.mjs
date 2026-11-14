@@ -1,4 +1,7 @@
+import { bankTransferPolicy, paymentDeadline } from "../lib/bank-transfer-policy.mjs";
+import { queueStaffNotification } from "../lib/staff-notifications.mjs";
 import { shippingPolicy } from "../lib/shipping-policy.mjs";
+import { createBankSettings } from "../lib/bank-settings.mjs";
 import { renderBlocks } from "../lib/commerce-common.mjs";
 import { randomBytes, createHash } from "node:crypto";
 import { migrate } from "./migrate.mjs";
@@ -6,8 +9,6 @@ import { seedCatalog } from "./seed.mjs";
 import { importLegacy } from "./import-legacy.mjs";
 import {
   buildVietQr,
-  readBankConfig,
-  normalizeBankConfig,
 } from "../lib/vietqr.mjs";
 
 export class StoreError extends Error {
@@ -107,7 +108,8 @@ function normalizeItems(items) {
     .sort((a, b) => a.id - b.id);
 }
 async function transaction(pool, work) {
-  const client = await pool.connect();
+  const borrowed = typeof pool.release === "function";
+  const client = borrowed ? pool : await pool.connect();
   try {
     await client.query("BEGIN");
     const result = await work(client);
@@ -117,7 +119,7 @@ async function transaction(pool, work) {
     await client.query("ROLLBACK");
     throw error;
   } finally {
-    client.release();
+    if (!borrowed) client.release();
   }
 }
 async function audit(
@@ -348,6 +350,8 @@ async function readOrder(client, numberValue) {
     token: o.access_token,
     status: o.status,
     createdAt: iso(o.created_at),
+    paymentExpiresAt: paymentDeadline(o)?.toISOString() || null,
+    transferReportedAt: o.bank_payment_reported_at ? iso(o.bank_payment_reported_at) : null,
     customer: {
       name: o.recipient_name,
       phone: o.recipient_phone,
@@ -409,9 +413,11 @@ export async function createStore({
   catalogPath,
   legacyPath,
   bankConfig,
+  migrateSchema = true,
 } = {}) {
   if (!pool) throw new Error("PostgreSQL pool is required.");
-  await migrate(pool);
+  if (migrateSchema) await migrate(pool);
+  const expiryPolicy = bankTransferPolicy();
   const seeded = await pool.query(
     "SELECT EXISTS (SELECT 1 FROM product_variants) AS present",
   );
@@ -420,14 +426,13 @@ export async function createStore({
   const importResult = legacyPath
     ? await importLegacy({ pool, legacyPath })
     : { imported: false, reason: "not_requested" };
-  const bank =
-    bankConfig === undefined
-      ? readBankConfig()
-      : normalizeBankConfig(bankConfig);
+  const bankSettings = createBankSettings(pool, { fallback: bankConfig });
   return {
     pool,
     importResult,
-    paymentMethods() {
+    bankSettings,
+    async paymentMethods() {
+      const bank = await bankSettings.effective();
       return [
         {
           id: "cod",
@@ -523,6 +528,7 @@ export async function createStore({
             );
           return readOrder(client, existing.order_number);
         }
+        const bank = input.payment === "bank_transfer" ? await bankSettings.effective(client, true) : { enabled: false };
         if (input.payment === "bank_transfer" && !bank.enabled)
           fail(
             503,
@@ -683,6 +689,10 @@ export async function createStore({
             "UPDATE carts SET status='converted',updated_at=NOW() WHERE user_id=$1 AND status='active'",
             [userId],
           );
+        if (input.payment === "bank_transfer") {
+          if (expiryPolicy.enabled) await client.query("UPDATE orders SET bank_payment_due_at=created_at+($2*interval '1 hour') WHERE id=$1", [order.id, expiryPolicy.hours]);
+          await queueStaffNotification(client, { id: order.id, grand_total: q.total }, "bank_order", `bank-order-${order.id}`);
+        }
         await audit(client, userId, "order.created", "order", orderNumber, {
           total: q.total,
           items: items.length,
@@ -693,14 +703,17 @@ export async function createStore({
     async getOrderByNumber(numberValue) {
       return readOrder(pool, numberValue);
     },
-    async listOrders({ userId, limit = 100 } = {}) {
+    async listOrders({ userId, limit = 100, bankPending = false, status = "" } = {}) {
+      if (status && !Object.hasOwn(statuses, status)) fail(400, "invalid_order_status", "Trạng thái đơn hàng không hợp lệ.");
       const cap = Math.min(200, Math.max(1, Number(limit) || 100));
+      const conditions = [], values = [];
+      if (userId != null) { values.push(userId); conditions.push("user_id=$" + values.length); }
+      else if (bankPending) conditions.push("payment_method='bank_transfer' AND status<>'cancelled' AND EXISTS(SELECT 1 FROM payments p WHERE p.order_id=orders.id AND p.method='bank_transfer' AND p.status='pending')");
+      if (status) { values.push(status); conditions.push("status=$" + values.length); }
       const rows = await pool.query(
-        "SELECT order_number FROM orders" +
-          (userId != null ? " WHERE user_id=$1" : "") +
-          " ORDER BY created_at DESC,id DESC LIMIT " +
-          cap,
-        userId != null ? [userId] : [],
+        "SELECT order_number FROM orders" + (conditions.length ? " WHERE " + conditions.join(" AND ") : "") +
+          (bankPending ? " ORDER BY created_at,id LIMIT " : " ORDER BY created_at DESC,id DESC LIMIT ") + cap,
+        values,
       );
       const list = [];
       for (const row of rows.rows) {
@@ -710,11 +723,12 @@ export async function createStore({
       }
       return list;
     },
-    async updateOrderStatus(orderNumber, status, actorId, reason = "") {
+    async updateOrderStatus(orderNumber, status, actorId, reason = "", { expireOnly = false, connection } = {}) {
       const statusNote = reason
         ? clean(reason, "Ghi chú xử lý", 0, 500, true)
         : "";
-      return transaction(pool, async (client) => {
+      return transaction(connection || pool, async (client) => {
+        if (expireOnly) await client.query("SET LOCAL lock_timeout='2s'");
         const o = (
           await client.query(
             "SELECT * FROM orders WHERE order_number=$1 FOR UPDATE",
@@ -722,6 +736,11 @@ export async function createStore({
           )
         ).rows[0];
         if (!o) fail(404, "order_not_found", "Không tìm thấy đơn hàng.");
+        if (expireOnly) {
+          if (!expiryPolicy.enabled || status !== "cancelled" || o.payment_method !== "bank_transfer" || !["pending", "confirmed", "processing"].includes(o.status) || paymentDeadline(o, expiryPolicy).getTime() > Date.now()) return null;
+          const payments = (await client.query("SELECT status FROM payments WHERE order_id=$1 FOR UPDATE", [o.id])).rows;
+          if (!payments.some(p => p.status === "pending") || payments.some(p => p.status === "paid")) return null;
+        }
         if (status === o.status) return readOrder(client, orderNumber);
         if (
           ["shipped", "delivered"].includes(status) &&
@@ -825,12 +844,26 @@ export async function createStore({
           "order.status_changed",
           "order",
           orderNumber,
-          { from: o.status, to: status },
+          { from: o.status, to: status, ...(expireOnly ? { source: "system:order-expiry", reason: "Hết hạn thanh toán" } : {}) },
         );
         return readOrder(client, orderNumber);
       });
     },
-    async recordBankTransfer(orderNumber, actorId) {
+    async reportTransfer(orderNumber) {
+      return transaction(pool, async client => {
+        const o = (await client.query("SELECT * FROM orders WHERE order_number=$1 FOR UPDATE", [orderNumber])).rows[0];
+        if (!o) fail(404, "order_not_found", "Không tìm thấy đơn hàng.");
+        const pending = (await client.query("SELECT id FROM payments WHERE order_id=$1 AND method='bank_transfer' AND status='pending'", [o.id])).rowCount;
+        if (o.status === "cancelled" || !pending || (paymentDeadline(o, expiryPolicy)?.getTime() <= Date.now())) fail(409, "invalid_payment_state", "Đơn đã hủy, hết hạn hoặc đã được đối soát. Nếu đã chuyển tiền, vui lòng liên hệ cửa hàng để xử lý hoàn tiền hoặc tạo lại đơn.");
+        const now = Date.now();
+        if (o.bank_payment_reported_at && now - new Date(o.bank_payment_reported_at).getTime() < 300000) fail(429, "notice_rate_limited", "Thông báo trước đã được ghi nhận. Vui lòng chờ 5 phút trước khi gửi lại.");
+        await client.query("UPDATE orders SET bank_payment_reported_at=now() WHERE id=$1", [o.id]);
+        await queueStaffNotification(client, o, "customer_transfer_notice", `customer-transfer-${o.id}-${now}`);
+        await audit(client, null, "payment.customer_reported", "order", orderNumber);
+        return { nextAllowedAt: new Date(now + 300000).toISOString(), message: "Đã báo cho nhân viên kiểm tra. Thanh toán chỉ được xác nhận sau khi cửa hàng đối soát." };
+      });
+    },
+    async recordBankTransfer(orderNumber, actorId, receipt = {}) {
       return transaction(pool, async (client) => {
         const o = (
           await client.query(
@@ -843,7 +876,7 @@ export async function createStore({
           fail(
             409,
             "invalid_payment_state",
-            "Đơn không có chuyển khoản đang chờ đối soát.",
+            "Đơn đã hủy, hết hạn hoặc không có chuyển khoản đang chờ đối soát. Nếu đã nhận tiền, cần xử lý hoàn tiền hoặc tạo lại đơn; không xác nhận thanh toán cho đơn này.",
           );
         const p = (
           await client.query(
@@ -858,6 +891,7 @@ export async function createStore({
             "Không tìm thấy giao dịch chuyển khoản.",
           );
         if (p.status === "paid") return readOrder(client, orderNumber);
+        if (paymentDeadline(o, expiryPolicy)?.getTime() <= Date.now()) fail(409, "invalid_payment_state", "Đơn đã hết hạn thanh toán. Nếu đã nhận tiền, cần xử lý hoàn tiền hoặc tạo lại đơn.");
         if (
           p.status !== "pending" ||
           number(p.amount) !== number(o.grand_total)
@@ -867,9 +901,14 @@ export async function createStore({
             "invalid_payment_state",
             "Giao dịch không còn chờ xác nhận hoặc số tiền không khớp đơn.",
           );
+        const receivedAmount = receipt.receivedAmount ?? number(p.amount);
+        if (!Number.isSafeInteger(receivedAmount) || receivedAmount < 0) fail(400, "validation_error", "Số tiền thực nhận phải là số nguyên từ 0 trở lên.");
+        const bankTransactionRef = receipt.bankTransactionRef ? clean(receipt.bankTransactionRef, "Mã giao dịch", 1, 100) : "";
+        if (bankTransactionRef && !/^[A-Za-z0-9._/-]+$/.test(bankTransactionRef)) fail(400, "validation_error", "Mã giao dịch chỉ gồm chữ không dấu, chữ số, dấu chấm, gạch nối hoặc gạch chéo; không nhập thông tin cá nhân.");
+        if (receivedAmount !== number(p.amount) && receipt.mismatchConfirmed !== true) fail(409, "amount_mismatch", "Số tiền thực nhận khác số phải thu. Hãy kiểm tra và tick xác nhận chênh lệch trước khi tiếp tục.");
         await client.query(
-          "UPDATE payments SET status='paid',paid_at=NOW() WHERE id=$1",
-          [p.id],
+          "UPDATE payments SET status='paid',amount=$2,paid_at=NOW() WHERE id=$1",
+          [p.id, receivedAmount],
         );
         await client.query(
           "INSERT INTO payment_events(payment_id,provider_event_id,event_type,payload) VALUES($1,$2,'bank_transfer.confirmed',$3::jsonb)",
@@ -878,7 +917,7 @@ export async function createStore({
             `bank-manual-${o.id}`,
             JSON.stringify({
               actorId: actorId || null,
-              amount: number(p.amount),
+              amount: receivedAmount, expectedAmount: number(p.amount), receivedAmount, bankTransactionRef, mismatchConfirmed: receivedAmount !== number(p.amount), source: "admin:manual",
             }),
           ],
         );
@@ -888,7 +927,7 @@ export async function createStore({
           "payment.bank_transfer_confirmed",
           "order",
           orderNumber,
-          { amount: number(p.amount) },
+          { amount: receivedAmount, expectedAmount: number(p.amount), receivedAmount, bankTransactionRef, mismatchConfirmed: receivedAmount !== number(p.amount), source: "admin:manual" },
         );
         return readOrder(client, orderNumber);
       });
@@ -1101,12 +1140,13 @@ export async function createStore({
     },
     async inventoryList() {
       const result = await pool.query(
-        "SELECT ib.*,w.name AS warehouse_name,w.type AS warehouse_type,v.name,v.sku,v.low_stock_threshold FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id JOIN product_variants v ON v.id=ib.variant_id ORDER BY ib.variant_id,ib.warehouse_id",
+        "SELECT ib.*,w.name AS warehouse_name,w.type AS warehouse_type,w.status AS warehouse_status,v.name,v.sku,v.low_stock_threshold FROM inventory_balances ib JOIN warehouses w ON w.id=ib.warehouse_id JOIN product_variants v ON v.id=ib.variant_id ORDER BY ib.variant_id,ib.warehouse_id",
       );
       return result.rows.map((row) => ({
         warehouseId: number(row.warehouse_id),
         warehouseName: row.warehouse_name,
         warehouseType: row.warehouse_type,
+        warehouseStatus: row.warehouse_status,
         lowStockThreshold: row.low_stock_threshold,
         variantId: number(row.variant_id),
         sku: row.sku,

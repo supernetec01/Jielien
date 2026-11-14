@@ -49,7 +49,8 @@ export async function checkDemoServer(upstream, request = fetch) {
   if (
     !response.ok ||
     health?.status !== "ok" ||
-    health?.database !== "postgresql"
+    typeof health?.version !== "string" ||
+    !Number.isFinite(Date.parse(health?.time))
   )
     throw new Error(
       "Cổng này chưa trả health check hợp lệ của Jielien/PostgreSQL. Kiểm tra đúng cổng và database trước khi mở tunnel.",

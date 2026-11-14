@@ -1,3 +1,4 @@
+import { transferTimingMarkup, startTransferTimers, stopTransferTimers } from "/transfer-timing.js";
 import { setupCategoryNavigation } from "/category-navigation.js";
 import { createCheckoutKey } from "/checkout-key.js";
 import { icon } from "/ui-icons.js";
@@ -397,11 +398,11 @@ function transferMarkup(order) {
   if (order.paymentStatus === "paid")
     return `<div class="transfer-paid" role="status">✓ Đã nhận tiền chuyển khoản. Cảm ơn bạn!</div>`;
   if (order.status === "cancelled")
-    return `<p class="notice">Đơn đã hủy. Bạn không chuyển khoản cho đơn này.</p>`;
+    return `<p class="notice">${order.statusHistory?.some(h => h.newStatus === "cancelled" && h.note === "Hết hạn thanh toán") ? "Đơn đã hủy vì hết hạn thanh toán." : "Đơn đã hủy."} Không chuyển thêm tiền. Nếu đã chuyển, liên hệ cửa hàng để xử lý hoàn tiền hoặc tạo lại đơn.</p>`;
   const t = order.transfer;
   if (!t)
     return `<p class="notice">Chưa tải được thông tin nhận tiền. Bạn thử cập nhật trạng thái đơn.</p>`;
-  return `<section class="transfer-panel" aria-label="Hướng dẫn chuyển khoản"><div class="transfer-qr">${t.qrDataUrl ? `<img id="transfer-qr" src="${escape(t.qrDataUrl)}" alt="VietQR chuyển khoản cho đơn ${escape(order.id)}" width="280" height="280">` : ""}<p>Quét bằng ứng dụng ngân hàng</p></div><div><h2>Chuyển khoản thanh toán đơn hàng</h2><dl class="transfer-details"><dt>Ngân hàng</dt><dd>${escape(t.bankName)}</dd><dt>Số tài khoản</dt><dd><b>${escape(t.accountNumber)}</b> <button class="copy-transfer" data-copy-transfer="${escape(t.accountNumber)}" aria-label="Sao chép số tài khoản">Sao chép</button></dd><dt>Chủ tài khoản</dt><dd>${escape(t.accountName)}</dd><dt>Số tiền</dt><dd><b>${money(t.amount)}</b> <button class="copy-transfer" data-copy-transfer="${t.amount}" aria-label="Sao chép số tiền">Sao chép</button></dd><dt>Nội dung chuyển khoản</dt><dd><b>${escape(t.reference)}</b> <button class="copy-transfer" data-copy-transfer="${escape(t.reference)}" aria-label="Sao chép nội dung chuyển khoản">Sao chép</button></dd></dl><p>Giữ nguyên số tiền và nội dung để cửa hàng đối soát đúng đơn. Kiểm tra tên người nhận trong ứng dụng ngân hàng trước khi xác nhận.</p><p class="notice">Đang chờ đối soát. Quét mã không tự xác nhận đã trả tiền; cửa hàng sẽ cập nhật sau khi nhận tiền. Nếu đã chuyển, bạn không thanh toán lại.</p><button class="secondary" data-refresh-payment="${escape(order.id)}">Cập nhật trạng thái thanh toán</button></div></section>`;
+  return `<section class="transfer-panel" aria-label="Hướng dẫn chuyển khoản"><div class="transfer-qr">${t.qrDataUrl ? `<img id="transfer-qr" src="${escape(t.qrDataUrl)}" alt="VietQR chuyển khoản cho đơn ${escape(order.id)}" width="280" height="280">` : ""}<p>Quét bằng ứng dụng ngân hàng</p></div><div><h2>Chuyển khoản thanh toán đơn hàng</h2><dl class="transfer-details"><dt>Ngân hàng</dt><dd>${escape(t.bankName)}</dd><dt>Số tài khoản</dt><dd><b>${escape(t.accountNumber)}</b> <button class="copy-transfer" data-copy-transfer="${escape(t.accountNumber)}" aria-label="Sao chép số tài khoản">Sao chép</button></dd><dt>Chủ tài khoản</dt><dd>${escape(t.accountName)}</dd><dt>Số tiền</dt><dd><b>${money(t.amount)}</b> <button class="copy-transfer" data-copy-transfer="${t.amount}" aria-label="Sao chép số tiền">Sao chép</button></dd><dt>Nội dung chuyển khoản</dt><dd><b>${escape(t.reference)}</b> <button class="copy-transfer" data-copy-transfer="${escape(t.reference)}" aria-label="Sao chép nội dung chuyển khoản">Sao chép</button></dd></dl>${transferTimingMarkup(order, escape)}<p>Ghi ĐÚNG nội dung chuyển khoản được hiển thị ở trên. Giữ nguyên số tiền và nội dung để cửa hàng đối soát đúng đơn. Kiểm tra tên người nhận trong ứng dụng ngân hàng trước khi xác nhận.</p><p class="notice">Đang chờ đối soát. Quét mã không tự xác nhận đã trả tiền; cửa hàng sẽ cập nhật sau khi nhận tiền. Nếu đã chuyển, bạn không thanh toán lại.</p><button class="secondary" data-transfer-notice="${escape(order.id)}" data-next-allowed="${order.transferReportedAt ? escape(new Date(new Date(order.transferReportedAt).getTime()+300000).toISOString()) : ""}">Tôi đã chuyển khoản</button><p class="support-text">Nút này chỉ báo nhân viên kiểm tra, không tự xác nhận đã nhận tiền. Mỗi lần gửi cách nhau ít nhất 5 phút.</p><button class="secondary" data-refresh-payment="${escape(order.id)}">Cập nhật trạng thái thanh toán</button></div></section>`;
 }
 function orderMarkup(order) {
   return `<section class="panel order-card"><div class="order-number"><strong>Mã đơn: ${escape(order.id)}</strong><span class="status">${escape({ pending: "Chờ xác nhận", confirmed: "Đã xác nhận", processing: "Đang chuẩn bị", shipped: "Đang giao", delivered: "Đã giao", cancelled: "Đã hủy" }[order.status] || order.status)} · ${escape(paymentLabel(order.payment))}</span></div>${transferMarkup(order)}<div class="order-details"><div><h3>Người nhận</h3><p><b>${escape(order.customer.name)}</b></p><p>${escape(order.customer.phone)}</p><p>${escape(order.customer.address)}</p><p>${escape(order.customer.district)}, ${escape(order.customer.province)}</p></div><div><h3>Thông tin đơn</h3><p>Ngày đặt: ${new Date(order.createdAt).toLocaleString("vi-VN")}</p><p>Phương thức: ${escape(paymentLabel(order.payment))}</p><p>Thanh toán: ${order.paymentStatus === "paid" ? "Đã ghi nhận thu tiền" : "Chưa ghi nhận thu tiền"}</p>${order.note ? `<p>Ghi chú: ${escape(order.note)}</p>` : ""}</div></div>${order.items.map((item) => `<div class="checkout-mini"><img src="${escape(item.image)}" alt=""><div>${escape(item.name)}<b>${money(item.lineTotal)}</b>${allocationMarkup(item)}</div><strong>${money(item.lineTotal)}</strong></div>`).join("")}<div class="summary-line"><span>Tạm tính</span><b>${money(order.subtotal)}</b></div><div class="summary-line discount"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="summary-line"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="summary-line total"><span>Tổng thanh toán</span><strong>${money(order.total)}</strong></div><p class="notice">Bạn lưu mã đơn để tra cứu cùng số điện thoại. Vận chuyển được cửa hàng xử lý thủ công.</p></section>`;
@@ -434,6 +435,7 @@ function notFound() {
   return `<section class="panel" style="margin-top:25px">${empty("Chưa tìm thấy trang này", "Bạn quay về trang chủ để tiếp tục khám phá nhé.", "/", "Về trang chủ")}</section>`;
 }
 async function render({ scroll = true } = {}) {
+  stopTransferTimers();
   const version = ++renderVersion;
   closeMenu();
   closeMiniCart();
@@ -535,6 +537,7 @@ function restoreDraft(data) {
   if ($("#place-order")) $("#place-order").textContent = orderButtonLabel();
 }
 function bindPage() {
+  startTransferTimers();
   if ($("#checkout-form") && identity) prefillCheckout();
   $$("[data-tab]").forEach((tab, i) => {
     tab.tabIndex = i === 0 ? 0 : -1;
@@ -606,6 +609,7 @@ function bindPage() {
         body: JSON.stringify(data),
       });
       $("#lookup-result").innerHTML = orderMarkup(order);
+      startTransferTimers();
       $("#lookup-result").scrollIntoView({
         behavior: "smooth",
         block: "start",
@@ -899,6 +903,23 @@ document.addEventListener("click", async (event) => {
     $("#detail-tab-content").setAttribute("aria-labelledby", tab.id);
     return;
   }
+  const notice = event.target.closest("[data-transfer-notice]");
+  if (notice && !notice.disabled) {
+    notice.disabled = true;
+    notice.dataset.busy = "true";
+    try {
+      const id = notice.dataset.transferNotice;
+      let token;
+      try { token = sessionStorage.getItem("jielien-order-" + id); } catch {}
+      const phone = $("#lookup-phone")?.value;
+      const result = await api("/api/orders/" + encodeURIComponent(id) + "/transfer-notice", { method: "POST", body: JSON.stringify({ token, phone }) });
+      notice.dataset.nextAllowed = result.nextAllowedAt;
+      toast(result.message);
+      startTransferTimers();
+    } catch (error) { toast(error.message); }
+    finally { delete notice.dataset.busy; if (notice.isConnected) startTransferTimers(); }
+    return;
+  }
   const copyTransfer = event.target.closest("[data-copy-transfer]");
   if (copyTransfer) {
     try {
@@ -939,6 +960,7 @@ document.addEventListener("click", async (event) => {
       if ($("#lookup-result"))
         $("#lookup-result").innerHTML = orderMarkup(result.order);
       else await render({ scroll: false });
+      startTransferTimers();
       toast(
         result.order.paymentStatus === "paid"
           ? "Đã nhận tiền chuyển khoản."

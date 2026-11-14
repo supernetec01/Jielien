@@ -1,3 +1,4 @@
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir } from "node:fs/promises";
@@ -87,7 +88,7 @@ try {
   await admin.locator("#password").fill(password);
   await admin.locator("#auth-submit").click();
   await admin.waitForURL("**/quan-tri");
-  await admin.locator('[data-section="users"]').click();
+  await openAdminView(admin, "users");
   await admin.locator(`[data-customer="${signup.user.id}"]`).click();
   await admin.locator(".customer-profile").waitFor();
   assert.ok(
@@ -241,7 +242,7 @@ try {
   await guest.waitForURL("**/don-hang/*");
   assert.equal(guestOrder.userId, null);
   await admin.goto(base + "/quan-tri");
-  await admin.locator('[data-section="users"]').click();
+  await openAdminView(admin, "users");
   await admin.locator(`[data-customer="${signup.user.id}"]`).click();
   await admin.locator(".customer-profile").waitFor();
   assert.ok(

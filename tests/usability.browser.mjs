@@ -1,3 +1,4 @@
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir } from "node:fs/promises";
@@ -48,14 +49,14 @@ try {
         await toggle.click();
     }
     await page.locator("#admin-nav-search").fill("");
-    await page.locator(`[data-section="${id}"]`).click();
+    await openAdminView(page, id);
     await page
       .locator('#admin-content[aria-busy="true"]')
       .waitFor({ state: "hidden" });
     await page.locator("#admin-content .loading").waitFor({ state: "hidden" });
   };
   await page.locator("#admin-nav-search").fill("bao cao");
-  assert.equal(await page.locator(".side-nav button:visible").count(), 1);
+  assert.equal(await page.locator(".side-nav a[data-section]:visible").count(), 1);
   await page.locator("#admin-nav-search").fill("khongtontai");
   assert.equal(await page.locator("#navigation-empty").isVisible(), true);
   await page.locator("#admin-nav-search").fill("");

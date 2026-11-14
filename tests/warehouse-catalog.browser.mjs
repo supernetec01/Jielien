@@ -1,3 +1,4 @@
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -124,7 +125,7 @@ try {
   async function navigate() {
     if (await page.locator("#admin-menu-toggle").isVisible())
       await page.locator("#admin-menu-toggle").click();
-    await page.locator('[data-section="warehouse-editor"]').click();
+    await openAdminView(page, "warehouse-editor");
     await page.locator(".warehouse-workbench h1").waitFor();
   }
   await navigate();

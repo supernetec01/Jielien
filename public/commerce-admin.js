@@ -1,8 +1,10 @@
 import { createWarehouseEditor } from "/warehouse-admin.js";
+import { createBankSettingsEditor } from "/bank-settings-admin.js";
 import { reportVisuals } from "/report-visuals.js";
 import { icon } from "/ui-icons.js";
 // Editors share the existing authenticated API/CSRF adapter and permission gate.
 export function createCommerceEditors({ root, api, has, escape: e, notify }) {
+  const bankSettingsEditor = createBankSettingsEditor({ root, api, has, escape: e, notify });
   const warehouseEditor = createWarehouseEditor({
     root,
     api,
@@ -100,6 +102,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       tax[kind] = (await api("/api/admin/catalog/" + kind)).items;
   }
   async function render(view) {
+    if (view === "bank-settings-editor") return bankSettingsEditor.render();
     if (view === "warehouse-editor") return warehouseEditor.render();
     if (view === "catalog-editor") {
       const data = await api("/api/admin/catalog/products");

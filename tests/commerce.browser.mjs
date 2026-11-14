@@ -1,3 +1,4 @@
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
@@ -51,9 +52,9 @@ try {
   await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
   await page.waitForURL("**/quan-tri");
-  await page.locator('[data-section="catalog-editor"]').waitFor();
+  await page.locator('[data-section="catalog-editor"]').waitFor({ state: "attached" });
   pass("admin username login opens authenticated admin");
-  await page.locator('[data-section="catalog-editor"]').click();
+  await openAdminView(page, "catalog-editor");
   await page.locator('[data-editor-action="new-product"]').click();
   await page
     .locator('#product-form [name="name"]')
@@ -145,7 +146,7 @@ try {
     true,
   );
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.locator('[data-section="users"]').click();
+  await openAdminView(page, "users");
   await page.locator("#new-staff").click();
   const staff = page.locator("#create-staff-form");
   await staff.locator('[name="fullName"]').fill("Nhân viên kiểm thử");
@@ -158,7 +159,7 @@ try {
     () => !document.querySelector("#admin-dialog").open,
   );
   pass("admin creates company employee without a customer/admin default grant");
-  await page.locator('[data-section="cms-editor"]').click();
+  await openAdminView(page, "cms-editor");
   const tax = page.locator('[data-cms-tax="categories"]');
   await tax.locator('[name="name"]').fill("Kiến thức công ty");
   await tax.locator('[name="slug"]').fill("kien-thuc-cong-ty");
@@ -235,8 +236,8 @@ try {
     true,
   );
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.locator('[data-section="dashboard"]').click();
-  await page.locator(".workspace-actions").waitFor();
+  await openAdminView(page, "dashboard");
+  await page.locator(".stats-grid").waitFor();
   await page.evaluate(() => {
     document.activeElement?.blur();
     window.scrollTo(0, 0);
@@ -245,10 +246,10 @@ try {
     path: "docs/screenshots/commerce/admin-dashboard-1440.png",
     fullPage: true,
   });
-  await page.locator('[data-workspace-section="catalog-editor"]').click();
+  await page.locator('.stat-card[href="/quan-tri/san-pham"]').click();
   await page.locator("#catalog-results").waitFor();
-  pass("new dashboard shortcuts open real permission-gated editors");
-  await page.locator('[data-section="banners-editor"]').click();
+  pass("dashboard product KPI opens the real permission-gated editor");
+  await openAdminView(page, "banners-editor");
   await page.locator('#banner-form [name="title"]').fill("Banner thiết kế mới");
   const assetOption = await page
     .locator('#banner-form [name="assetId"] option')
@@ -306,7 +307,7 @@ try {
     .waitFor();
   await bannerPage.close();
   pass("editing existing banner updates storefront and fits mobile workspace");
-  await page.locator('[data-section="settings-editor"]').click();
+  await openAdminView(page, "settings-editor");
   await page.locator('#company-form [name="companyName"]').fill("Jielien Test Company");
   await page.locator('#company-form button').click();
   await page.waitForFunction(()=>document.querySelector('#company-form [name="companyName"]')?.value==='Jielien Test Company' && !document.querySelector('#company-form button').disabled);

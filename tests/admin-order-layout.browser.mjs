@@ -1,3 +1,4 @@
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -59,7 +60,7 @@ try {
     await page.setViewportSize({ width, height: width === 1920 ? 948 : 1000 });
     const menu = page.locator("#admin-menu-toggle");
     if (await menu.isVisible()) await menu.click();
-    await page.locator('[data-section="orders"]').click();
+    await openAdminView(page, "orders");
     await page.locator("[data-admin-order]").first().waitFor();
     if (width > 900) {
       const bounds = await page.locator(".admin-sidebar").boundingBox();

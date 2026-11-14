@@ -5,9 +5,9 @@
   "type": "module",
   "description": "PostgreSQL mother and baby commerce storefront with accounts, RBAC and fulfillment",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env server.mjs",
-    "start": "node --env-file-if-exists=.env server.mjs",
-    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs tests/commerce.test.mjs tests/commerce-upgrade.test.mjs tests/admin-visibility.test.mjs tests/frontend-v3.test.mjs tests/checkout-key.test.mjs tests/ui-upgrade.test.mjs tests/production-config.test.mjs tests/cms-validation.test.mjs tests/auth-rate-limit.test.mjs tests/registration.test.mjs tests/customer-recovery.test.mjs tests/warehouse-catalog.test.mjs tests/ngrok-demo.test.mjs",
+    "dev": "node --import ./instrument.mjs --env-file-if-exists=.env server.mjs",
+    "start": "node --import ./instrument.mjs --env-file-if-exists=.env server.mjs",
+    "test": "node --test tests/api.test.mjs tests/migration.test.mjs tests/phase1.test.mjs tests/account-settings.test.mjs tests/bank-payments.test.mjs tests/staff.test.mjs tests/backup.test.mjs tests/commerce.test.mjs tests/commerce-upgrade.test.mjs tests/admin-visibility.test.mjs tests/frontend-v3.test.mjs tests/checkout-key.test.mjs tests/ui-upgrade.test.mjs tests/production-config.test.mjs tests/cms-validation.test.mjs tests/auth-rate-limit.test.mjs tests/registration.test.mjs tests/customer-recovery.test.mjs tests/warehouse-catalog.test.mjs tests/ngrok-demo.test.mjs tests/monitoring.test.mjs tests/bank-settings.test.mjs tests/manual-bank-workflow.test.mjs tests/admin-filters.test.mjs",
     "test:browser": "node tests/browser.test.mjs",
     "db:backup": "node scripts/backup.mjs",
     "db:local": "bash scripts/dev-postgres.sh",
@@ -17,7 +17,7 @@
     "admin:create": "node --env-file-if-exists=.env scripts/create-admin.mjs",
     "db:install": "bash scripts/install-postgres.sh",
     "test:management": "node tests/management.browser.mjs",
-    "test:bank": "node tests/bank-checkout.browser.mjs",
+    "test:bank": "node tests/bank-checkout.browser.mjs && node --test tests/bank-settings.test.mjs && node tests/bank-settings.browser.mjs && node --test tests/manual-bank-workflow.test.mjs && node tests/manual-bank-workflow.browser.mjs",
     "test:account": "node tests/account-settings.browser.mjs",
     "local:init": "node scripts/local.mjs init",
     "local:start": "node scripts/local.mjs start",
@@ -41,10 +41,13 @@
     "test:admin-layout": "node tests/admin-order-layout.browser.mjs",
     "test:storefront-language": "node tests/storefront-language.browser.mjs",
     "demo:ngrok": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.ngrok scripts/ngrok-demo.mjs",
-    "demo:server": "node --env-file-if-exists=.env --env-file-if-exists=.env.ngrok scripts/ngrok-demo-server.mjs",
+    "demo:server": "node --import ./instrument.mjs --env-file-if-exists=.env --env-file-if-exists=.env.ngrok scripts/ngrok-demo-server.mjs",
     "test:ngrok": "node --test tests/ngrok-demo.test.mjs",
     "test:warehouse": "node tests/warehouse-catalog.browser.mjs",
-    "test:admin-catalog": "node tests/admin-catalog-layout.browser.mjs"
+    "test:admin-catalog": "node tests/admin-catalog-layout.browser.mjs",
+    "test:monitoring": "node --test tests/monitoring.test.mjs",
+    "orders:expire": "node --env-file-if-exists=.env scripts/expire-orders.mjs",
+    "test:admin-filters": "node --test tests/admin-filters.test.mjs && node tests/admin-filters.browser.mjs"
   },
   "engines": {
     "node": ">=24.11.0"
@@ -55,6 +58,7 @@
     "playwright-core": "1.58.2"
   },
   "dependencies": {
+    "@sentry/node": "11.12.0",
     "bcryptjs": "3.0.2",
     "pg": "8.16.3",
     "qrcode": "1.5.4",
