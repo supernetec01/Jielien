@@ -83,6 +83,9 @@ test("published migrations remain immutable and populated LAN schema upgrades wi
       ).rows,
     });
     const before = await snapshot();
+    // New nullable metadata must be NULL on legacy orders; all existing fields
+    // are still compared exactly, so additive columns do not hide data changes.
+    for (const row of before.orders) Object.assign(row, { bank_payment_due_at: null, bank_payment_reported_at: null });
     const applied = await migrate(db.pool);
     assert.ok(applied.applied.length >= 7);
     assert.deepEqual(await snapshot(), before);

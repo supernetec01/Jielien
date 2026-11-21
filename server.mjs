@@ -1,3 +1,10 @@
+import { resolveAdminRoute } from "./public/admin-nav.js";
+import { createOrderExpiry } from "./lib/order-expiry.mjs";
+import { bankTransferPolicy } from "./lib/bank-transfer-policy.mjs";
+import { createStaffNotifications } from "./lib/staff-notifications.mjs";
+import { version } from "./lib/runtime.mjs";
+import { reportError } from "./lib/monitoring.mjs";
+import { frontendMonitoring, monitoringConnectSource } from "./lib/sentry-config.mjs";
 import { canAccessAdmin } from "./public/admin-access.js";
 import http from "node:http";
 import { readFile, realpath } from "node:fs/promises";
@@ -250,8 +257,10 @@ export async function createApp({
   loginLimitOptions,
   passwordRecoveryDelivery,
   recoveryClock,
+  staffNotificationRequest,
 } = {}) {
   const pool = externalPool || createPool();
+  const monitoring = frontendMonitoring();
   let store;
   try {
     store = await createStore({ pool, catalogPath, legacyPath, bankConfig });
@@ -259,7 +268,13 @@ export async function createApp({
     if (!externalPool) await pool.end();
     throw error;
   }
-  const commerce=createCommerce(pool,{mediaDirectory,publicProducts:()=>store.listProducts()});
+  const commerce=createCommerce(pool,{mediaDirectory,monitoring,bankSettings:store.bankSettings,publicProducts:()=>store.listProducts()});
+  const expiry = createOrderExpiry(pool, store);
+  const notifications = createStaffNotifications(pool, { request: staffNotificationRequest });
+  const expiryTimer = bankTransferPolicy().enabled ? setInterval(() => { void expiry.run().catch(() => console.error("Chưa xử lý được đơn hết hạn; sẽ thử lại sau.")); }, 10 * 60000) : null;
+  expiryTimer?.unref();
+  const notificationTimer = process.env.STAFF_NOTIFY_ENABLED === "true" ? setInterval(() => { void notifications.kick(); }, 30000) : null;
+  notificationTimer?.unref();
   const indexing=seoConfig(seoConfiguration||process.env);
   const seo=createSeo({pool,store,cms:commerce.cms,config:indexing,publicCatalog:commerce.publicCatalog,ops:commerce.ops});
   const publisher=setInterval(()=>commerce.cms.runDue().catch(e=>console.error("CMS scheduler:",e.code||e.name)),30000); publisher.unref();
@@ -298,7 +313,7 @@ export async function createApp({
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "same-origin");
     res.setHeader("X-Frame-Options", "DENY");
-    res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
+    res.setHeader('Content-Security-Policy',`default-src 'self'; script-src 'self'${monitoring ? " https://browser.sentry-cdn.com" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'${monitoring ? " " + monitoringConnectSource(monitoring) : ""}; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`);
     res.setHeader(
       "Permissions-Policy",
       "camera=(), microphone=(), geolocation=()",
@@ -326,20 +341,26 @@ export async function createApp({
       }
       if (path.startsWith("/api/")) {
         res.setHeader("Cache-Control", "no-store");
+        // Public readiness check must not depend on sessions or other API services.
+        if (req.method === "GET" && path === "/api/health") {
+          try {
+            await pool.query({ text: "SELECT 1", query_timeout: 3000 });
+            return json(res, 200, { status: "ok", time: new Date().toISOString(), version });
+          } catch (error) {
+            reportError(error);
+            return json(res, 503, { status: "error", time: new Date().toISOString(), version });
+          }
+        }
         const rawToken = cookieToken(req),
           session = rawToken ? await auth.authenticate(rawToken) : null;
         if(path.startsWith('/api/admin/')) {
           requireUser(session); if(!['GET','HEAD'].includes(req.method)) requireCsrf(req,session);
         }
         if(await commerce.api({req,res,path,url,user:session?.user,auth,readBody,json})) return;
-        if (req.method === "GET" && path === "/api/health") {
-          await pool.query("SELECT 1");
-          return json(res, 200, { status: "ok", database: "postgresql" });
-        }
         if (req.method === "GET" && path === "/api/products")
           return json(res, 200, { products: await store.listProducts() });
         if (req.method === "GET" && path === "/api/payment-methods")
-          return json(res, 200, { methods: store.paymentMethods() });
+          return json(res, 200, { methods: await store.paymentMethods() });
         if (req.method === "GET" && path === "/api/categories") {
           const { rows } = await pool.query(
             'SELECT id,parent_id AS "parentId",name,slug,sort_order AS "sortOrder" FROM categories WHERE status=\'active\' ORDER BY sort_order,id',
@@ -504,7 +525,26 @@ export async function createApp({
             pricingKey: body.pricingKey,
             userId: session?.user.id || null,
           });
-          return json(res, 201, { order: await withTransferQr(order) });
+          json(res, 201, { order: await withTransferQr(order) });
+          void notifications.kick();
+          return;
+        }
+        const noticeMatch = path.match(/^\/api\/orders\/([A-Za-z0-9-]{1,80})\/transfer-notice$/);
+        if (req.method === "POST" && noticeMatch) {
+          sameOrigin(req);
+          if (session) requireCsrf(req, session);
+          rateLimit(req, "transfer-notice", 30);
+          const body = await readBody(req);
+          const suppliedPhone = body.phone == null ? null : normalizePhone(body.phone);
+          const order = await store.getOrderByNumber(noticeMatch[1]);
+          const owner = order && session && Number(order.userId) === Number(session.user.id);
+          const token = order && sameSecret(body.token, order.token);
+          const phone = order && suppliedPhone && sameSecret(suppliedPhone, order.customer.phone);
+          if (!owner && !token && !phone) fail(404, "order_not_found", "Không tìm thấy đơn hàng.");
+          const result = await store.reportTransfer(noticeMatch[1]);
+          json(res, 200, result);
+          void notifications.kick();
+          return;
         }
         if (req.method === "POST" && path === "/api/orders/lookup") {
           rateLimit(req, "lookup", 10);
@@ -554,7 +594,7 @@ export async function createApp({
           if (req.method === "GET" && path === "/api/admin/orders") {
             requirePermission(session, "orders.read");
             return json(res, 200, {
-              orders: (await store.listOrders({ limit: 200 })).map(stripToken),
+              orders: (await store.listOrders({ limit: 200, bankPending: url.searchParams.get("reconciliation") === "pending", status: url.searchParams.get("status") || "" })).map(stripToken),
             });
           }
           if (req.method === "GET" && path === "/api/admin/inventory") {
@@ -568,6 +608,13 @@ export async function createApp({
           if (req.method === "GET" && path === "/api/admin/users") {
             requirePermission(session,"users.manage");
             return json(res,200,await auth.listUsers());
+          }
+          const adminOrderMatch = path.match(/^\/api\/admin\/orders\/([A-Za-z0-9-]{1,80})$/);
+          if (req.method === "GET" && adminOrderMatch) {
+            requirePermission(session, "orders.read");
+            const order = await store.getOrderByNumber(adminOrderMatch[1]);
+            if (!order) fail(404, "order_not_found", "Không tìm thấy đơn hàng.");
+            return json(res, 200, { order: stripToken(order) });
           }
           const supportMatch=path.match(/^\/api\/admin\/customers\/(\d+)\/recovery$/);
           if(req.method==='POST'&&supportMatch){
@@ -625,10 +672,11 @@ export async function createApp({
           );
           if (req.method === "POST" && bankPaidMatch) {
             requirePermission(session, "payments.reconcile");
-            await readBody(req);
+            const receipt = await readBody(req);
+            if (!Number.isSafeInteger(receipt.receivedAmount) || receipt.receivedAmount < 0) fail(400, "validation_error", "Vui lòng nhập số tiền thực nhận hợp lệ.");
             return json(res, 200, {
               order: stripToken(
-                await store.recordBankTransfer(bankPaidMatch[1], user.id),
+                await store.recordBankTransfer(bankPaidMatch[1], user.id, receipt),
               ),
             });
           }
@@ -658,7 +706,7 @@ export async function createApp({
       }
       if (req.method !== "GET" && req.method !== "HEAD")
         fail(405, "method_not_allowed", "Phương thức không được hỗ trợ.");
-      if (decoded === "/quan-tri" || decoded === "/admin.html") {
+      if (resolveAdminRoute(decoded) || decoded === "/admin.html") {
         const token = cookieToken(req), session = token ? await auth.authenticate(token) : null;
         const status = !session ? 401 : canAccessAdmin(session.user) ? 200 : 403;
         res.writeHead(status, {"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Robots-Tag":"noindex, nofollow"});
@@ -712,8 +760,9 @@ export async function createApp({
         Number.isInteger(error.status) &&
         error.status >= 400 &&
         error.status <= 599;
+      if (!exposed || error.status >= 500) reportError(error);
       if (!exposed)
-        console.error("Request failed:", error.code || error.name || "unknown");
+        console.error("Không hoàn tất được yêu cầu do lỗi máy chủ.");
       if(error.status===429&&Number.isInteger(error.retryAfter))res.setHeader('Retry-After',String(error.retryAfter));
       json(res, exposed ? error.status : 500, {
         error: exposed ? error.error || "request_error" : "internal_error",
@@ -722,11 +771,12 @@ export async function createApp({
     }
   });
   server.flushRecoveryOutbox=flushRecovery;
-  server.recoveryIdle=()=>deliveryJob;
-  server.on("close",()=>{clearInterval(publisher);clearInterval(recoveryTimer);});
+  server.recoveryIdle=()=>Promise.all([deliveryJob, expiry.idle(), notifications.idle()]);
+  server.flushStaffNotifications=()=>notifications.kick();
+  server.on("close",()=>{clearInterval(publisher);clearInterval(recoveryTimer);clearInterval(expiryTimer);clearInterval(notificationTimer);});
   if (!externalPool)
     server.on("close", () => {
-      deliveryJob.finally(()=>pool.end()).catch(() => {});
+      server.recoveryIdle().finally(()=>pool.end()).catch(() => {});
     });
   return server;
 }

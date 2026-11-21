@@ -1,3 +1,5 @@
+import { resolveAdminRoute } from "/admin-nav.js";
+import { logoutSession } from "/auth-session.js";
 import { canAccessAdmin } from "/admin-access.js";
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -89,7 +91,7 @@ function empty(title, text, link = "") {
 }
 function safeRedirect() {
   const target = new URLSearchParams(location.search).get("redirect");
-  return ["/quan-tri", "/thanh-toan", "/gio-hang", "/"].includes(target)
+  return (["/quan-tri", "/thanh-toan", "/gio-hang", "/"].includes(target) || (typeof target === "string" && !!resolveAdminRoute(target.split(/[?#]/)[0])))
     ? target
     : null;
 }
@@ -377,19 +379,11 @@ root.addEventListener("click", async (event) => {
   if (event.target.closest("#retry-auth")) init();
   const logout = event.target.closest("#logout");
   if (logout) {
-    logout.disabled = true;
-    try {
-      await api("/api/auth/logout", { method: "POST", body: {} });
-      localStorage.removeItem("jielien-cart-v2");
-      localStorage.removeItem("jielien-cart-owner");
+    await logoutSession({ button: logout, api, notify, onSignedOut() {
       user = null;
       csrfToken = "";
       renderAuth();
-      notify("Đã đăng xuất.");
-    } catch (error) {
-      notify(error.message);
-      logout.disabled = false;
-    }
+    } });
   }
 });
 root.addEventListener("change", (event) => {

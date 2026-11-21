@@ -1,3 +1,4 @@
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -191,7 +192,7 @@ try {
   pass(
     "dashboard chart and top SKU use actual fixture orders, separate from collected money",
   );
-  await page.locator('[data-section="settings-editor"]').click();
+  await openAdminView(page, "settings-editor");
   await page.locator("#company-form").waitFor();
   await page
     .locator('[name="companyName"]')
@@ -207,7 +208,7 @@ try {
     () => !document.querySelector("#company-form button")?.disabled,
   );
   await page.reload();
-  await page.locator('[data-section="settings-editor"]').click();
+  await openAdminView(page, "settings-editor");
   await page.locator("#company-form").waitFor();
   assert.equal(
     await page.locator('[name="hotline"]').inputValue(),
@@ -248,7 +249,7 @@ try {
         (await page.locator("#admin-menu-toggle").isVisible())
       )
         await page.locator("#admin-menu-toggle").click();
-      await page.locator(`[data-section="${view}"]`).click();
+      await openAdminView(page, view);
       await page.waitForFunction(
         () =>
           document
@@ -278,7 +279,7 @@ try {
     "six Admin screens fit all five target widths with actual order fixtures",
   );
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.locator('[data-section="coupons-editor"]').click();
+  await openAdminView(page, "coupons-editor");
   await page.locator('[data-editor-action^="coupon-edit:"]').first().click();
   assert.ok(await page.locator('#coupon-form [name="id"]').inputValue());
   assert.equal(

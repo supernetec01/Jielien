@@ -619,20 +619,6 @@ p {
   position: sticky;
   top: 20px;
 }
-.admin-user {
-  font-size: 11px;
-  color: var(--muted);
-  border-top: 1px solid var(--line);
-  margin: 10px 5px 0;
-  padding: 15px 9px 8px;
-  overflow-wrap: anywhere;
-}
-.admin-user b {
-  display: block;
-  color: var(--ink);
-  font-size: 12px;
-  margin-bottom: 4px;
-}
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -982,8 +968,7 @@ p {
     flex-shrink: 0;
     font-size: 11px;
   }
-  .side-nav .section-caption,
-  .admin-user {
+  .side-nav .section-caption {
     display: none;
   }
   .admin-sidebar {

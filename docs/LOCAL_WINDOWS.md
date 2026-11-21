@@ -35,7 +35,7 @@ Nếu Git báo conflict, thay đổi local hoặc không thể fast-forward, gi�
 - Đăng ký/đăng nhập: **http://localhost:3001/tai-khoan**
 - Giỏ hàng: **http://localhost:3001/gio-hang**
 - Quản trị: **http://localhost:3001/quan-tri**
-- Kiểm tra backend: **http://localhost:3001/api/health** — JSON cần có `status: "ok"`, `database: "postgresql"`.
+- Kiểm tra backend: **http://localhost:3001/api/health** — JSON cần có `status: "ok"`, `time`, `version`.
 
 Nhấn **Ctrl+Shift+R** nếu trình duyệt còn giữ giao diện cũ. Địa chỉ `localhost:3000` không phải bản vừa chạy. Nút đăng ký nhận bản tin của giao diện demo cũ không phải trang tạo tài khoản.
 

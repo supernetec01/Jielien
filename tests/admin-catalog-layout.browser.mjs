@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -7,6 +9,7 @@ import { createAuth } from "../lib/auth.mjs";
 import { createTestDatabase, closeServer } from "./support/database.mjs";
 const db = await createTestDatabase();
 const out = "docs/screenshots/admin-catalog-layout";
+const password = randomBytes(24).toString("base64url");
 let app, browser;
 try {
   await mkdir(out, { recursive: true });
@@ -18,7 +21,7 @@ try {
     email: "catalog@example.test",
     phone: "0987654321",
     name: "Admin kiểm thử",
-    password: "Catalog-Fixture-2026!",
+    password,
   });
   browser = await chromium.launch({
     executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium",
@@ -33,13 +36,13 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(base + "/tai-khoan?redirect=/quan-tri");
   await page.locator("#identifier").fill("catalog@example.test");
-  await page.locator("#password").fill("Catalog-Fixture-2026!");
+  await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
   await page.waitForURL("**/quan-tri");
   async function navigate(section) {
     const menu = page.locator("#admin-menu-toggle");
     if (await menu.isVisible()) await menu.click();
-    await page.locator(`[data-section="${section}"]`).click();
+    await openAdminView(page, section);
   }
   await navigate("taxonomy-editor");
   const categoryForm = page.locator('[data-tax-kind="categories"]');

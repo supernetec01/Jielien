@@ -1,5 +1,8 @@
 // Shared local SVG paths.
 export const paths = {
+  wallet: '<path d="M20 8V5a2 2 0 0 0-2-2L4 6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16V8H4a2 2 0 0 1 0-4"/><path d="M20 12h-5v5h5M16 14.5h.01"/>',
+  chevronDown: '<path d="m6 9 6 6 6-6"/>',
+  megaphone: '<path d="m3 10 17-6v16L3 14v-4ZM7 15l2 6h4l-2-5M20 9l3-1M20 15l3 1"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/>',
   heart:
     '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',

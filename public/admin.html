@@ -10,21 +10,17 @@
     <link rel="stylesheet" href="/brand.css" />
     <link rel="stylesheet" href="/management.css" />
     <link rel="stylesheet" href="/admin-workspace.css" />
+    <script type="module" src="/sentry-browser.js"></script>
   </head>
   <body class="admin-workspace">
     <a class="skip-link" href="#admin-content">Đến nội dung</a>
     <header class="management-header">
       <div class="management-wrap header-row">
-        <a class="management-logo" href="/"
-          ><img
-            class="brand-logo"
-            src="/assets/jielien-logo.jpg"
-            alt="Jielien International"
-            width="128"
-            height="96" /></a
-        ><span class="header-caption">JIELIEN · QUẢN TRỊ</span
-        ><a class="header-back" href="/">Xem website</a
-        ><a class="header-back" href="/tai-khoan">Tài khoản</a>
+        <a class="management-logo" href="/quan-tri" aria-label="Quản trị Jielien"><img class="brand-logo" src="/assets/jielien-logo.jpg" alt="Jielien" width="44" height="40"></a>
+        <button type="button" id="admin-menu-toggle" aria-expanded="false" aria-controls="workspace-navigation" aria-label="Mở mục quản trị" hidden></button>
+        <div class="topbar-location"><nav id="admin-breadcrumb" aria-label="Breadcrumb"><ol><li aria-current="page">Quản trị</li></ol></nav><span class="workspace-session" title="Phiên đăng nhập được bảo vệ" hidden><span>Phiên đăng nhập được bảo vệ</span></span></div>
+        <div class="topbar-actions"><a class="header-back" aria-label="Xem website (mở tab mới)" href="/" target="_blank" rel="noopener noreferrer"><span class="website-label">Xem website</span></a>
+        <div class="admin-account" hidden><button type="button" id="admin-account-toggle" aria-label="Mở menu tài khoản quản trị" aria-haspopup="menu" aria-expanded="false" aria-controls="admin-account-menu"><span class="user-avatar"></span><span class="admin-account-name">Admin</span></button><div id="admin-account-menu" role="menu" aria-label="Tài khoản quản trị" hidden><a role="menuitem" href="/tai-khoan">Tài khoản</a><button type="button" role="menuitem" id="admin-logout">Đăng xuất</button></div></div></div>
       </div>
     </header>
     <main id="admin-main" class="management-wrap admin-main">
