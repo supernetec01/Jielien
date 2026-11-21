@@ -55,95 +55,111 @@ try {
   pass("admin username login opens authenticated admin");
   await page.locator('[data-section="catalog-editor"]').click();
   await page.locator('[data-editor-action="new-product"]').click();
-  await page
-    .locator('#product-form [name="name"]')
-    .fill("Sản phẩm kiểm thử UI");
-  await page
-    .locator('#product-form [name="slug"]')
-    .fill("san-pham-kiem-thu-ui");
-  await page
-    .locator('#product-form [name="description"]')
-    .fill("Mô tả sản phẩm kiểm thử");
-  await page.locator("#product-form button.primary").click();
-  await page.locator("#sku-form").waitFor();
+  const form = page.locator("#product-form");
+  const title = form.locator('#product-basics [name="name"]');
+  await title.fill("Bình sữa cổ rộng kiểm thử");
+  await form.locator('#product-details [name="description"]').fill("Bình sữa cổ rộng có ba lựa chọn dung tích.");
+  await form.locator('[name="categoryId"]').selectOption({ label: "Đồ dùng cho bé" });
+  const imageFiles = await Promise.all(
+    ["#faf5ed", "#f6f0ec", "#f0f6f0"].map(async (background, i) => ({
+      name: `sample-${i}.png`,
+      mimeType: "image/png",
+      buffer: await sharp("public/product-bottle.svg", { density: 140 })
+        .resize(320, 300, { fit: "contain", background })
+        .flatten({ background })
+        .png()
+        .toBuffer(),
+    })),
+  );
+  await form.locator("#product-gallery-upload").setInputFiles(imageFiles.slice(0, 2));
+  await page.waitForFunction(() => document.querySelectorAll(".product-photo-card").length === 2);
+  const secondImage = await page.locator(".product-photo-card img").nth(1).getAttribute("src");
+  await page.getByRole("button", { name: "Làm ảnh bìa" }).click();
+  assert.equal(await page.locator("[data-product-preview-image]").getAttribute("src"), secondImage);
+  assert.equal(await title.inputValue(), "Bình sữa cổ rộng kiểm thử");
+
+  const lines = form.locator(".sku-line");
   for (let i = 0; i < 3; i++) {
     if (i) await page.locator('[data-editor-action="add-sku"]').click();
-    const line = page.locator(".sku-line").nth(i);
-    await line.locator('[name="name"]').fill("Phân loại " + (i + 1));
-    await line.locator('[name="sku"]').fill("UI-SKU-" + (i + 1));
-    await line.locator('[name="price"]').fill("120000");
-    await line.locator('[name="originalPrice"]').fill("150000");
+    await lines.nth(i).locator('[name="name"]').fill([120, 180, 240][i] + " ml");
+    await lines.nth(i).locator('[name="sku"]').fill("UI-SKU-" + (i + 1));
   }
-  await page.locator("#sku-form button.primary").click();
-  await page.waitForFunction(
-    () =>
-      document.querySelectorAll('.sku-line[data-sku-id]:not([data-sku-id=""])')
-        .length === 3,
-  );
-  pass("product editor persists parent and three individually priced SKUs");
-  const image = await sharp({
-    create: { width: 320, height: 240, channels: 3, background: "#86b529" },
-  })
-    .png()
-    .toBuffer();
-  await page.locator('#upload-form [name="image"]').setInputFiles({
-    name: "sample.png",
-    mimeType: "image/png",
-    buffer: image,
-  });
-  await page.locator('#upload-form [name="alt"]').fill("Ảnh sản phẩm thử");
-  await page.locator("#upload-form button.primary").click();
-  await page.locator('#product-media-form [name="assets"]').waitFor();
-  await page.locator('#product-media-form [name="assets"]').check();
-  const mediaVersion = Number(
-    await page.locator("#product-form").getAttribute("data-version"),
-  );
-  await page.locator("#product-media-form button.primary").click();
-  await page.waitForFunction(
-    (v) => Number(document.querySelector("#product-form")?.dataset.version) > v,
-    mediaVersion,
-  );
-  await page.locator('#product-form [name="status"]').selectOption("active");
-  const publishVersion = Number(
-    await page.locator("#product-form").getAttribute("data-version"),
-  );
-  await page.locator("#product-form button.primary").click();
-  await page.waitForFunction(
-    (v) => Number(document.querySelector("#product-form")?.dataset.version) > v,
-    publishVersion,
-  );
-  await page.waitForFunction(
-    () =>
-      document.querySelector('#product-form [name="status"]')?.value ===
-        "active" &&
-      document.querySelector("#product-form button.primary")?.disabled ===
-        false,
-  );
-  pass("verified upload and gallery allow publishing actual product");
+  await form.locator('[name="bulkPrice"]').fill("120000");
+  await page.locator('[data-editor-action="product-price-all"]').click();
+  await lines.last().locator('[name="price"]').fill("150000");
+  await lines.first().locator('input[type="file"]').setInputFiles(imageFiles[2]);
+  await lines.first().locator(".product-sku-photo img").waitFor();
+  await form.locator('[name="bulk-weightGrams"]').fill("500");
+  await page.locator('[data-editor-action="product-shipping-all"]').click();
+
   await mkdir("docs/screenshots/commerce", { recursive: true });
-  await page.evaluate(() => {
-    document.activeElement?.blur();
-    window.scrollTo(0, 0);
-  });
-  await page.screenshot({
-    path: "docs/screenshots/commerce/product-editor-desktop.png",
-    fullPage: true,
-  });
-  await page.setViewportSize({ width: 375, height: 900 });
-  await page.evaluate(() => {
-    document.activeElement?.blur();
-    window.scrollTo(0, 0);
-  });
-  await page.screenshot({
-    path: "docs/screenshots/commerce/product-editor-mobile.png",
-    fullPage: true,
-  });
-  assert.equal(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth + 1,
-    ),
-    true,
+  for (const width of [320, 375, 768, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => {
+      document.activeElement?.blur();
+      window.scrollTo(0, 0);
+    });
+    assert.ok(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
+      `product form overflows at ${width}px`,
+    );
+    if (width === 375 || width === 1440) {
+      await page.screenshot({
+        path: `docs/screenshots/commerce/product-editor-${width === 375 ? "mobile" : "desktop"}.png`,
+        fullPage: true,
+      });
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+
+  // A code that belongs to a different product fails after starting the combined save.
+  const existingSku = (await db.pool.query("SELECT sku FROM product_variants ORDER BY id LIMIT 1")).rows[0].sku;
+  await lines.last().locator('[name="sku"]').fill(existingSku);
+  await form.getByRole("button", { name: "Lưu nháp" }).click();
+  await page.getByText("SKU đã tồn tại.", { exact: true }).waitFor();
+  assert.equal((await db.pool.query("SELECT id FROM products WHERE slug='binh-sua-co-rong-kiem-thu'")).rowCount, 0);
+  assert.equal(await page.locator(".product-photo-card").count(), 2);
+  await lines.last().locator('[name="sku"]').fill("UI-SKU-3");
+  await form.getByRole("button", { name: "Lưu nháp" }).click();
+  await page.waitForFunction(() => document.querySelectorAll('.sku-line[data-sku-id]:not([data-sku-id=""])').length === 3);
+  const saved = (await db.pool.query(
+    "SELECT id,status FROM products WHERE slug='binh-sua-co-rong-kiem-thu'",
+  )).rows[0];
+  assert.equal(saved.status, "draft");
+  const skuRows = (await db.pool.query(
+    "SELECT id,price,weight_grams,row_version FROM product_variants WHERE product_id=$1 ORDER BY id",
+    [saved.id],
+  )).rows;
+  assert.deepEqual(skuRows.map(({ price, weight_grams }) => [price, weight_grams]), [
+    [120000, 500], [120000, 500], [150000, 500],
+  ]);
+  const photos = (await db.pool.query(
+    "SELECT id,url,variant_id FROM product_media WHERE product_id=$1 ORDER BY sort_order",
+    [saved.id],
+  )).rows;
+  assert.equal(photos[0].url, secondImage);
+  assert.equal(photos[2].variant_id, skuRows[0].id);
+  pass("new form saves images, three SKU rows and shipping together, with rollback on a duplicate SKU");
+
+  await form.getByRole("button", { name: "Xuất bản" }).click();
+  await page.waitForFunction(() => document.querySelector("[data-product-progress]")?.textContent === "Đã xuất bản sản phẩm.");
+  assert.equal((await db.pool.query("SELECT status FROM products WHERE id=$1", [saved.id])).rows[0].status, "active");
+  assert.deepEqual(
+    (await db.pool.query("SELECT row_version FROM product_variants WHERE product_id=$1 ORDER BY id", [saved.id]))
+      .rows.map((row) => row.row_version),
+    skuRows.map((row) => row.row_version),
   );
+  assert.deepEqual(
+    (await db.pool.query("SELECT id FROM product_media WHERE product_id=$1 ORDER BY sort_order", [saved.id]))
+      .rows.map((row) => row.id),
+    photos.map((row) => row.id),
+  );
+  await page.locator('[data-editor-action="catalog-list"]').click();
+  await page.locator(`[data-product-id="${saved.id}"]`).click();
+  await form.getByRole("button", { name: "Lưu thay đổi" }).waitFor();
+  assert.equal(await lines.first().locator('[name="sku"]').inputValue(), "UI-SKU-1");
+  assert.equal(await lines.first().locator(".product-sku-photo img").count(), 1);
+  pass("published product reopens with its saved cover and SKU images");
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.locator('[data-section="users"]').click();
   await page.locator("#new-staff").click();

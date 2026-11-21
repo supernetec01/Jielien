@@ -86,16 +86,16 @@ const sameSecret = (given, expected) => {
     b = Buffer.from(expected);
   return a.length === b.length && timingSafeEqual(a, b);
 };
-async function readBody(req) {
+async function readBody(req, limit = maxBodyBytes) {
   if (!/^application\/json(?:\s*;|$)/i.test(req.headers["content-type"] || ""))
     fail(415, "unsupported_media_type", "Yêu cầu định dạng application/json.");
-  if (Number(req.headers["content-length"]) > maxBodyBytes)
+  if (Number(req.headers["content-length"]) > limit)
     fail(413, "body_too_large", "Yêu cầu quá lớn.");
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > maxBodyBytes) fail(413, "body_too_large", "Yêu cầu quá lớn.");
+    if (size > limit) fail(413, "body_too_large", "Yêu cầu quá lớn.");
     chunks.push(chunk);
   }
   try {

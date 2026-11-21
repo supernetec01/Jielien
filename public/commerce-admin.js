@@ -317,54 +317,493 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
   function cmsTaxForm(kind) {
     return `<form data-cms-tax="${kind}" class="editor-form">${field(kind === "categories" ? "Tên chuyên mục" : "Tên tag", "name", "", "text", "required")}${field("Slug", "slug", "", "text", "required")}<button>Tạo</button></form>`;
   }
+  const shippingFields = [
+    ["weightGrams", "weight_grams", "Khối lượng (g)"],
+    ["lengthMm", "length_mm", "Dài (mm)"],
+    ["widthMm", "width_mm", "Rộng (mm)"],
+    ["heightMm", "height_mm", "Cao (mm)"],
+  ];
+  const slugFromName = (name) =>
+    name.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d")
+      .replace(/[^a-z0-9]+/g, "-").slice(0, 150).replace(/^-|-$/g, "");
+  const productWritable = () =>
+    has(product ? "catalog.edit" : "catalog.create");
+  let productPhotos = [], stockBySku = new Map(), localSku = 0;
+
   async function productEditor(productId) {
-    await loadTax();
-    assets = has("media.read") ? (await api("/api/admin/media")).items : [];
-    product = productId
-      ? (await api("/api/admin/catalog/products/" + productId)).product
-      : null;
+    const [record, library, inventory] = await Promise.all([
+      productId ? api("/api/admin/catalog/products/" + productId) : null,
+      has("media.read") ? api("/api/admin/media") : { items: [] },
+      productId && has("inventory.read")
+        ? api("/api/admin/catalog/products/" + productId + "/stock")
+        : { items: [] },
+      loadTax(),
+    ]);
+    assets = library.items;
+    stockBySku = new Map(inventory.items.map((row) => [row.id, row.available]));
+    setProductRecord(record?.product || null);
+    renderProductEditor();
+  }
+
+  function setProductRecord(record) {
+    product = record;
+    productPhotos = (record?.media || []).map((m) => ({
+      existingMediaId: m.id, url: m.url, alt: m.alt_text,
+      skuKey: m.variant_id ? "saved-" + m.variant_id : null,
+    }));
+  }
+
+  function renderProductEditor() {
     const p = product || {};
-    $("#admin-content").innerHTML =
-      `<div class="catalog-workbench">${heading(product ? e(p.name) : "Thêm sản phẩm", "Quản lý thông tin, phân loại bán hàng và hình ảnh theo từng bước.", button("← Danh sách", "catalog-list") + (product ? button("Xem trước nháp", "preview-product") + (has("catalog.archive") && has("inventory.manage") ? button("Xóa sản phẩm & tồn các kho", "delete-product") : "") : ""))}<nav class="catalog-jumps" aria-label="Các phần sản phẩm"><a href="#product-basics">01 · Thông tin</a>${p.id ? '<a href="#product-variants">02 · Phân loại & giá</a><a href="#product-images">03 · Hình ảnh</a>' : ""}</nav><section class="panel catalog-section" id="product-basics"><div class="section-title"><h2>01 · Thông tin sản phẩm</h2><span>Lưu riêng từng phần</span></div><form id="product-form" data-version="${p.version || 0}" class="editor-form">${field("Tên sản phẩm", "name", p.name || "", "text", "required")}${field("Đường dẫn sản phẩm (slug)", "slug", p.slug || "", "text", "required")}${select("Thương hiệu", "brandId", tax.brands, p.brand_id)}<label>Danh mục<select name="categoryId" required>${tax.categories.map((c) => option(c.id, c.name, (p.categoryIds || []).includes(c.id))).join("")}</select></label>${area("Mô tả ngắn", "shortDescription", p.short_description || "")}${area("Mô tả chi tiết", "description", p.description || "")}<details class="catalog-details"><summary>Nội dung mở rộng & hiển thị trên Google</summary><div class="editor-form">${blockEditor(p.content_blocks || [])}${field("Tiêu đề trên Google", "seoTitle", p.seo_title || "")}${field("Mô tả trên Google", "seoDescription", p.seo_description || "")}</div></details><label>Trạng thái sản phẩm<select name="status">${["draft", "active", "inactive"].map((v) => option(v, { draft: "Nháp", active: "Xuất bản", inactive: "Ngừng bán" }[v], (p.status || "draft") === v)).join("")}</select></label><div class="form-actions">${has("catalog.edit") || (!p.id && has("catalog.create")) ? '<button class="primary">Lưu sản phẩm</button>' : ""}</div></form></section>${p.id ? `<section class="panel catalog-section" id="product-variants"><div class="section-title"><h2>02 · Phân loại & giá bán</h2><span>${p.variants.length} SKU đã lưu</span></div><p class="muted">Mỗi SKU là một lựa chọn mua hàng với mã và giá riêng. Điều chỉnh tồn kho tại mục Kho & tồn hàng.</p><details class="catalog-details"><summary>Tạo nhiều SKU từ thuộc tính</summary><fieldset id="sku-matrix"><legend>Chọn các lựa chọn cần bán</legend>${tax.attributes.map((group) => `<fieldset data-attribute-group="${group.id}"><legend>${e(group.name)}</legend><div class="attribute-options">${group.values.map((v) => `<label><input type="checkbox" value="${v.id}" data-value-label="${e(v.value)}"><span>${e(v.value)}</span></label>`).join("")}</div></fieldset>`).join("")}${button("Tạo SKU từ lựa chọn", "generate-matrix")}<p class="muted">Tối đa 100 tổ hợp. SKU cũ được giữ lại. Kiểm tra mã và giá rồi bấm Lưu SKU.</p></fieldset></details><form id="sku-form" class="editor-form"><div id="sku-lines">${p.variants.map(skuLine).join("") || skuLine()}</div><div class="form-actions">${button("+ Thêm SKU thủ công", "add-sku")}<button class="primary">Lưu SKU</button></div></form></section><section class="panel catalog-section" id="product-images"><div class="section-title"><h2>03 · Hình ảnh sản phẩm</h2></div>${uploadForm()}<form id="product-media-form" class="editor-form"><p>Chọn ảnh theo thứ tự trong thư viện; ảnh đầu tiên làm ảnh bìa. Bấm Lưu gallery để áp dụng.</p>${galleryMarkup(p)}<div class="form-actions"><button class="primary">Lưu gallery</button></div></form></section>` : '<p class="panel muted">Lưu sản phẩm trước để thêm phân loại, giá bán và hình ảnh.</p>'}${result}</div>`;
-    if (!has("catalog.edit")) {
-      root
-        .querySelectorAll(
-          "#product-form input,#product-form textarea,#product-form select,#sku-form input,#sku-form select,#sku-form button,#sku-matrix input,#sku-matrix button,#upload-form input,#upload-form button,#product-media-form input,#product-media-form select,#product-media-form button",
-        )
-        .forEach((el) => (el.disabled = true));
+    const editParts = has("catalog.edit");
+    const writable = productWritable();
+    const canDraft = writable && (!p.id || p.status === "draft");
+    const canDeactivate = p.id && writable && has("catalog.archive") && p.status !== "inactive";
+    const canDelete = p.id && has("catalog.archive") && has("inventory.manage");
+    const canPublish = writable && editParts && has("catalog.publish");
+    const canUpdate = writable && (p.status !== "inactive" || has("catalog.archive"));
+    const actions = [
+      canDraft ? '<button class="secondary" type="submit" name="intent" value="draft">Lưu nháp</button>' : "",
+      p.id && p.status !== "draft" && canUpdate ? '<button class="primary" type="submit" name="intent" value="update">Lưu thay đổi</button>' : "",
+      canPublish && p.status !== "active" ? '<button class="primary" type="submit" name="intent" value="active">Xuất bản</button>' : "",
+    ].join("");
+    const sections = [
+      ["product-basics", "image", "Ảnh và thông tin cơ bản"],
+      ["product-details", "file", "Mô tả sản phẩm"],
+      ["product-variants", "tag", "Giá và biến thể"],
+      ["product-shipping", "truck", "Vận chuyển"],
+    ];
+    const sectionLinks = sections.slice(0, editParts || p.id ? 4 : 2)
+      .map(([id, symbol, label]) => `<a href="#${id}">${icon(symbol)}${label}</a>`).join("");
+    const library = assets.length ? `<div class="product-library">${select("Chọn ảnh đã tải", "libraryAsset", assets.map((a) => ({ id: a.id, name: a.alt_text })))}
+      ${button("Thêm vào bộ ảnh", "product-library-add")}</div>` : "";
+    $("#admin-content").innerHTML = `<div class="catalog-workbench">
+      <header class="product-editor-header">
+        ${button("← Danh sách", "catalog-list")}
+        <div><h1>${p.id ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm"}</h1>
+        <p>${p.id ? e(p.name) + " · " + e({ draft: "Bản nháp", active: "Đang bán", inactive: "Đã ngừng bán" }[p.status]) : "Tải ảnh, nhập nội dung và thiết lập các lựa chọn bán hàng."}</p></div>
+      </header>
+      <form id="product-form" data-version="${p.version || 0}" novalidate class="product-editor-form">
+        <div class="product-editor-layout">
+          <div class="product-editor-sections">
+            <section class="panel catalog-section" id="product-basics">
+              <h2>Ảnh và thông tin cơ bản</h2>
+              ${editParts || p.id ? `<div class="product-photo-field"><h3>Ảnh sản phẩm</h3>
+                <p class="muted">Ảnh bìa xuất hiện trên danh sách sản phẩm. JPEG, PNG hoặc WebP, tối đa 5 MB mỗi ảnh.</p>
+                <div id="product-gallery" class="product-gallery"></div>
+                ${editParts && has("media.upload") ? '<input type="file" id="product-gallery-upload" data-product-upload multiple accept="image/jpeg,image/png,image/webp" hidden aria-label="Tải ảnh sản phẩm">' : ""}
+                ${editParts ? library : ""}
+              </div>` : ""}
+              <div class="editor-form">
+                <label class="product-title-field"><span>Tên sản phẩm <b aria-hidden="true">*</b></span>
+                  <input name="name" value="${e(p.name || "")}" minlength="2" maxlength="200" required placeholder="Ví dụ: Dây ràng hàng SafeStraps">
+                  <small data-product-title-count></small>
+                </label>
+                <div class="field-row">
+                  ${select("Danh mục", "categoryId", tax.categories, p.categoryIds?.[0])}
+                  ${select("Thương hiệu", "brandId", tax.brands, p.brand_id)}
+                </div>
+                <details class="catalog-details"><summary>Đường dẫn và hiển thị trên Google</summary><div class="editor-form">
+                  ${field("Đường dẫn sản phẩm", "slug", p.slug || "", "text", 'maxlength="150"')}
+                  ${field("Tiêu đề trên Google", "seoTitle", p.seo_title || "", "text", 'maxlength="200"')}
+                  ${field("Mô tả trên Google", "seoDescription", p.seo_description || "", "text", 'maxlength="500"')}
+                </div></details>
+              </div>
+            </section>
+            <section class="panel catalog-section" id="product-details">
+              <h2>Mô tả sản phẩm</h2>
+              <div class="editor-form">
+                ${area("Mô tả chi tiết", "description", p.description || "")}
+                <details class="catalog-details"><summary>Mô tả ngắn và nội dung bổ sung</summary><div class="editor-form">
+                  ${area("Mô tả ngắn", "shortDescription", p.short_description || "")}
+                  ${blockEditor(p.content_blocks || [])}
+                </div></details>
+              </div>
+            </section>
+            ${editParts || p.id ? productSales(p, editParts) : ""}
+            ${canDeactivate || canDelete ? `<details class="panel catalog-details product-management">
+              <summary>Trạng thái và thao tác khác</summary>
+              <div class="product-management-actions">
+                ${canDeactivate ? button("Ngừng bán", "product-deactivate") : ""}
+                ${canDelete ? button("Xóa sản phẩm", "delete-product") : ""}
+              </div>
+            </details>` : ""}
+          </div>
+          <aside class="product-editor-aside">
+            <nav class="panel product-section-nav" aria-label="Các mục sản phẩm">${sectionLinks}</nav>
+            <section class="panel product-live-preview" aria-label="Xem trước sản phẩm">
+              <h2>Xem trước</h2>
+              <div class="product-preview-photo"><img data-product-preview-image alt="" hidden><span data-product-preview-empty>${icon("image", { size: 32 })}Chưa có ảnh bìa</span></div>
+              <p data-product-preview-name></p><strong data-product-preview-price></strong>
+            </section>
+          </aside>
+        </div>
+        <div class="product-save-bar">
+          ${result}<p data-product-progress role="status"></p>
+          <div class="product-save-buttons">
+            ${actions}
+          </div>
+        </div>
+      </form>
+    </div>`;
+    const form = $("#product-form");
+    form.querySelectorAll(".sku-line[data-sku-id]").forEach((line) => {
+      if (line.dataset.skuId) line.dataset.initialValues = JSON.stringify(skuValues(line));
+    });
+    if (!writable || (p.status === "active" && !has("catalog.publish"))) {
+      const scope = writable ? "#product-basics .editor-form, #product-details" : ".product-editor-sections";
+      form.querySelectorAll(scope).forEach((section) => {
+        section.querySelectorAll("input, select, textarea, button").forEach((el) => el.disabled = true);
+      });
     }
+    renderProductGallery();
+    refreshProductPreview();
   }
-  function galleryMarkup(p) {
-    const attached = new Set(p.media.map((m) => m.url));
-    return (
-      p.media
-        .map((m) => {
-          const a = assets.find((a) => a.url === m.url);
-          return galleryChoice(
-            a ? "assets" : "existing",
-            a?.id || m.id,
-            m.url,
-            m.alt_text || p.name,
-            true,
-            m.variant_id,
-          );
-        })
-        .join("") +
-      assets
-        .filter((a) => !attached.has(a.url))
-        .map((a) => galleryChoice("assets", a.id, a.url, a.alt_text, false))
-        .join("")
-    );
+
+  function productSales(p, editable) {
+    const rows = p.variants?.length ? p.variants : [{}];
+    return `<section class="panel catalog-section" id="product-variants">
+      <h2>Giá và biến thể</h2>
+      <p class="muted">Sản phẩm chỉ có một lựa chọn dùng một mã SKU. Thêm dòng hoặc tạo tổ hợp khi bán nhiều màu, kích cỡ hay độ dài.</p>
+      ${editable ? `<details class="catalog-details"><summary>Tạo biến thể theo thuộc tính</summary>
+        <div id="sku-matrix">
+          ${tax.attributes.length ? tax.attributes.map((group) => `<fieldset data-attribute-group="${group.id}"><legend>${e(group.name)}</legend><div class="attribute-options">${group.values.map((v) => `<label><input type="checkbox" value="${v.id}" data-value-label="${e(v.value)}"><span>${e(v.value)}</span></label>`).join("") || "<span>Chưa có giá trị</span>"}</div></fieldset>`).join("") : "<p>Thêm nhóm và giá trị trong mục Danh mục & Thuộc tính để tạo tổ hợp.</p>"}
+          ${tax.attributes.length ? button("Tạo biến thể đã chọn", "generate-matrix") : ""}
+        </div></details>` : ""}
+      ${editable ? `<div class="product-bulk">${field("Giá bán chung (₫)", "bulkPrice", "", "number", 'min="1"')}${button("Áp dụng cho tất cả SKU", "product-price-all")}</div>` : ""}
+      <div id="sku-lines">${rows.map(skuLine).join("")}</div>
+      ${editable ? button("+ Thêm biến thể", "add-sku") : ""}
+      ${has("inventory.read") ? '<p class="muted product-inventory-note">Tồn khả dụng là số lượng có thể bán tại các kho đang hoạt động. Nhập và điều chỉnh tồn tại mục Kho & tồn hàng.</p>' : ""}
+    </section>
+    <section class="panel catalog-section" id="product-shipping">
+      <h2>Vận chuyển</h2>
+      <p class="muted">Nhập khối lượng và kích thước kiện hàng. Nếu từng biến thể có kích thước khác nhau, mở “Thông tin SKU” trên dòng tương ứng.</p>
+      ${editable ? `<div class="product-shipping-fields">${shippingFields.map(([name, , label]) => field(label, "bulk-" + name, "", "number", 'min="0" max="100000000" step="1"')).join("")}</div>
+        ${button("Áp dụng cho tất cả SKU", "product-shipping-all")}` : ""}
+    </section>`;
   }
-  function galleryChoice(kind, id, url, alt, checked, variantId) {
-    return `<div class="gallery-choice"><label><input type="checkbox" name="${kind}" value="${id}" ${checked ? "checked" : ""}>${e(alt)}<img width="70" height="70" src="${e(url)}" alt="${e(alt)}"></label><label>Ảnh dùng cho<select class="media-variant"><option value="">Toàn sản phẩm</option>${product.variants.map((v) => option(v.id, v.sku + " · " + v.name, Number(variantId) === v.id)).join("")}</select></label>${button("Lên", "gallery-up")}${button("Xuống", "gallery-down")}</div>`;
-  }
+
   function skuLine(v = {}) {
     const selected = (v.combination_key || "").split("-").filter(Boolean);
-    const image = product?.media?.find(
-      (m) => Number(m.variant_id) === Number(v.id),
-    );
-    return `<fieldset class="sku-line" data-sku-id="${v.id || ""}" data-version="${v.row_version || ""}"><legend>${e(v.sku || "SKU mới · chưa lưu")}</legend><div class="sku-image-note">${image ? `<img src="${e(image.url)}" alt="${e(v.name)}" width="64" height="64"><span>Ảnh riêng của SKU</span>` : `<span>Chưa gán ảnh riêng cho SKU.</span>`}<a href="#product-images">Chọn ảnh tại mục Hình ảnh</a></div><div class="field-row">${field("Tên phân loại", "name", v.name || "", "text", "required")}${field("Mã SKU (không trùng)", "sku", v.sku || "", "text", "required")}${field("Giá mặc định cho kho mới (₫)", "price", v.price || 0, "number", 'min="0" required')}${field("Giá trước giảm mặc định (₫)", "originalPrice", v.original_price ?? v.price ?? 0, "number", 'min="0" required')}<label>Trạng thái bán<select name="status">${["active", "inactive", "draft"].map((x) => option(x, states[x] || "Nháp", (v.status || "active") === x)).join("")}</select></label>${field("Ngưỡng cảnh báo tồn", "lowStockThreshold", v.low_stock_threshold ?? 5, "number", 'min="0"')}</div><details class="catalog-details"><summary>Thuộc tính, mã vạch & vận chuyển</summary><div class="field-row">${field("Đường dẫn SKU", "slug", v.slug || "")}${field("Mã vạch", "barcode", v.barcode || "")}${field("Quy cách hiển thị", "weight", v.weight || "")}${field("Độ tuổi hiển thị", "age", v.age || "")}${field("Khối lượng (gram)", "weightGrams", v.weight_grams ?? "", "number", 'min="0"')}${field("Dài (mm)", "lengthMm", v.length_mm ?? "", "number", 'min="0"')}${field("Rộng (mm)", "widthMm", v.width_mm ?? "", "number", 'min="0"')}${field("Cao (mm)", "heightMm", v.height_mm ?? "", "number", 'min="0"')}</div><div class="sku-attribute-selectors">${tax.attributes.map((g) => `<label>${e(g.name)}<select data-sku-attribute><option value="">Không chọn</option>${g.values.map((x) => option(x.id, x.value, selected.includes(String(x.id)))).join("")}</select></label>`).join("")}</div></details><input type="hidden" name="attributes" value="${e(selected.join(","))}"></fieldset>`;
+    const key = v.id ? "saved-" + v.id : "new-" + (++localSku);
+    return `<fieldset class="sku-line" data-sku-key="${key}" data-sku-id="${v.id || ""}" data-version="${v.row_version || ""}">
+      <legend>${e(v.sku || "Lựa chọn bán hàng")}</legend>
+      <div class="product-sku-fields">
+        ${field("Tên biến thể", "name", v.name || "", "text", 'maxlength="200" placeholder="Mặc định"')}
+        ${field("SKU người bán", "sku", v.sku || "", "text", 'maxlength="80" placeholder="VD: SS-1M"')}
+        ${field("Giá bán (₫)", "price", v.price ?? "", "number", 'min="0" step="1"')}
+        ${has("inventory.read") ? `<div class="product-stock"><span>Tồn khả dụng</span><strong>${v.id ? Number(stockBySku.get(v.id) ?? 0).toLocaleString("vi-VN") : "—"}</strong></div>` : ""}
+      </div>
+      <div class="product-sku-media">${skuPhotoMarkup(key)}</div>
+      <details class="catalog-details"><summary>Thông tin SKU</summary><div class="editor-form">
+        <div class="field-row">
+          ${field("Giá trước giảm (₫)", "originalPrice", v.original_price ?? "", "number", 'min="0" step="1"')}
+          <label>Trạng thái bán<select name="status">${["active", "inactive", "draft"].map((x) => option(x, states[x], (v.status || "active") === x)).join("")}</select></label>
+          ${field("Đường dẫn SKU", "slug", v.slug || "")}
+          ${field("Mã vạch", "barcode", v.barcode || "")}
+          ${field("Quy cách hiển thị", "weight", v.weight || "")}
+          ${field("Độ tuổi hiển thị", "age", v.age || "")}
+          ${field("Ngưỡng cảnh báo tồn", "lowStockThreshold", v.low_stock_threshold ?? 5, "number", 'min="0"')}
+        </div>
+        <div class="product-shipping-fields">${shippingFields.map(([name, column, label]) => field(label, name, v[column] ?? "", "number", 'min="0" max="100000000" step="1"')).join("")}</div>
+        <div class="sku-attribute-selectors">${tax.attributes.map((g) => `<label>${e(g.name)}<select data-sku-attribute><option value="">Không chọn</option>${g.values.map((x) => option(x.id, x.value, selected.includes(String(x.id)))).join("")}</select></label>`).join("")}</div>
+      </div></details>
+      <input type="hidden" name="attributes" value="${e(selected.join(","))}">
+      ${has("catalog.edit") && !v.id ? button("Bỏ dòng", "product-sku-remove") : ""}
+    </fieldset>`;
+  }
+
+  function skuPhotoMarkup(key) {
+    const writable = has("catalog.edit") && productWritable();
+    return productPhotos.map((photo, index) => photo.skuKey === key
+      ? `<div class="product-sku-photo"><img src="${e(photo.url)}" alt="${e(photo.alt || "Ảnh biến thể")}">${writable ? button("Gỡ ảnh", "product-remove-photo:" + index) : ""}</div>` : "").join("")
+      + (writable && has("media.upload") ? `<input type="file" data-product-upload data-sku-key="${key}" accept="image/jpeg,image/png,image/webp" hidden aria-label="Tải ảnh biến thể">
+        ${button(icon("image") + " Tải ảnh biến thể", "product-pick-sku")}` : "");
+  }
+
+  function renderProductGallery() {
+    const gallery = $("#product-gallery");
+    if (!gallery) return;
+    const edit = has("catalog.edit") && productWritable();
+    const items = productPhotos.map((photo, index) => ({ photo, index }))
+      .filter(({ photo }) => !photo.skuKey);
+    gallery.innerHTML = items.map(({ photo, index }, position) => `
+      <figure class="product-photo-card ${position === 0 ? "product-cover" : ""}">
+        <img src="${e(photo.url)}" alt="${e(photo.alt || "Ảnh sản phẩm")}">
+        <figcaption>${position === 0 ? "<span>Ảnh bìa</span>" : edit ? button("Làm ảnh bìa", "product-cover:" + index) : ""}
+          ${edit ? button("Gỡ ảnh", "product-remove-photo:" + index) : ""}</figcaption>
+      </figure>`).join("") +
+      (edit && has("media.upload") ? `<button class="product-upload-tile ${items.length ? "" : "product-cover"}" type="button" data-editor-action="product-pick-gallery">${icon("plus", { size: 26 })}${items.length ? "Thêm ảnh" : "Tải ảnh bìa và ảnh phụ"}</button>`
+        : items.length ? "" : '<p class="muted">Chưa có ảnh sản phẩm.</p>');
+  }
+
+  function refreshProductPreview() {
+    const form = $("#product-form");
+    if (!form) return;
+    const title = form.querySelector('#product-basics [name="name"]').value;
+    const photo = productPhotos.find((m) => !m.skuKey) || productPhotos[0];
+    const image = $("[data-product-preview-image]");
+    image.hidden = !photo;
+    $("[data-product-preview-empty]").hidden = Boolean(photo);
+    if (photo) {
+      image.src = photo.url;
+      image.alt = photo.alt || title;
+    } else image.removeAttribute("src");
+    $("[data-product-preview-name]").textContent = title || "Tên sản phẩm";
+    $("[data-product-title-count]").textContent = title.length + "/200";
+    const prices = [...form.querySelectorAll('.sku-line [name="price"]')]
+      .map((i) => Number(i.value)).filter((n) => n > 0);
+    $("[data-product-preview-price]").textContent = prices.length
+      ? [Math.min(...prices), Math.max(...prices)].filter((n, i, all) => i === 0 || n !== all[0])
+          .map((n) => n.toLocaleString("vi-VN") + " ₫").join(" – ")
+      : "Chưa nhập giá";
+  }
+  function syncProductPhotos() {
+    renderProductGallery();
+    $("#product-form").querySelectorAll(".sku-line").forEach((line) => {
+      line.querySelector(".product-sku-media").innerHTML = skuPhotoMarkup(line.dataset.skuKey);
+    });
+    refreshProductPreview();
+  }
+
+  function setProductBusy(form, busy, message = "") {
+    form.dataset.busy = busy ? "true" : "false";
+    form.querySelectorAll('button[type="submit"], [data-editor-action="delete-product"]')
+      .forEach((control) => control.disabled = busy);
+    form.querySelector("[data-product-progress]").textContent = message;
+  }
+
+  async function uploadProductPhotos(input) {
+    const form = input.form;
+    const files = [...input.files];
+    const skuKey = input.dataset.skuKey || null;
+    if (!files.length || form.dataset.busy === "true") {
+      input.value = "";
+      return;
+    }
+    const error = form.querySelector("#editor-error");
+    error.textContent = "";
+    setProductBusy(form, true, "Đang tải ảnh…");
+    let added = 0;
+    try {
+      if (productPhotos.length + files.length > 30)
+        throw Error("Tối đa 30 ảnh, gồm cả ảnh của từng biến thể.");
+      for (const file of files) {
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024)
+          throw Error("Chọn ảnh JPEG, PNG hoặc WebP tối đa 5 MB.");
+      }
+      for (const file of files) {
+        const alt = form.querySelector('#product-basics [name="name"]').value.trim() ||
+          file.name.replace(/\.[^.]+$/, "") || "Ảnh sản phẩm";
+        const { asset } = await api("/api/admin/media/uploads", {
+          method: "POST",
+          rawBody: file,
+          extraHeaders: {
+            "Content-Type": file.type,
+            "X-Image-Alt": encodeURIComponent(alt.slice(0, 200)),
+          },
+        });
+        if (!form.isConnected) return;
+        productPhotos.push({ assetId: asset.id, url: asset.url, alt: asset.alt_text, skuKey });
+        assets.unshift(asset);
+        added++;
+      }
+    } catch (err) {
+      if (form.isConnected) error.textContent = err.message;
+    } finally {
+      if (form.isConnected) {
+        input.value = "";
+        syncProductPhotos();
+        setProductBusy(form, false, added ? `Đã thêm ${added} ảnh vào biểu mẫu.` : "");
+        const focus = skuKey
+          ? form.querySelector('[data-sku-key="' + skuKey + '"] [data-editor-action="product-pick-sku"]')
+          : form.querySelector('[data-editor-action="product-pick-gallery"]');
+        focus?.focus({ preventScroll: true });
+      }
+    }
+  }
+
+  function productEditorAction(action, target) {
+    const form = $("#product-form");
+    if (form.dataset.busy === "true") return;
+    $("#editor-error").textContent = "";
+    if (action === "product-deactivate") return saveProductEditor(form, "inactive");
+    if (action === "product-pick-gallery") $("#product-gallery-upload")?.click();
+    if (action === "product-pick-sku") target.closest(".sku-line").querySelector("[data-product-upload]")?.click();
+    if (action === "product-library-add") {
+      const asset = assets.find((a) => String(a.id) === form.elements.libraryAsset.value);
+      if (!asset) throw Error("Chọn ảnh từ thư viện.");
+      if (productPhotos.some((m) => !m.skuKey && m.url === asset.url))
+        throw Error("Ảnh này đã có trong bộ ảnh.");
+      if (productPhotos.length >= 30) throw Error("Tối đa 30 ảnh.");
+      productPhotos.push({ assetId: asset.id, url: asset.url, alt: asset.alt_text, skuKey: null });
+      syncProductPhotos();
+    }
+    if (action.startsWith("product-remove-photo:") || action.startsWith("product-cover:")) {
+      const line = target.closest(".sku-line");
+      const [photo] = productPhotos.splice(Number(action.split(":")[1]), 1);
+      if (action.startsWith("product-cover:")) productPhotos.unshift(photo);
+      syncProductPhotos();
+      const focus = line?.querySelector('[data-editor-action="product-pick-sku"]') ||
+        $("#product-gallery")?.querySelector("button");
+      focus?.focus({ preventScroll: true });
+    }
+    if (action === "product-sku-remove") {
+      const line = target.closest(".sku-line");
+      productPhotos = productPhotos.filter((photo) => photo.skuKey !== line.dataset.skuKey);
+      line.remove();
+      syncProductPhotos();
+      form.querySelector('[data-editor-action="add-sku"]').focus();
+    }
+    if (action === "product-price-all" || action === "product-shipping-all") {
+      if (!$("#sku-lines").children.length) throw Error("Thêm ít nhất một dòng SKU.");
+      const price = action === "product-price-all";
+      const fields = price
+        ? [["price", form.elements.bulkPrice]]
+        : shippingFields.map(([name]) => [name, form.elements["bulk-" + name]]);
+      const supplied = fields.filter(([, input]) => input.value !== "" || input.validity.badInput);
+      if (!supplied.length) throw Error(price ? "Nhập giá bán chung." : "Nhập khối lượng hoặc kích thước kiện hàng.");
+      supplied.forEach(([, input]) => {
+        if (!input.checkValidity() || !Number.isSafeInteger(Number(input.value)))
+          throw Error("Nhập số nguyên hợp lệ.");
+      });
+      for (const [name, input] of supplied) {
+        form.querySelectorAll('.sku-line [name="' + name + '"]').forEach((field) => {
+          field.value = input.value;
+          if (price) {
+            const original = field.closest(".sku-line").querySelector('[name="originalPrice"]');
+            if (original.value && +original.value < +input.value) original.value = input.value;
+          }
+        });
+      }
+      form.querySelector("[data-product-progress]").textContent = price
+        ? "Đã áp dụng giá cho các dòng SKU." : "Đã áp dụng kích thước cho các dòng SKU.";
+      refreshProductPreview();
+    }
+  }
+
+  function skuValues(line) {
+    return Object.fromEntries([...line.querySelectorAll("[name]")]
+      .map((input) => [input.name, input.value.trim()]));
+  }
+
+  function skuHasContent(line, values, mediaOwners) {
+    return line.dataset.skuId || mediaOwners.has(line.dataset.skuKey) ||
+      ["name", "sku", "price", "originalPrice", "attributes", "barcode", "age", "weight", "slug",
+        ...shippingFields.map(([name]) => name)]
+        .some((name) => values[name]) ||
+      values.status !== "active" || !["", "5"].includes(values.lowStockThreshold);
+  }
+
+  function collectProductVariants(form) {
+    const mediaOwners = new Set(productPhotos.filter((m) => m.skuKey).map((m) => m.skuKey));
+    const variants = [];
+    const skuByKey = new Map();
+    const codes = new Set();
+    let hasActiveSku = false;
+    for (const line of form.querySelectorAll(".sku-line")) {
+      const values = skuValues(line);
+      const key = line.dataset.skuKey;
+      if (!skuHasContent(line, values, mediaOwners)) continue;
+      const sku = values.sku.toUpperCase();
+      if (codes.has(sku)) throw Error("Mã SKU " + sku + " bị trùng.");
+      codes.add(sku);
+      skuByKey.set(key, sku);
+      if (Number(values.price) > 0 && values.status === "active") hasActiveSku = true;
+      if (line.dataset.initialValues === JSON.stringify(values)) continue;
+      if (!/^[A-Z0-9_-]{1,80}$/.test(sku) || !/[A-Z0-9]/.test(sku))
+        throw Error("Nhập SKU cho mỗi dòng có dữ liệu. Dùng chữ không dấu, số, gạch ngang hoặc gạch dưới.");
+      if (values.price === "" || !Number.isSafeInteger(Number(values.price)))
+        throw Error("Nhập giá bán nguyên cho SKU " + sku + ".");
+      const price = Number(values.price);
+      const originalPrice = values.originalPrice === "" ? price : Number(values.originalPrice);
+      if (originalPrice < price) throw Error("Giá trước giảm của " + sku + " phải từ giá bán trở lên.");
+      variants.push({
+        ...values, sku, name: values.name || "Mặc định", price, originalPrice,
+        slug: values.slug || slugFromName(sku),
+        id: line.dataset.skuId ? Number(line.dataset.skuId) : undefined,
+        rowVersion: Number(line.dataset.version),
+        lowStockThreshold: Number(values.lowStockThreshold || 5),
+        attributeValueIds: values.attributes ? values.attributes.split(",").map(Number) : [],
+        ...Object.fromEntries(shippingFields.map(([name]) => [name, values[name] === "" ? null : Number(values[name])])),
+      });
+    }
+    return { variants, skuByKey, hasActiveSku };
+  }
+
+  async function saveProductEditor(form, intent) {
+    if (form.dataset.busy === "true" || !productWritable()) return;
+    const error = form.querySelector("#editor-error");
+    error.textContent = "";
+    try {
+      const invalid = [...form.elements].find((input) => !input.name?.startsWith("bulk") && !input.validity?.valid && input.willValidate);
+      if (invalid) {
+        if (invalid.closest("details")) invalid.closest("details").open = true;
+        invalid.reportValidity();
+        return;
+      }
+      const current = product;
+      const basics = (name) => form.querySelector('#product-basics [name="' + name + '"]').value.trim();
+      const description = form.querySelector('#product-details [name="description"]').value;
+      const status = intent === "update" ? current?.status || "draft" : intent;
+      const partsOnly = status === "active" && !has("catalog.publish");
+      const name = basics("name");
+      const slug = basics("slug") || slugFromName(name);
+      if (name.length < 2) throw Error("Tên sản phẩm cần ít nhất 2 ký tự.");
+      if (!slug) throw Error("Nhập đường dẫn sản phẩm ở mục hiển thị trên Google.");
+      const categoryId = Number(basics("categoryId"));
+      const categoryIds = categoryId ? [...new Set([categoryId, ...(current?.categoryIds || []).slice(1)])] : (current?.categoryIds || []).slice(1);
+      const payload = {
+        name, slug, status, categoryIds,
+        version: current?.version,
+        brandId: Number(basics("brandId")) || null,
+        description,
+        shortDescription: form.querySelector('#product-details [name="shortDescription"]').value,
+        descriptionBlocks: collectBlocks(form),
+        seoTitle: basics("seoTitle"),
+        seoDescription: basics("seoDescription"),
+      };
+      if (partsOnly) delete payload.status;
+      if (has("catalog.edit")) {
+        const { variants, skuByKey, hasActiveSku } = collectProductVariants(form);
+        if (variants.length) payload.variants = variants;
+        const previousMedia = current?.media || [];
+        const photosChanged = previousMedia.length !== productPhotos.length ||
+          productPhotos.some((photo, i) => photo.existingMediaId !== previousMedia[i].id);
+        if (photosChanged) {
+          const coverFirst = [...productPhotos.filter((m) => !m.skuKey), ...productPhotos.filter((m) => m.skuKey)];
+          payload.media = coverFirst.map(({ existingMediaId, assetId, skuKey }) => ({
+            existingMediaId, assetId, variantSku: skuByKey.get(skuKey),
+          }));
+        }
+        if (status === "active" && !partsOnly) {
+          if (!categoryIds.length) throw Error("Chọn danh mục trước khi xuất bản.");
+          if (!productPhotos.length) throw Error("Thêm ảnh sản phẩm trước khi xuất bản.");
+          if (!hasActiveSku)
+            throw Error("Xuất bản cần ít nhất một SKU đang bán có giá lớn hơn 0.");
+        }
+      }
+      setProductBusy(form, true, "Đang lưu sản phẩm…");
+      form.querySelector(".product-editor-layout").inert = true;
+      const { product: saved } = await api(
+        "/api/admin/catalog/products" + (current ? "/" + current.id : "") + "/editor",
+        { method: current ? "PATCH" : "POST", body: payload },
+      );
+      if (!form.isConnected) return;
+      setProductRecord(saved);
+      renderProductEditor();
+      const savedMessage = status === "draft" ? "Đã lưu bản nháp." :
+        intent === "active" ? "Đã xuất bản sản phẩm." : "Đã lưu thay đổi.";
+      $("[data-product-progress]").textContent = savedMessage;
+      notify(savedMessage);
+    } catch (err) {
+      if (form.isConnected) error.textContent = err.message;
+    } finally {
+      if (form.isConnected) {
+        form.querySelector(".product-editor-layout").inert = false;
+        setProductBusy(form, false);
+      }
+    }
   }
   function blockEditor(values) {
     return `<fieldset><legend>Nội dung bài / mô tả</legend><p class="editor-note">Thêm đoạn, tiêu đề, danh sách hoặc ảnh đã upload. Mọi nội dung được server xác minh và escape.</p><div id="content-blocks">${values.map(blockLine).join("")}</div>${button("Thêm đoạn nội dung", "add-block")}</fieldset>`;
@@ -432,6 +871,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         return;
       }
       if (action === "delete-product") {
+        if ($("#product-form")?.dataset.busy === "true") return;
         if (!product || !has("catalog.archive") || !has("inventory.manage"))
           return;
         if (
@@ -578,21 +1018,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         $("#import-result").textContent =
           "Import hoàn tất. Xem sản phẩm trong catalog.";
       }
-      if (action === "preview-product") {
-        const { html } = await api(
-          "/api/admin/catalog/products/" + product.id + "/preview",
-        );
-        let preview = $("#product-preview");
-        if (!preview) {
-          $("#admin-content").insertAdjacentHTML(
-            "beforeend",
-            '<section id="product-preview" class="panel" tabindex="-1"></section>',
-          );
-          preview = $("#product-preview");
-        }
-        preview.innerHTML = html;
-        preview.focus();
-      }
+
       if (action?.startsWith("banner-preview:")) {
         previewMode = action.split(":")[1];
         root
@@ -648,12 +1074,16 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         form.elements.title.focus();
       }
       if (action === "new-product") await productEditor();
-      if (action === "catalog-list") await refresh("catalog-editor");
+      if (action === "catalog-list" && $("#product-form")?.dataset.busy !== "true")
+        await refresh("catalog-editor");
       if (action?.startsWith("catalog-page:"))
         $("#catalog-results").innerHTML = productTable(
           await api("/api/admin/catalog/products?page=" + action.split(":")[1]),
         );
+      if (action?.startsWith("product-") && $("#product-form"))
+        return productEditorAction(action, event.target.closest("button"));
       if (action === "generate-matrix") {
+        if ($("#product-form").dataset.busy === "true") return;
         const groups = [...root.querySelectorAll("[data-attribute-group]")]
           .map((g) =>
             [...g.querySelectorAll("input:checked")].map((i) => ({
@@ -670,52 +1100,35 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
           );
           if (matrix.length > 100) throw Error("Tối đa 100 tổ hợp.");
         }
-        root
-          .querySelectorAll(
-            '.sku-line:not([data-sku-id]),.sku-line[data-sku-id=""]',
-          )
-          .forEach((line) => {
-            if (
-              !line.querySelector('[name="name"]').value &&
-              !line.querySelector('[name="sku"]').value
-            )
-              line.remove();
-          });
-        const existing = new Set(
-          [...root.querySelectorAll('.sku-line [name="attributes"]')].map((i) =>
-            i.value
-              .split(",")
-              .map(Number)
-              .sort((a, b) => a - b)
-              .join("-"),
-          ),
-        );
-        for (const combo of matrix) {
-          const ids = combo.map((v) => v.id).sort((a, b) => a - b),
-            key = ids.join("-");
-          if (existing.has(key)) continue;
-          $("#sku-lines").insertAdjacentHTML(
-            "beforeend",
-            skuLine({
-              name: combo.map((v) => v.label).join(" / "),
-              sku: (product.slug.slice(0, 35) + "-" + key).toUpperCase(),
-              combination_key: key,
-            }),
-          );
-          existing.add(key);
+        const rows = [...$("#sku-lines").children];
+        const mediaOwners = new Set(productPhotos.map((m) => m.skuKey));
+        const filled = rows.filter((line) => skuHasContent(line, skuValues(line), mediaOwners));
+        const existing = new Set(filled.map((line) =>
+          skuValues(line).attributes.split(",").filter(Boolean).map(Number).sort((a, b) => a - b).join("-"),
+        ));
+        const newRows = matrix.map((combo) => ({
+          name: combo.map((v) => v.label).join(" / "),
+          key: combo.map((v) => v.id).sort((a, b) => a - b).join("-"),
+        })).filter(({ key }) => !existing.has(key));
+        if (filled.length + newRows.length > 100) throw Error("Tối đa 100 SKU.");
+        if (!newRows.length) {
+          notify("Các biến thể này đã có trong danh sách.");
+          return;
         }
+        rows.filter((line) => !filled.includes(line)).forEach((line) => line.remove());
+        const prefix = (product?.slug || slugFromName($('#product-basics [name="name"]').value) || "sku").slice(0, 35);
+        for (const { name, key } of newRows) {
+          $("#sku-lines").insertAdjacentHTML("beforeend", skuLine({
+            name, sku: (prefix + "-" + key).toUpperCase(), combination_key: key,
+          }));
+        }
+        notify(`Đã thêm ${newRows.length} biến thể.`);
       }
-      if (["gallery-up", "gallery-down"].includes(action)) {
-        const row = event.target.closest(".gallery-choice"),
-          sibling =
-            action === "gallery-up"
-              ? row.previousElementSibling
-              : row.nextElementSibling;
-        if (sibling?.classList.contains("gallery-choice"))
-          row.parentNode.insertBefore(
-            action === "gallery-up" ? row : sibling,
-            action === "gallery-up" ? sibling : row,
-          );
+      if (action === "add-sku") {
+        if ($("#product-form").dataset.busy === "true") return;
+        if ($("#sku-lines").children.length >= 100) throw Error("Tối đa 100 SKU.");
+        $("#sku-lines").insertAdjacentHTML("beforeend", skuLine());
+        $("#sku-lines").lastElementChild.querySelector('input').focus();
       }
       if (action === "add-block")
         $("#content-blocks").insertAdjacentHTML("beforeend", blockLine());
@@ -731,8 +1144,6 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         if (b.nextElementSibling)
           b.parentNode.insertBefore(b.nextElementSibling, b);
       }
-      if (action === "add-sku")
-        $("#sku-lines").insertAdjacentHTML("beforeend", skuLine());
       if (action === "new-article") await articleEditor();
       if (action === "cms-list") await refresh("cms-editor");
       if (action?.startsWith("article:restore:")) {
@@ -824,11 +1235,13 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
   }
   root.addEventListener("submit", async (event) => {
     const form = event.target;
+    if (form.getAttribute("id") === "product-form") {
+      event.preventDefault();
+      await saveProductEditor(form, event.submitter?.value || (product ? "update" : "draft"));
+      return;
+    }
     const supported = [
-      "product-form",
       "redirect-form",
-      "sku-form",
-      "product-media-form",
       "upload-form",
       "article-form",
       "schedule-form",
@@ -932,74 +1345,6 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
             "/api/admin/catalog/products?q=" + encodeURIComponent(data.q),
           ),
         );
-      if (form.getAttribute("id") === "product-form") {
-        const { product: p } = await api(
-          "/api/admin/catalog/products" + (product ? "/" + product.id : ""),
-          {
-            method: product ? "PATCH" : "POST",
-            body: {
-              ...data,
-              version: product?.version,
-              brandId: data.brandId ? Number(data.brandId) : null,
-              categoryIds: [Number(data.categoryId)],
-              descriptionBlocks: collectBlocks(form),
-            },
-          },
-        );
-        await productEditor(p.id);
-      }
-      if (form.getAttribute("id") === "sku-form") {
-        const variants = [...form.querySelectorAll(".sku-line")].map((line) => {
-          const values = Object.fromEntries(
-            [...line.querySelectorAll("[name]")].map((input) => [
-              input.name,
-              input.value,
-            ]),
-          );
-          return {
-            ...values,
-            id: line.dataset.skuId ? Number(line.dataset.skuId) : undefined,
-            rowVersion: Number(line.dataset.version),
-            weightGrams:
-              values.weightGrams === "" ? null : Number(values.weightGrams),
-            lengthMm: values.lengthMm === "" ? null : Number(values.lengthMm),
-            widthMm: values.widthMm === "" ? null : Number(values.widthMm),
-            heightMm: values.heightMm === "" ? null : Number(values.heightMm),
-            lowStockThreshold: Number(values.lowStockThreshold),
-            price: Number(values.price),
-            originalPrice: Number(values.originalPrice),
-            attributeValueIds: values.attributes
-              ? values.attributes.split(",").map(Number)
-              : [],
-          };
-        });
-        await api("/api/admin/catalog/products/" + product.id + "/variants", {
-          method: "POST",
-          body: { version: product.version, variants },
-        });
-        await productEditor(product.id);
-      }
-      if (form.getAttribute("id") === "product-media-form") {
-        await api("/api/admin/catalog/products/" + product.id + "/media", {
-          method: "PUT",
-          body: {
-            version: product.version,
-            media: [...form.querySelectorAll(".gallery-choice")]
-              .filter((row) => row.querySelector("input").checked)
-              .map((row) => {
-                const input = row.querySelector("input"),
-                  variant = row.querySelector(".media-variant").value;
-                return {
-                  ...(input.name === "existing"
-                    ? { existingMediaId: Number(input.value) }
-                    : { assetId: Number(input.value) }),
-                  variantId: variant ? Number(variant) : null,
-                };
-              }),
-          },
-        });
-        await productEditor(product.id);
-      }
       if (form.getAttribute("id") === "upload-form") {
         const file = form.querySelector('[name="image"]').files[0];
         await api("/api/admin/media/uploads", {
@@ -1010,8 +1355,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
             "X-Image-Alt": encodeURIComponent(data.alt),
           },
         });
-        if (product) await productEditor(product.id);
-        else await refresh("media-editor");
+        await refresh("media-editor");
       }
       if (form.dataset.taxKind) {
         const kind = form.dataset.taxKind;
@@ -1195,6 +1539,10 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
   }
 
   root.addEventListener("change", (event) => {
+    if (event.target.matches("[data-product-upload]")) {
+      void uploadProductPhotos(event.target);
+      return;
+    }
     if (event.target.matches("[data-sku-attribute]")) {
       const line = event.target.closest(".sku-line");
       line.querySelector('[name="attributes"]').value = [
@@ -1216,6 +1564,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     if (event.target.closest("#banner-form")) previewBanner();
   });
   root.addEventListener("input", (event) => {
+    if (event.target.closest("#product-form")) refreshProductPreview();
     if (event.target.matches("[data-new-value]"))
       syncAttributeValues(event.target.closest("form"));
     if (event.target.matches("[data-tax-search]")) {

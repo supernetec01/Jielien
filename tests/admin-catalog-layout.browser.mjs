@@ -126,9 +126,9 @@ try {
     .getAttribute("value");
   await savedSelector.selectOption(chosenValue);
   const savedResponse = page.waitForResponse(
-    (r) => r.url().includes("/variants") && r.request().method() === "POST",
+    (r) => r.url().endsWith("/editor") && r.request().method() === "PATCH",
   );
-  await page.locator("#sku-form button.primary").click();
+  await page.locator('#product-form button[value="update"]').click();
   assert.equal((await savedResponse).status(), 200);
   await page.waitForFunction(
     (value) =>
