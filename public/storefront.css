@@ -3602,3 +3602,189 @@ main {
   color: #42566a;
   line-height: 1.65;
 }
+
+/* Tin tức và cẩm nang */
+.journal-index, .journal-article-page {
+  color: var(--navy);
+  margin-block: 34px 64px;
+  overflow-wrap: anywhere;
+}
+.journal-index-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid var(--line);
+  padding: 24px 0;
+}
+.journal-index-header h1 { margin: 0 0 8px; font-size: clamp(30px, 4vw, 50px); }
+.journal-index-header p { margin: 0; color: var(--muted); }
+.journal-index-header form { width: min(100%, 360px); }
+.journal-index-header form label { display: block; margin-bottom: 6px; font-weight: 700; }
+.journal-index-header form div { display: flex; gap: 8px; }
+.journal-index-header input { min-width: 0; flex: 1; }
+.journal-topics, .journal-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 18px;
+}
+.journal-topics a, .journal-pagination a {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  text-decoration: none;
+}
+.journal-topics a[aria-current], .journal-topics a:hover,
+.journal-pagination a:hover { background: #edf5df; border-color: #86b529; }
+.journal-index :is(.article-visual, .article-visual img),
+.journal-related :is(.article-visual, .article-visual img) {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/10;
+}
+.journal-index .article-visual::before, .journal-related .article-visual::before { display: none; }
+.journal-index .article-content small { color: #42641a; font-weight: 700; }
+.journal-empty {
+  padding: 26px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+main.container:has(.journal-article-page) { max-width: 1580px; }
+.journal-article-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+.journal-article-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 260px);
+  gap: 20px;
+  align-items: start;
+  min-width: 0;
+}
+.journal-article-layout:not(:has(.journal-article-sidebar)) { grid-template-columns: minmax(0, 1fr); }
+.article-body.journal-article {
+  max-width: none;
+  min-width: 0;
+  padding: clamp(16px, 2.5vw, 36px);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: white;
+}
+.journal-article h1 {
+  font-size: clamp(28px, 3.2vw, 46px);
+  line-height: 1.16;
+  margin-block: 14px;
+}
+.journal-breadcrumb, .journal-byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  font-size: 14px;
+  color: #4e6279;
+}
+.journal-breadcrumb a { color: #42641a; font-weight: 700; }
+.journal-lead { color: #4e6279; font-size: 18px; }
+.journal-article > .journal-cover { margin: 8px 0 14px; border-radius: 12px; height: auto; }
+.journal-summary {
+  border-left: 4px solid #86b529;
+  border-radius: 0 10px 10px 0;
+  padding: 14px 18px;
+  margin: 16px 0 26px;
+  background: #f1f7e8;
+}
+.journal-summary h2, .journal-author h2, .journal-article-sidebar h2 { margin: 0 0 8px; font-size: 17px; }
+.journal-summary :is(p, ul), .journal-author p, .journal-faq p { margin: 0; }
+.journal-prose { line-height: 1.75; }
+.journal-prose :is(h2, h3) { scroll-margin-top: 150px; }
+.journal-prose figure { margin-inline: 0; }
+.journal-prose figcaption, .journal-faq p { white-space: pre-line; }
+.journal-rail { display: none; }
+.journal-ad { text-decoration: none; }
+.journal-ad img { display: block; }
+.journal-inline-ad {
+  display: block;
+  overflow: hidden;
+  margin: 22px 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.journal-inline-ad img { width: 100%; height: auto; aspect-ratio: 3/1; object-fit: cover; }
+.journal-article-sidebar {
+  position: sticky;
+  top: 126px;
+  display: grid;
+  gap: 14px;
+}
+.journal-article-sidebar > *, .journal-author, .journal-mobile-toc {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  padding: 16px;
+}
+.journal-article-sidebar ul, .journal-mobile-toc ul { margin: 0; padding-left: 18px; }
+.journal-article-sidebar li { padding-block: 4px; }
+.journal-article-sidebar a:hover { text-decoration: underline; }
+.journal-product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-block: 14px;
+  padding: 12px;
+  border: 1px solid #dbe7cd;
+  border-radius: 10px;
+  background: #f7faef;
+  color: var(--navy);
+  text-decoration: none;
+}
+.journal-product-small { margin: 8px 0 0; padding: 8px; font-size: 14px; }
+.journal-product img { width: 72px; height: 72px; object-fit: contain; border-radius: 6px; }
+.journal-product-small img { width: 48px; height: 48px; }
+.journal-product span { flex: 1; min-width: 0; }
+.journal-product small { display: block; color: #42641a; }
+.journal-faq {
+  margin-block: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #f6f8fb;
+}
+.journal-faq summary { cursor: pointer; padding: 12px; font-weight: 700; }
+.journal-faq p { padding: 0 12px 14px; }
+.journal-author { display: flex; align-items: flex-start; gap: 12px; margin-top: 28px; }
+.journal-mobile-toc { display: none; margin-bottom: 20px; }
+.journal-mobile-toc h2 { margin: 0 0 8px; font-size: 17px; }
+.journal-author svg { flex: 0 0 auto; color: #42641a; }
+.journal-related { grid-column: 1/-1; min-width: 0; }
+.journal-related > h2 { margin-bottom: 8px; }
+.journal-related .news-grid { margin-top: 14px; }
+@media (min-width: 1381px) {
+  .journal-article-page.has-left-rail { grid-template-columns: 160px minmax(0, 1fr); }
+  .journal-article-page.has-right-rail { grid-template-columns: minmax(0, 1fr) 160px; }
+  .journal-article-page.has-left-rail.has-right-rail { grid-template-columns: 160px minmax(0, 1fr) 160px; }
+  .journal-rail {
+    display: block;
+    position: sticky;
+    top: 126px;
+    width: 160px;
+    height: 600px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #eff4e8;
+  }
+  .journal-rail img { width: 160px; height: 600px; object-fit: cover; }
+}
+@media (max-width: 820px) {
+  .journal-article-layout { grid-template-columns: minmax(0, 1fr); }
+  .journal-article-sidebar { position: static; }
+  .journal-article-sidebar nav, .journal-article-sidebar:not(:has(section)) { display: none; }
+  .journal-mobile-toc { display: block; }
+  .journal-article-page { margin-top: 18px; }
+}

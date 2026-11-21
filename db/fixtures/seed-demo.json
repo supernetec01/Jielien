@@ -1,0 +1,816 @@
+{
+  "_meta": {
+    "note": "Chỉ dùng cho schema demo Jielien. Tên, giá, tồn kho, nội dung và số liệu quảng cáo là mẫu.",
+    "version": "1.1",
+    "generated": "2026-11-21",
+    "image_base": "/demo/img/"
+  },
+  "authors": [
+    {
+      "id": "a1",
+      "slug": "admin",
+      "display_name": "Admin Jielien",
+      "email": "admin@example.com",
+      "role": "admin",
+      "bio": "Quản trị nội dung website Jielien.",
+      "avatar": "avatar-admin.webp"
+    },
+    {
+      "id": "a2",
+      "slug": "bien-tap-vien-demo",
+      "display_name": "Biên tập viên Demo",
+      "email": "editor@example.com",
+      "role": "editor",
+      "bio": "Biên tập các bài cẩm nang mua sắm và đời sống.",
+      "avatar": "avatar-editor.webp"
+    },
+    {
+      "id": "a3",
+      "slug": "cong-tac-vien-demo",
+      "display_name": "Cộng tác viên Demo",
+      "email": "writer@example.com",
+      "role": "contributor",
+      "bio": "Cộng tác viên viết về mẹ và bé, thú cưng.",
+      "avatar": "avatar-writer.webp"
+    }
+  ],
+  "categories": [
+    {
+      "id": "c1",
+      "name": "Cẩm nang mua sắm",
+      "slug": "cam-nang-mua-sam",
+      "description": "Kinh nghiệm chọn mua và mua sắm an toàn.",
+      "sort_order": 1
+    },
+    {
+      "id": "c2",
+      "name": "Mẹ và Bé",
+      "slug": "me-va-be",
+      "description": "Gợi ý chọn đồ dùng cho mẹ và bé.",
+      "sort_order": 2
+    },
+    {
+      "id": "c3",
+      "name": "Âm thanh & Phụ kiện xe",
+      "slug": "am-thanh-phu-kien-xe",
+      "description": "Loa, camera hành trình, nón bảo hiểm và phụ kiện.",
+      "sort_order": 3
+    },
+    {
+      "id": "c4",
+      "name": "Làm đẹp & Kính mắt",
+      "slug": "lam-dep-kinh-mat",
+      "description": "Mỹ phẩm và kính áp tròng.",
+      "sort_order": 4
+    },
+    {
+      "id": "c5",
+      "name": "Thú cưng",
+      "slug": "thu-cung",
+      "description": "Chăm sóc và chọn đồ cho thú cưng.",
+      "sort_order": 5
+    }
+  ],
+  "tags": [
+    {
+      "id": "t1",
+      "name": "mua hàng online",
+      "slug": "mua-hang-online"
+    },
+    {
+      "id": "t2",
+      "name": "lừa đảo",
+      "slug": "lua-dao"
+    },
+    {
+      "id": "t3",
+      "name": "nón bảo hiểm",
+      "slug": "non-bao-hiem"
+    },
+    {
+      "id": "t4",
+      "name": "loa bluetooth",
+      "slug": "loa-bluetooth"
+    },
+    {
+      "id": "t5",
+      "name": "xe đẩy",
+      "slug": "xe-day"
+    },
+    {
+      "id": "t6",
+      "name": "em bé",
+      "slug": "em-be"
+    },
+    {
+      "id": "t7",
+      "name": "kính áp tròng",
+      "slug": "kinh-ap-trong"
+    },
+    {
+      "id": "t8",
+      "name": "thú cưng",
+      "slug": "thu-cung"
+    },
+    {
+      "id": "t9",
+      "name": "thanh toán",
+      "slug": "thanh-toan"
+    }
+  ],
+  "products": [
+    {
+      "id": "p1",
+      "sku": "DEMO-MB-XD-001",
+      "name": "Xe đẩy gấp gọn cho bé (DEMO)",
+      "slug": "xe-day-gap-gon-demo",
+      "category": "Mẹ và Bé",
+      "price_vnd": 1890000,
+      "image": "sp-xe-day.webp",
+      "stock_demo": 12,
+      "description": "Sản phẩm minh họa để kiểm tra giao diện Jielien. Giá và tồn kho là dữ liệu giả lập.",
+      "brand": "Jielien Demo"
+    },
+    {
+      "id": "p2",
+      "sku": "DEMO-BT-BINH-SUA",
+      "name": "Bình sữa silicone Baby Tattoo (DEMO)",
+      "slug": "binh-sua-silicone-baby-tattoo-demo",
+      "category": "Mẹ và Bé",
+      "price_vnd": 185000,
+      "image": "sp-binh-sua.webp",
+      "stock_demo": 15,
+      "description": "Sản phẩm minh họa để kiểm tra giao diện Jielien. Giá và tồn kho là dữ liệu giả lập.",
+      "brand": "Baby Tattoo",
+      "source_url": "https://www.youtube.com/watch?v=YG7NvpCSARU",
+      "source_shop_url": "https://shopee.vn/babytattoo"
+    },
+    {
+      "id": "p3",
+      "sku": "DEMO-YL-S12",
+      "name": "Loa karaoke Bluetooth Youlisn S12 (DEMO)",
+      "slug": "loa-youlisn-s12-demo",
+      "category": "Thiết bị Âm thanh",
+      "price_vnd": 690000,
+      "image": "sp-loa.webp",
+      "stock_demo": 18,
+      "description": "Sản phẩm minh họa để kiểm tra giao diện Jielien. Giá và tồn kho là dữ liệu giả lập.",
+      "brand": "Youlisn",
+      "source_url": "https://shopee.vn/product/1630540075/54600282280"
+    },
+    {
+      "id": "p4",
+      "sku": "DEMO-SS-3M",
+      "name": "Dây ràng hàng điều chỉnh 3 m SafeStraps (DEMO)",
+      "slug": "day-rang-safestraps-3m-demo",
+      "category": "Phụ Kiện Xe",
+      "price_vnd": 1250000,
+      "image": "sp-day-rang.webp",
+      "stock_demo": 21,
+      "description": "Sản phẩm minh họa để kiểm tra giao diện Jielien. Giá và tồn kho là dữ liệu giả lập.",
+      "brand": "SafeStraps",
+      "source_url": "https://shopee.vn/product/1676920822/57005449557"
+    },
+    {
+      "id": "p5",
+      "sku": "DEMO-NB-001",
+      "name": "Nón bảo hiểm nửa đầu (DEMO)",
+      "slug": "non-bao-hiem-nua-dau-demo",
+      "category": "Nón bảo hiểm",
+      "price_vnd": 420000,
+      "image": "sp-non.webp",
+      "stock_demo": 24,
+      "description": "Sản phẩm minh họa để kiểm tra giao diện Jielien. Giá và tồn kho là dữ liệu giả lập.",
+      "brand": "Jielien Demo"
+    },
+    {
+      "id": "p6",
+      "sku": "DEMO-MP-KD-001",
+      "name": "Kem dưỡng ẩm phục hồi da (DEMO)",
+      "slug": "kem-duong-am-demo",
+      "category": "Mỹ phẩm",
+      "price_vnd": 320000,
+      "image": "sp-kem.webp",
+      "stock_demo": 27,
+      "description": "Sản phẩm minh họa để kiểm tra giao diện Jielien. Giá và tồn kho là dữ liệu giả lập.",
+      "brand": "Jielien Demo"
+    },
+    {
+      "id": "p7",
+      "sku": "DEMO-KA-001",
+      "name": "Kính áp tròng dùng 1 ngày (DEMO)",
+      "slug": "kinh-ap-trong-1-ngay-demo",
+      "category": "Kính Áp tròng",
+      "price_vnd": 280000,
+      "image": "sp-kinh.webp",
+      "stock_demo": 30,
+      "description": "Sản phẩm minh họa để kiểm tra giao diện Jielien. Giá và tồn kho là dữ liệu giả lập.",
+      "brand": "Jielien Demo"
+    },
+    {
+      "id": "p8",
+      "sku": "DEMO-TC-TA-001",
+      "name": "Thức ăn hạt cho chó trưởng thành 1,5kg (DEMO)",
+      "slug": "thuc-an-hat-cho-demo",
+      "category": "Thú Cưng",
+      "price_vnd": 215000,
+      "image": "sp-thuc-an.webp",
+      "stock_demo": 33,
+      "description": "Sản phẩm minh họa để kiểm tra giao diện Jielien. Giá và tồn kho là dữ liệu giả lập.",
+      "brand": "Jielien Demo"
+    }
+  ],
+  "articles": [
+    {
+      "id": "n1",
+      "slug": "canh-bao-khi-mua-hang-online",
+      "title": "Cảnh báo quan trọng tới tất cả những ai hay mua hàng online",
+      "excerpt": "Những dấu hiệu cần cảnh giác và cách kiểm tra trước khi thanh toán khi mua hàng online.",
+      "status": "pending",
+      "category_id": "c1",
+      "author_id": "a2",
+      "tag_ids": [
+        "t1",
+        "t2",
+        "t9"
+      ],
+      "focus_keyword": "mua hàng online",
+      "seo_title": "Cảnh báo khi mua hàng online: 5 dấu hiệu cần biết",
+      "meta_description": "Mua hàng online cần cảnh giác điều gì? Tổng hợp dấu hiệu cửa hàng thiếu đáng tin và cách thanh toán an toàn hơn trước khi chuyển tiền.",
+      "featured_image": "bai-mua-hang-online.webp",
+      "featured_alt": "Người dùng kiểm tra đơn hàng trên điện thoại",
+      "published_at": null,
+      "reading_minutes": 1,
+      "word_count": 147,
+      "content_html": "<p>Mua hàng online rất tiện, nhưng cũng là nơi các chiêu lừa đảo xuất hiện nhiều. Bài viết tổng hợp dấu hiệu cần cảnh giác khi <strong>mua hàng online</strong> và cách kiểm tra trước khi thanh toán.</p><h2>Dấu hiệu một cửa hàng online thiếu đáng tin</h2><ul><li>Giá rẻ bất thường so với mặt bằng chung.</li><li>Không có địa chỉ, tên doanh nghiệp hoặc hotline rõ ràng.</li><li>Chỉ nhận chuyển khoản vào tài khoản cá nhân.</li><li>Liên tục thúc ép chốt đơn thật nhanh.</li></ul><h3>Không có thông tin pháp nhân</h3><p>Cửa hàng đáng tin thường công khai tên công ty, địa chỉ và cách liên hệ. Hãy đối chiếu thông tin này trước khi đặt hàng.</p><h2>Cách thanh toán an toàn hơn</h2><p>Ưu tiên thanh toán khi nhận hàng hoặc qua cổng thanh toán chính thức, giữ lại tin nhắn và hóa đơn để đối chiếu khi cần.</p>",
+      "faq": [
+        {
+          "q": "Mua hàng online nên thanh toán bằng cách nào cho an toàn?",
+          "a": "Ưu tiên thanh toán khi nhận hàng hoặc qua cổng thanh toán chính thức, tránh chuyển khoản cho tài khoản cá nhân lạ."
+        },
+        {
+          "q": "Làm sao biết một shop online có đáng tin không?",
+          "a": "Kiểm tra thông tin doanh nghiệp, địa chỉ, chính sách đổi trả và đánh giá thật từ người mua trước đó."
+        },
+        {
+          "q": "Nếu nghi ngờ bị lừa thì làm gì?",
+          "a": "Giữ lại bằng chứng, liên hệ ngân hàng hoặc ví điện tử để được hỗ trợ và báo cho cơ quan chức năng."
+        }
+      ],
+      "product_ids": [
+        "p3",
+        "p4",
+        "p2"
+      ],
+      "internal_links": 3,
+      "quick_summary": "Những dấu hiệu cần cảnh giác và cách kiểm tra trước khi thanh toán khi mua hàng online.",
+      "inline_product_ids": [
+        "p3"
+      ]
+    },
+    {
+      "id": "n2",
+      "slug": "cach-chon-non-bao-hiem",
+      "title": "Cách chọn nón bảo hiểm vừa đầu và an toàn",
+      "excerpt": "Ba bước kiểm tra độ vừa vặn, quai đeo và tem chất lượng trước khi mua nón bảo hiểm.",
+      "status": "published",
+      "category_id": "c3",
+      "author_id": "a2",
+      "tag_ids": [
+        "t3",
+        "t1"
+      ],
+      "focus_keyword": "chọn nón bảo hiểm",
+      "seo_title": "Cách chọn nón bảo hiểm vừa đầu, an toàn cho mọi lứa tuổi",
+      "meta_description": "Hướng dẫn chọn nón bảo hiểm: đo vòng đầu, kiểm tra quai đeo, lớp xốp bên trong và các lưu ý khi mua online để đội thoải mái và an toàn.",
+      "featured_image": "bai-non-bao-hiem.webp",
+      "featured_alt": "Nón bảo hiểm đặt trên kệ",
+      "published_at": "2026-11-05T09:00:00+07:00",
+      "reading_minutes": 1,
+      "word_count": 105,
+      "content_html": "<p>Muốn <strong>chọn nón bảo hiểm</strong> vừa vặn, bạn cần chú ý kích cỡ, quai đeo và chất lượng lớp lót bên trong.</p><h2>Đo vòng đầu trước khi mua</h2><p>Dùng thước dây quấn quanh đầu, ngay phía trên lông mày, rồi đối chiếu với bảng size của sản phẩm.</p><h2>Kiểm tra quai đeo và lớp lót</h2><ul><li>Quai chắc, khóa cài dễ thao tác.</li><li>Nón ôm đầu, không xoay lắc khi lắc đầu nhẹ.</li><li>Lớp xốp bên trong đều, không bị rách hay lệch.</li></ul><h3>Lưu ý khi mua online</h3><p>Xem kỹ hình ảnh thật, chính sách đổi trả và thông tin nhà bán trước khi đặt hàng.</p>",
+      "faq": [
+        {
+          "q": "Bao lâu nên thay nón bảo hiểm?",
+          "a": "Nên thay khi nón bị va đập mạnh, nứt vỡ hoặc lớp lót xuống cấp rõ rệt."
+        },
+        {
+          "q": "Nón rộng hơn một chút có sao không?",
+          "a": "Có. Nón quá rộng dễ xoay lệch và giảm hiệu quả bảo vệ khi va chạm."
+        }
+      ],
+      "product_ids": [
+        "p5",
+        "p4"
+      ],
+      "internal_links": 2,
+      "quick_summary": "Ba bước kiểm tra độ vừa vặn, quai đeo và tem chất lượng trước khi mua nón bảo hiểm.",
+      "inline_product_ids": [
+        "p5"
+      ]
+    },
+    {
+      "id": "n3",
+      "slug": "cach-chon-loa-bluetooth",
+      "title": "Cách chọn loa Bluetooth cho gia đình: 4 tiêu chí cần xem",
+      "excerpt": "So sánh công suất, thời lượng pin, khả năng chống nước và kết nối khi chọn loa Bluetooth.",
+      "status": "published",
+      "category_id": "c3",
+      "author_id": "a2",
+      "tag_ids": [
+        "t4"
+      ],
+      "focus_keyword": "chọn loa bluetooth",
+      "seo_title": "Chọn loa Bluetooth: 4 tiêu chí cần xem trước khi mua",
+      "meta_description": "Chọn loa Bluetooth thế nào cho phù hợp? Xem 4 tiêu chí về công suất, pin, chống nước và kết nối để mua đúng nhu cầu gia đình bạn.",
+      "featured_image": "bai-loa.webp",
+      "featured_alt": "Loa Bluetooth đặt cạnh cửa sổ",
+      "published_at": "2026-11-08T10:00:00+07:00",
+      "reading_minutes": 1,
+      "word_count": 89,
+      "content_html": "<p>Khi <strong>chọn loa Bluetooth</strong>, hãy bắt đầu từ nơi bạn dùng loa nhiều nhất: trong nhà, ngoài trời hay khi đi du lịch.</p><h2>Công suất và chất âm</h2><p>Công suất lớn không đồng nghĩa với chất âm hay. Hãy nghe thử nếu có thể.</p><h2>Pin và khả năng chống nước</h2><ul><li>Thời lượng pin đủ cho buổi sử dụng thường ngày.</li><li>Chuẩn chống nước phù hợp khi dùng ngoài trời.</li></ul><h3>Kết nối ổn định</h3><p>Ưu tiên loa hỗ trợ phiên bản Bluetooth mới và có cổng sạc phổ biến.</p>",
+      "faq": [
+        {
+          "q": "Loa chống nước có dùng được dưới mưa không?",
+          "a": "Tùy chuẩn chống nước. Hãy đọc kỹ thông số của từng sản phẩm trước khi dùng ngoài trời."
+        },
+        {
+          "q": "Có nên mua loa đôi để nghe nhạc nổi?",
+          "a": "Nếu loa hỗ trợ ghép đôi thì hai loa cho âm trường rộng hơn, phù hợp phòng khách."
+        }
+      ],
+      "product_ids": [
+        "p3"
+      ],
+      "internal_links": 1,
+      "quick_summary": "So sánh công suất, thời lượng pin, khả năng chống nước và kết nối khi chọn loa Bluetooth.",
+      "inline_product_ids": [
+        "p3"
+      ],
+      "inline_banner_ids": [
+        "ad3"
+      ]
+    },
+    {
+      "id": "n4",
+      "slug": "chon-xe-day-cho-be",
+      "title": "Mẹ cần để ý gì khi chọn xe đẩy cho bé?",
+      "excerpt": "Những điểm về khung xe, phanh, độ gấp gọn và tư thế nằm cho bé khi chọn xe đẩy.",
+      "status": "published",
+      "category_id": "c2",
+      "author_id": "a3",
+      "tag_ids": [
+        "t5",
+        "t6"
+      ],
+      "focus_keyword": "chọn xe đẩy cho bé",
+      "seo_title": "Chọn xe đẩy cho bé: 5 điểm mẹ cần kiểm tra",
+      "meta_description": "Cách chọn xe đẩy cho bé theo độ tuổi: khung xe, phanh, đai an toàn, độ gấp gọn và tư thế ngồi để bé thoải mái, mẹ đẩy nhẹ nhàng.",
+      "featured_image": "bai-xe-day.webp",
+      "featured_alt": "Xe đẩy cho bé trong công viên",
+      "published_at": "2026-11-12T08:30:00+07:00",
+      "reading_minutes": 1,
+      "word_count": 98,
+      "content_html": "<p>Việc <strong>chọn xe đẩy cho bé</strong> nên dựa trên độ tuổi của bé, nơi bạn thường di chuyển và cách bạn cất xe.</p><h2>Khung xe và hệ thống phanh</h2><p>Khung chắc, bánh quay êm và phanh hoạt động tốt là những điểm nên thử ngay tại cửa hàng.</p><h2>Độ gấp gọn và trọng lượng</h2><ul><li>Gấp được bằng một tay thì tiện khi đang bế bé.</li><li>Nhẹ vừa đủ để mẹ tự nâng lên xuống xe.</li></ul><h3>Tư thế nằm và ngồi</h3><p>Với bé nhỏ, nên ưu tiên xe cho phép bé nằm thẳng lưng, có đai giữ chắc chắn.</p>",
+      "faq": [
+        {
+          "q": "Bé mấy tháng thì dùng được xe đẩy?",
+          "a": "Phụ thuộc loại xe. Hãy đọc hướng dẫn của nhà sản xuất và hỏi bác sĩ nhi khi bé còn rất nhỏ."
+        },
+        {
+          "q": "Có nên mua xe đẩy có mui che?",
+          "a": "Có. Mui che giúp hạn chế nắng gió khi đi ngoài trời."
+        }
+      ],
+      "product_ids": [
+        "p1",
+        "p2"
+      ],
+      "internal_links": 2,
+      "quick_summary": "Những điểm về khung xe, phanh, độ gấp gọn và tư thế nằm cho bé khi chọn xe đẩy.",
+      "inline_product_ids": [
+        "p1"
+      ]
+    },
+    {
+      "id": "n5",
+      "slug": "bao-quan-kinh-ap-trong",
+      "title": "Cách đeo và bảo quản kính áp tròng đúng cách",
+      "excerpt": "Vệ sinh tay, thay dung dịch và thay kính đúng hạn là ba thói quen cần có.",
+      "status": "published",
+      "category_id": "c4",
+      "author_id": "a2",
+      "tag_ids": [
+        "t7"
+      ],
+      "focus_keyword": "bảo quản kính áp tròng",
+      "seo_title": "Bảo quản kính áp tròng đúng cách để mắt luôn thoải mái",
+      "meta_description": "Hướng dẫn đeo và bảo quản kính áp tròng: rửa tay, dùng dung dịch chuyên dụng, vệ sinh hộp đựng và khi nào cần gặp bác sĩ mắt.",
+      "featured_image": "bai-kinh.webp",
+      "featured_alt": "Hộp đựng kính áp tròng và dung dịch",
+      "published_at": "2026-11-15T09:30:00+07:00",
+      "reading_minutes": 1,
+      "word_count": 83,
+      "content_html": "<p>Muốn <strong>bảo quản kính áp tròng</strong> tốt, bạn cần giữ vệ sinh từ đôi tay đến hộp đựng.</p><h2>Vệ sinh trước khi đeo</h2><p>Rửa sạch và lau khô tay trước khi chạm vào kính.</p><h2>Bảo quản hằng ngày</h2><ul><li>Dùng dung dịch chuyên dụng, không dùng nước máy.</li><li>Thay dung dịch trong hộp mỗi ngày.</li><li>Thay hộp đựng định kỳ.</li></ul><h3>Khi nào cần gặp bác sĩ</h3><p>Nếu mắt đỏ, đau hoặc nhìn mờ kéo dài, hãy ngừng đeo và đến cơ sở y tế.</p>",
+      "faq": [
+        {
+          "q": "Có nên đeo kính áp tròng khi ngủ?",
+          "a": "Chỉ nên làm vậy nếu loại kính được thiết kế cho việc đó và có hướng dẫn của bác sĩ mắt."
+        },
+        {
+          "q": "Bao lâu thay kính một lần?",
+          "a": "Tuân theo hạn sử dụng ghi trên bao bì từng loại kính."
+        }
+      ],
+      "product_ids": [
+        "p7"
+      ],
+      "internal_links": 1,
+      "quick_summary": "Vệ sinh tay, thay dung dịch và thay kính đúng hạn là ba thói quen cần có.",
+      "inline_product_ids": [
+        "p7"
+      ]
+    },
+    {
+      "id": "n6",
+      "slug": "chon-thuc-an-hat-cho-cho",
+      "title": "Chọn thức ăn hạt cho chó trưởng thành",
+      "excerpt": "Bản nháp minh họa để kiểm tra luồng duyệt nội dung.",
+      "status": "draft",
+      "category_id": "c5",
+      "author_id": "a3",
+      "tag_ids": [
+        "t8"
+      ],
+      "focus_keyword": "thức ăn hạt cho chó",
+      "seo_title": "",
+      "meta_description": "",
+      "featured_image": null,
+      "featured_alt": "",
+      "published_at": null,
+      "reading_minutes": 1,
+      "word_count": 26,
+      "content_html": "<p>[Bản nháp] Cách đọc thành phần trên bao bì và chuyển đổi thức ăn từ từ cho chó.</p><h2>Đọc thành phần trên bao bì</h2><p>[Đang viết…]</p>",
+      "faq": [],
+      "product_ids": [
+        "p8"
+      ],
+      "internal_links": 1,
+      "quick_summary": "Những điều cần xem trên bao bì và cách chuyển đổi thức ăn cho chó.",
+      "inline_product_ids": [
+        "p8"
+      ]
+    }
+  ],
+  "ad_placements": [
+    {
+      "code": "article_left",
+      "name": "Cột trái trang bài viết",
+      "width": 160,
+      "height": 600,
+      "devices": "desktop",
+      "min_viewport": 1380,
+      "sticky": true
+    },
+    {
+      "code": "article_right",
+      "name": "Cột phải trang bài viết",
+      "width": 160,
+      "height": 600,
+      "devices": "desktop",
+      "min_viewport": 1380,
+      "sticky": true
+    },
+    {
+      "code": "article_inline",
+      "name": "Giữa bài viết",
+      "width": 700,
+      "height": 90,
+      "mobile_width": 320,
+      "mobile_height": 100,
+      "devices": "both",
+      "min_viewport": 0,
+      "sticky": false
+    },
+    {
+      "code": "sidebar_mid",
+      "name": "Sidebar giữa",
+      "width": 300,
+      "height": 250,
+      "devices": "desktop",
+      "min_viewport": 960,
+      "sticky": false
+    },
+    {
+      "code": "list_top",
+      "name": "Đầu trang danh sách tin",
+      "width": 728,
+      "height": 90,
+      "mobile_width": 320,
+      "mobile_height": 100,
+      "devices": "both",
+      "min_viewport": 0,
+      "sticky": false
+    },
+    {
+      "code": "list_left",
+      "name": "Cột trái trang danh sách",
+      "width": 160,
+      "height": 600,
+      "devices": "desktop",
+      "min_viewport": 1380,
+      "sticky": true
+    },
+    {
+      "code": "list_right",
+      "name": "Cột phải trang danh sách",
+      "width": 160,
+      "height": 600,
+      "devices": "desktop",
+      "min_viewport": 1380,
+      "sticky": true
+    }
+  ],
+  "ad_campaigns": [
+    {
+      "id": "ad1",
+      "customer_name": "Khách hàng Demo A",
+      "contract_note": "Hợp đồng demo 3 tháng",
+      "name": "Banner trái - Demo A",
+      "placement_code": "article_left",
+      "creative_type": "image",
+      "image_desktop": "ad-160x600-a.webp",
+      "image_mobile": null,
+      "alt": "Quảng cáo Khách hàng Demo A",
+      "target_url": "https://example.com/khach-a",
+      "start_at": "2026-11-01T00:00:00+07:00",
+      "end_at": "2026-12-31T23:59:00+07:00",
+      "status": "active",
+      "priority": 5,
+      "weight": 50,
+      "device": "desktop",
+      "scope_type": "all",
+      "scope_ids": [],
+      "max_impressions": null,
+      "stats_7d": {
+        "from": "2026-11-14",
+        "impressions": [
+          820,
+          910,
+          760,
+          1040,
+          980,
+          1120,
+          1010
+        ],
+        "clicks": [
+          12,
+          15,
+          9,
+          18,
+          14,
+          21,
+          16
+        ]
+      },
+      "demo_path": "/san-pham/day-rang-safestraps-3m-demo"
+    },
+    {
+      "id": "ad2",
+      "customer_name": "Khách hàng Demo B",
+      "contract_note": "Gói tuần",
+      "name": "Banner phải - Demo B",
+      "placement_code": "article_right",
+      "creative_type": "image",
+      "image_desktop": "ad-160x600-b.webp",
+      "image_mobile": null,
+      "alt": "Quảng cáo Khách hàng Demo B",
+      "target_url": "https://example.com/khach-b",
+      "start_at": "2026-11-10T00:00:00+07:00",
+      "end_at": "2026-12-10T23:59:00+07:00",
+      "status": "active",
+      "priority": 5,
+      "weight": 50,
+      "device": "desktop",
+      "scope_type": "all",
+      "scope_ids": [],
+      "max_impressions": null,
+      "stats_7d": {
+        "from": "2026-11-14",
+        "impressions": [
+          700,
+          740,
+          690,
+          800,
+          770,
+          860,
+          830
+        ],
+        "clicks": [
+          8,
+          10,
+          7,
+          11,
+          9,
+          13,
+          12
+        ]
+      },
+      "demo_path": "/san-pham/loa-youlisn-s12-demo"
+    },
+    {
+      "id": "ad3",
+      "customer_name": "Khách hàng Demo C",
+      "contract_note": "Chỉ chuyên mục Âm thanh & Phụ kiện xe",
+      "name": "Giữa bài - Demo C",
+      "placement_code": "article_inline",
+      "creative_type": "image",
+      "image_desktop": "ad-700x90-c.webp",
+      "image_mobile": "ad-320x100-c.webp",
+      "alt": "Quảng cáo Khách hàng Demo C",
+      "target_url": "https://example.com/khach-c",
+      "start_at": "2026-11-05T00:00:00+07:00",
+      "end_at": "2026-12-05T23:59:00+07:00",
+      "status": "active",
+      "priority": 7,
+      "weight": 100,
+      "device": "all",
+      "scope_type": "category",
+      "scope_ids": [
+        "c3"
+      ],
+      "max_impressions": 20000,
+      "stats_7d": {
+        "from": "2026-11-14",
+        "impressions": [
+          410,
+          450,
+          390,
+          520,
+          480,
+          560,
+          530
+        ],
+        "clicks": [
+          9,
+          11,
+          7,
+          13,
+          10,
+          15,
+          12
+        ]
+      },
+      "demo_path": "/san-pham/loa-youlisn-s12-demo"
+    },
+    {
+      "id": "ad4",
+      "customer_name": "Khách hàng Demo D",
+      "contract_note": "Tạm dừng theo yêu cầu khách",
+      "name": "Sidebar - Demo D",
+      "placement_code": "sidebar_mid",
+      "creative_type": "image",
+      "image_desktop": "ad-300x250-d.webp",
+      "image_mobile": null,
+      "alt": "Quảng cáo Khách hàng Demo D",
+      "target_url": "https://example.com/khach-d",
+      "start_at": "2026-10-20T00:00:00+07:00",
+      "end_at": "2026-12-20T23:59:00+07:00",
+      "status": "paused",
+      "priority": 4,
+      "weight": 100,
+      "device": "desktop",
+      "scope_type": "all",
+      "scope_ids": [],
+      "max_impressions": null,
+      "stats_7d": {
+        "from": "2026-11-14",
+        "impressions": [
+          300,
+          280,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "clicks": [
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "demo_path": "/san-pham/binh-sua-silicone-baby-tattoo-demo"
+    },
+    {
+      "id": "ad5",
+      "customer_name": "Khách hàng Demo E",
+      "contract_note": "Đã hết hạn",
+      "name": "Đầu trang danh sách - Demo E",
+      "placement_code": "list_top",
+      "creative_type": "image",
+      "image_desktop": "ad-728x90-e.webp",
+      "image_mobile": "ad-320x100-e.webp",
+      "alt": "Quảng cáo Khách hàng Demo E",
+      "target_url": "https://example.com/khach-e",
+      "start_at": "2026-10-01T00:00:00+07:00",
+      "end_at": "2026-11-10T23:59:00+07:00",
+      "status": "expired",
+      "priority": 5,
+      "weight": 100,
+      "device": "all",
+      "scope_type": "all",
+      "scope_ids": [],
+      "max_impressions": null,
+      "stats_7d": {
+        "from": "2026-11-14",
+        "impressions": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "clicks": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "demo_path": "/tin-tuc"
+    },
+    {
+      "id": "ad6",
+      "customer_name": "Khách hàng Demo F",
+      "contract_note": "Sắp chạy từ tháng 12",
+      "name": "Giữa bài - Demo F",
+      "placement_code": "article_inline",
+      "creative_type": "image",
+      "image_desktop": "ad-700x90-f.webp",
+      "image_mobile": "ad-320x100-f.webp",
+      "alt": "Quảng cáo Khách hàng Demo F",
+      "target_url": "https://example.com/khach-f",
+      "start_at": "2026-12-01T00:00:00+07:00",
+      "end_at": "2026-12-31T23:59:00+07:00",
+      "status": "active",
+      "priority": 6,
+      "weight": 100,
+      "device": "all",
+      "scope_type": "all",
+      "scope_ids": [],
+      "max_impressions": null,
+      "stats_7d": {
+        "from": "2026-11-14",
+        "impressions": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "clicks": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "demo_path": "/san-pham"
+    }
+  ],
+  "house_ad": {
+    "title": "Khám phá danh mục mẫu Jielien",
+    "image": "house-banner.webp",
+    "target_url": "/",
+    "note": "Ảnh minh họa dự phòng. Giao diện tự chọn banner dự phòng thuộc milestone quảng cáo."
+  },
+  "redirects": [
+    {
+      "old_path": "/tin-tuc/mua-hang-online-an-toan",
+      "new_path": "/tin-tuc/canh-bao-khi-mua-hang-online",
+      "source": "manual",
+      "hit_count": 0
+    },
+    {
+      "old_path": "/tin-tuc/chon-non-bao-hiem",
+      "new_path": "/tin-tuc/cach-chon-non-bao-hiem",
+      "source": "auto_slug_change",
+      "hit_count": 3
+    }
+  ]
+}

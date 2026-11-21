@@ -2417,3 +2417,149 @@
     margin-bottom: 5px;
   }
 }
+
+/* Trình soạn bài tin tức */
+.cms-workspace { min-width: 0; max-width: 1500px; margin-inline: auto; }
+.cms-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(285px, 345px);
+  gap: 20px;
+  align-items: start;
+}
+.cms-editor-main, .cms-seo, .cms-editor-section { min-width: 0; }
+.cms-fields, .cms-block {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.cms-fields, .cms-block-fields { display: grid; gap: 14px; }
+.cms-fields label, .cms-product-picker label, .cms-editor-section > label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 650;
+}
+.cms-fields :is(input, select, textarea), .cms-editor-section input {
+  min-width: 0;
+  max-width: 100%;
+}
+.cms-fields textarea { min-height: 96px; resize: vertical; }
+.cms-block-fields textarea { min-height: 132px; }
+.cms-two-fields, .cms-publication {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.cms-insertion, .cms-block-actions, .cms-publish-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.cms-publish-actions { margin-block: 12px; }
+.admin-workspace .cms-insertion button { color: #41641a; background: #f2f7e9; border-color: #d9e6c7; }
+.cms-block {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid #dce5ee;
+  border-radius: 10px;
+  background: #fbfcfe;
+}
+.cms-block legend { padding-inline: 6px; color: #0b1b34; font-weight: 700; }
+.cms-block-actions { justify-content: end; margin-top: 10px; }
+.cms-product-picker { min-width: 0; }
+.cms-product-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+.cms-product-picker small, .cms-product-picker label:has(select) { grid-column: 1/-1; }
+.cms-related-picker > button { margin-top: 10px; }
+#cms-related-products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+#cms-related-products:empty { display: none; }
+#cms-related-products li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: #edf5df;
+}
+.admin-workspace .cms-check { display: flex; align-items: center; gap: 8px; }
+.cms-score { display: flex; align-items: center; gap: 14px; color: #3a5a17; font-size: 22px; }
+.cms-score progress { width: 100%; min-width: 0; accent-color: #5c821f; }
+.cms-checklist { display: grid; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+.cms-checklist li { display: flex; align-items: baseline; gap: 8px; font-size: 14px; }
+.cms-checklist li > span:first-child {
+  flex: 0 0 66px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.cms-pass { background: #edf5df; color: #365816; }
+.cms-revise { background: #fff0d8; color: #754708; }
+.cms-google {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid #dce5ee;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.cms-google strong { color: #2037a5; font-size: 17px; }
+.cms-google p { margin: 0; color: #4e6279; }
+.cms-google small { color: #35551b; }
+#article-preview:not(:empty) {
+  padding: 20px;
+  border: 1px solid #dce5ee;
+  border-radius: 12px;
+  background: white;
+  overflow-wrap: anywhere;
+}
+#article-preview img { max-width: 100%; height: auto; }
+#article-preview pre { white-space: pre-wrap; }
+#article-preview .journal-product { display: flex; gap: 10px; margin-block: 14px; }
+#article-preview .journal-product img { width: 64px; height: 64px; object-fit: contain; }
+#article-preview .journal-product small { display: block; }
+.banner-preview-frame.banner-article-rail:not(.mobile) { max-width: 160px; }
+.banner-preview-frame.banner-article-rail:not(.mobile) .banner-live-preview {
+  min-height: 0;
+  aspect-ratio: 160/600;
+}
+#cms-publish-panel, #cms-seo-panel { scroll-margin-top: 90px; }
+.cms-editor-jumps { display: none; }
+@media (max-width: 1050px) {
+  .cms-editor-layout { grid-template-columns: minmax(0, 1fr); }
+  .cms-editor-jumps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .cms-editor-jumps a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 6px 12px;
+    border: 1px solid #dce5ee;
+    border-radius: 8px;
+    background: white;
+    color: #33551a;
+    font-weight: 650;
+    text-decoration: none;
+  }
+}
+@media (max-width: 630px) {
+  .cms-two-fields, .cms-publication, .cms-product-picker { grid-template-columns: minmax(0, 1fr); }
+  .cms-block-actions { justify-content: start; }
+}

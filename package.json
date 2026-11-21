@@ -44,7 +44,9 @@
     "demo:server": "node --env-file-if-exists=.env --env-file-if-exists=.env.ngrok scripts/ngrok-demo-server.mjs",
     "test:ngrok": "node --test tests/ngrok-demo.test.mjs",
     "test:warehouse": "node tests/warehouse-catalog.browser.mjs",
-    "test:admin-catalog": "node tests/admin-catalog-layout.browser.mjs"
+    "test:admin-catalog": "node tests/admin-catalog-layout.browser.mjs",
+    "test:journal-demo": "node --test tests/journal-demo.test.mjs",
+    "demo:journal": "node --env-file-if-exists=.env scripts/journal-demo.mjs"
   },
   "engines": {
     "node": ">=24.11.0"
