@@ -187,15 +187,17 @@ try {
     }, adminUser);
   }
   await page.locator('[data-section="cms-editor"]').click();
+  await page.locator("#cms-taxonomy > summary").click();
   const tax = page.locator('[data-cms-tax="categories"]');
   await tax.locator('[name="name"]').fill("Kiến thức công ty");
-  await tax.locator('[name="slug"]').fill("kien-thuc-cong-ty");
   await tax.locator("button").click();
+  await page.waitForFunction(() => document.activeElement?.closest("[data-cms-tax]"));
   await page.locator('[data-editor-action="new-article"]').click();
   const article = page.locator("#article-form");
   await article.locator('[name="title"]').fill("Cách chọn bình sữa phù hợp cho bé");
   await article.locator('[name="slug"]').fill("bai-viet-cms-that");
   await article.locator('[name="excerpt"]').fill("Những điểm nên kiểm tra khi chọn dung tích và thiết kế bình sữa.");
+  await article.locator("#cms-article-extras > summary").click();
   await article.locator('[name="quickSummary"]').fill("Chọn dung tích theo nhu cầu.\nKiểm tra chất liệu và cách vệ sinh.");
   await article.locator('[name="authorBio"]').fill("Nội dung minh họa dùng để kiểm thử giao diện Jielien.");
   await article
@@ -302,13 +304,40 @@ try {
   await page.locator('[data-workspace-section="catalog-editor"]').click();
   await page.locator("#catalog-results").waitFor();
   pass("new dashboard shortcuts open real permission-gated editors");
+  await page.locator('[data-section="cms-editor"]').click();
+  await page.locator(".cms-article-list li").first().waitFor();
+  for (const width of [320, 375, 768, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 1000 });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    if (width === 375 || width === 1440)
+      await page.screenshot({ path: `docs/screenshots/commerce/cms-list-${width}.png`, fullPage: true });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.locator('[data-section="banners-editor"]').click();
+  await page.locator("#banner-list").waitFor();
+  assert.equal(await page.locator("#banner-form").isVisible(), false);
+  await page.locator("#banner-slot-filter").selectOption("article_left");
+  assert.equal(await page.locator(".banner-library article:visible").count(), 1);
+  await page.locator("#banner-slot-filter").selectOption("");
+  await page.locator('[data-editor-action="banner-new"]').click();
+  await page.locator('#banner-form [name="title"]').fill("Sẽ hủy bản này");
+  await page.locator('#banner-form [data-editor-action="banner-cancel"]').click();
+  assert.equal(await page.locator("#banner-form").isVisible(), false);
+  await page.locator('[data-editor-action="banner-new"]').click();
+  assert.equal(await page.locator('#banner-form [name="title"]').inputValue(), "");
   await page.locator('#banner-form [name="title"]').fill("Banner thiết kế mới");
-  const assetOption = await page
-    .locator('#banner-form [name="assetId"] option')
-    .nth(1)
-    .getAttribute("value");
-  await page.locator('#banner-form [name="assetId"]').selectOption(assetOption);
+  await page.locator("[data-banner-upload]").setInputFiles({
+    name: "banner-sample.png", mimeType: "image/png", buffer: imageFiles[0].buffer,
+  });
+  await page.locator("#banner-preview-image").waitFor();
+  assert.equal(await page.locator("#banner-advanced").evaluate((details) => details.open), false);
+  for (const width of [320, 375, 768, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 1000 });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    if (width === 375 || width === 1440)
+      await page.screenshot({ path: `docs/screenshots/commerce/banner-form-${width}.png`, fullPage: true });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
   for (const value of ["article_left", "article_right", "article_inline"])
     assert.equal(await page.locator('#banner-form [name="slot"] option[value="' + value + '"]').count(), 1);
   await page.locator('#banner-form [name="status"]').selectOption("published");

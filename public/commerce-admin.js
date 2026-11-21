@@ -43,9 +43,9 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     area(label, name, JSON.stringify(value, null, 2));
   let previewMode = "desktop";
   const bannerSlots = {
-    home_hero: "Trang chủ · Hero chính",
-    home_side_top: "Trang chủ · Poster trên",
-    home_side_bottom: "Trang chủ · Poster dưới",
+    home_hero: "Trang chủ · Ảnh lớn đầu trang",
+    home_side_top: "Trang chủ · Ô ảnh phía trên",
+    home_side_bottom: "Trang chủ · Ô ảnh phía dưới",
     home_wide: "Trang chủ · Banner ngang",
     category_hero: "Danh mục · Banner đầu trang",
     article_featured: "Tin tức · Banner nổi bật",
@@ -122,7 +122,24 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     }
     if (view === "cms-editor") {
       const { items } = await api("/api/admin/cms/articles" + cmsQuery);
-      return `${heading("Tin tức & SEO", "Biên tập nội dung hữu ích và quản lý quy trình xuất bản.", has("content.write") ? button("+ Viết bài mới", "new-article") : "")}<section class="panel"><form id="cms-filter" class="filter-toolbar">${field("Tìm bài viết", "q", new URLSearchParams(cmsQuery).get("q") || "", "search", 'placeholder="Nhập tiêu đề bài viết…"')}<label>Trạng thái<select name="status"><option value="">Tất cả trạng thái</option>${["draft", "in_review", "approved", "scheduled", "published", "archived"].map((v) => option(v, states[v], new URLSearchParams(cmsQuery).get("status") === v)).join("")}</select></label><button class="primary">Áp dụng</button></form><div class="section-title"><h2>Danh sách bài viết</h2><span>${items.length} bài trong kết quả</span></div>${items.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>Bài viết</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>${items.map((a) => `<tr><td><b>${e(a.title)}</b></td><td>${stateBadge(a.status)}</td><td><button class="secondary" data-article-id="${a.id}">Mở biên tập</button></td></tr>`).join("")}</tbody></table></div>` : emptyState("Chưa có bài viết phù hợp", "Tạo bài viết đầu tiên hoặc thay đổi bộ lọc để xem nội dung khác.")}<div class="information-note">${icon("file")}<p>Bản nháp chỉ hiển thị trong Admin. Nội dung đã xuất bản cần được duyệt lại khi chỉnh sửa.</p></div></section>${has("content.manage") ? `<section class="panel"><div class="section-title"><div><h2>Phân loại nội dung</h2><p>Chuyên mục và thẻ giúp người đọc khám phá các bài liên quan.</p></div></div><div class="two-column"><div><h3>Thêm chuyên mục</h3>${cmsTaxForm("categories")}</div><div><h3>Thêm thẻ bài viết</h3>${cmsTaxForm("tags")}</div></div></section>` : ""}${result}`;
+      const filters = new URLSearchParams(cmsQuery);
+      const canWrite = has("content.write");
+      return `<div class="cms-workspace">
+        ${heading("Tin tức & SEO", "Mở một bài để chỉnh sửa, kiểm tra SEO hoặc gửi duyệt.", canWrite ? button("+ Viết bài mới", "new-article") : "")}
+        <section class="panel cms-list">
+          <form id="cms-filter" class="content-list-controls">
+            ${field("Tìm bài viết", "q", filters.get("q") || "", "search", 'placeholder="Nhập tiêu đề bài viết…"')}
+            <label>Trạng thái<select name="status"><option value="">Tất cả trạng thái</option>${["draft", "in_review", "approved", "scheduled", "published", "archived"].map((v) => option(v, states[v], filters.get("status") === v)).join("")}</select></label>
+            <button class="primary">Áp dụng</button>
+          </form>
+          <div class="section-title"><h2>Danh sách bài viết</h2><span>${items.length} bài</span></div>
+          ${items.length ? `<ul class="cms-article-list">${items.map((a) => `<li><b>${e(a.title)}</b>${stateBadge(a.status)}
+            <button type="button" class="secondary" data-article-id="${a.id}">${canWrite ? "Mở biên tập" : "Xem bài"}</button></li>`).join("")}</ul>` : emptyState("Chưa có bài viết phù hợp", filters.get("q") || filters.get("status") ? "Đổi từ khóa hoặc chọn lại trạng thái." : "Bấm Viết bài mới để bắt đầu.")}
+        </section>
+        ${has("content.manage") ? `<details class="panel content-options" id="cms-taxonomy"><summary>Quản lý chuyên mục và thẻ</summary>
+          <div class="cms-two-fields"><div><h3>Thêm chuyên mục</h3>${cmsTaxForm("categories")}</div><div><h3>Thêm thẻ bài viết</h3>${cmsTaxForm("tags")}</div></div></details>` : ""}
+        ${result}
+      </div>`;
     }
     if (view === "documents-editor") {
       const data = await api("/api/admin/inventory/documents");
@@ -230,34 +247,14 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       return `<section class="panel"><h1>CSV sản phẩm</h1><p>Import tối đa 200 dòng, chỉ lưu nháp, không sửa tồn. Dùng template trong docs/commerce-spec/templates; weight_grams là khối lượng nguyên gram. Upload ảnh và tạo danh mục/brand/thuộc tính trước. Export hiện là báo cáo SKU, không phải template import đầy đủ.</p>${button("Export SKU CSV", "csv-export")}${has("catalog.create") && has("catalog.edit") ? `<form id="import-form" class="editor-form"><label>CSV UTF-8<input type="file" name="file" accept=".csv" required></label><button>Preview & kiểm tra</button></form><div id="import-result" class="form-result"></div>` : ""}${result}</section>`;
     }
     if (view === "banners-editor") {
-      assets = has("media.read") ? (await api("/api/admin/media")).items : [];
-      bannerRows = (await api("/api/admin/banners")).items;
+      const [library, banners] = await Promise.all([
+        has("media.read") ? api("/api/admin/media") : { items: [] },
+        api("/api/admin/banners"),
+      ]);
+      assets = library.items;
+      bannerRows = banners.items;
       previewMode = "desktop";
-      return `${heading("Banner & Poster Studio", "Quản lý chiến dịch theo vị trí, thiết bị và thời gian hiển thị.")}<section class="panel"><div class="banner-editor-layout">${
-        has("banners.write") || has("settings.write")
-          ? `<form id="banner-form" class="editor-form"><input type="hidden" name="bannerId"><input type="hidden" name="version"><label>Vị trí hiển thị<select name="slot">${Object.entries(
-              bannerSlots,
-            )
-              .map(([key, label]) => option(key, label))
-              .join(
-                "",
-              )}</select></label>${field("Tiêu đề", "title", "", "text", 'required maxlength="150"')}${field("Mô tả ngắn", "subtitle", "", "text", 'maxlength="500"')}${select(
-              "Ảnh desktop · bắt buộc",
-              "assetId",
-              assets.map((a) => ({ id: a.id, name: a.alt_text })),
-            )}${select(
-              "Ảnh mobile · trống dùng desktop",
-              "assetMobileId",
-              assets.map((a) => ({ id: a.id, name: a.alt_text })),
-            )}${field("Mô tả ảnh cho người đọc màn hình", "alt", "", "text", 'maxlength="500"')}${field("Nhãn nút hành động", "ctaLabel", "Khám phá", "text", 'required maxlength="60"')}${field("Link nội bộ", "targetPath", "/san-pham", "text", "required")}${field("Thứ tự (số nhỏ hiển thị trước)", "sortOrder", 0, "number", 'required min="-10000" max="10000"')}<label>Trạng thái<select name="status">${["draft", "published", "archived"].map((v) => option(v, states[v])).join("")}</select></label>${field("Bắt đầu (giờ máy bạn)", "startsAt", "", "datetime-local")}${field("Kết thúc (giờ máy bạn)", "endsAt", "", "datetime-local")}<div class="field-row">${field("Lấy nét ngang (%)", "focalX", 50, "number", 'required min="0" max="100"')}${field("Lấy nét dọc (%)", "focalY", 50, "number", 'required min="0" max="100"')}</div><p class="editor-note">Ảnh được upload tại Thư viện ảnh. Gợi ý: hero 1600×900, poster 700×550, banner ngang 1600×450, mobile 750×920. Banner bên bài viết 160×600. Chọn vị trí Giữa bài viết để chèn trong Admin soạn bài.</p><div class="form-actions"><button class="primary">Lưu banner</button>${button("Tạo mới", "banner-new")}</div></form>`
-          : "<p>Bạn có quyền xem banner.</p>"
-      }<aside><div class="workspace-tabs"><button type="button" data-editor-action="banner-preview:desktop" aria-pressed="true">Desktop</button><button type="button" data-editor-action="banner-preview:mobile" aria-pressed="false">Mobile</button></div><div id="banner-preview-frame" class="banner-preview-frame"><div class="banner-live-preview"><img id="banner-preview-image" alt="" hidden><div><small id="banner-preview-slot">Trang chủ · Hero chính</small><h2 id="banner-preview-title">Tiêu đề banner của bạn</h2><p id="banner-preview-subtitle"></p><span id="banner-preview-cta">Khám phá →</span></div></div></div><p class="editor-note">Bản xem trước vùng lấy nét và nội dung. Banner chỉ hiển thị khi đã xuất bản và còn trong lịch.</p></aside></div></section><section class="panel"><div class="section-title"><h2>Danh sách banner</h2><label>Vị trí<select id="banner-slot-filter"><option value="">Tất cả vị trí</option>${Object.entries(
-        bannerSlots,
-      )
-        .map(([key, label]) => option(key, label))
-        .join(
-          "",
-        )}</select></label></div><div class="banner-library">${bannerRows.map((b) => `<article data-banner-slot="${e(b.slot)}"><img src="${e(b.url)}" alt="${e(b.alt || b.alt_text)}"><div><b>${e(b.title)}</b><p>${e(bannerSlots[b.slot])} · Thứ tự ${b.sort_order}</p><p>${e(states[b.status])} · ${e(b.target_path)}</p></div>${has("banners.write") || has("settings.write") ? button("Chỉnh sửa", "banner-edit:" + b.id) : ""}</article>`).join("") || "<p>Chưa có banner. Tạo chiến dịch đầu tiên bằng biểu mẫu phía trên.</p>"}</div>${result}</section>`;
+      return bannerWorkspace();
     }
     if (view === "coupons-editor") {
       couponItems = (await api("/api/admin/coupons")).items;
@@ -320,7 +317,9 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     ].join("\n");
   }
   function cmsTaxForm(kind) {
-    return `<form data-cms-tax="${kind}" class="editor-form">${field(kind === "categories" ? "Tên chuyên mục" : "Tên tag", "name", "", "text", "required")}${field("Slug", "slug", "", "text", "required")}<button>Tạo</button></form>`;
+    return `<form data-cms-tax="${kind}" class="cms-fields">${field(kind === "categories" ? "Tên chuyên mục" : "Tên thẻ", "name", "", "text", 'required maxlength="150"')}
+      <details class="content-options"><summary>Tùy chỉnh đường dẫn</summary>${field("Đường dẫn", "slug", "", "text", 'maxlength="150" placeholder="Tự tạo từ tên"')}</details>
+      <button class="secondary">Tạo</button></form>`;
   }
   const shippingFields = [
     ["weightGrams", "weight_grams", "Khối lượng (g)"],
@@ -1042,26 +1041,29 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
             <fieldset ${writable ? "" : "disabled"} class="cms-fields">
               ${field("Tiêu đề bài viết", "title", a.title || "", "text", 'required maxlength="200"')}
               ${area("Tóm tắt bài viết", "excerpt", a.excerpt || "")}
-              <div class="cms-two-fields">${select("Chuyên mục", "categoryId", categories.items, a.categoryId)}
-                <label>Thẻ<select name="tagIds" multiple size="3">${tags.items.map((t) => option(t.id, t.name, (a.tagIds || []).includes(t.id))).join("") || '<option disabled>Chưa có thẻ</option>'}</select></label></div>
+              ${select("Chuyên mục", "categoryId", categories.items, a.categoryId)}
               <div class="cms-two-fields"><label>Ảnh bìa<select name="coverUrl"><option value="">Chọn ảnh từ thư viện</option>
                 ${a.coverUrl && !assets.some((asset) => asset.url === a.coverUrl) ? option(a.coverUrl, "Ảnh bìa đã lưu", true) : ""}${coverChoices}</select></label>
                 ${field("Mô tả ảnh bìa", "coverAlt", a.coverAlt || "", "text", 'maxlength="250"')}</div>
-              ${area("Tóm tắt nhanh (mỗi dòng một ý)", "quickSummary", a.quickSummary || "")}
               <div class="cms-insertion" role="group" aria-label="Chèn nội dung">
                 ${button("+ Đoạn văn", "add-block")}
-                ${extra.map(([key, label]) => button("+ " + label, "cms-insert:" + key)).join("")}
+                ${extra.filter(([key]) => ["heading", "image", "product", "faq", "banner"].includes(key)).map(([key, label]) => button("+ " + label, "cms-insert:" + key)).join("")}
               </div>
+              <details class="content-options cms-insertion-more"><summary>Kiểu nội dung khác</summary>
+                <div class="cms-insertion">${extra.filter(([key]) => ["quote", "list"].includes(key)).map(([key, label]) => button("+ " + label, "cms-insert:" + key)).join("")}</div>
+              </details>
               <div id="content-blocks">${(a.contentBlocks?.length ? a.contentBlocks : [{ type: "paragraph" }]).map(articleBlock).join("")}</div>
             </fieldset>
           </section>
-          <section class="panel cms-editor-section"><h2>Tác giả và sản phẩm liên quan</h2>
+          <details class="panel cms-editor-section content-options" id="cms-article-extras"><summary>Thông tin bổ sung</summary>
             <fieldset ${writable ? "" : "disabled"} class="cms-fields">
+              ${area("Tóm tắt nhanh (mỗi dòng một ý)", "quickSummary", a.quickSummary || "")}
+              <label>Thẻ bài viết<select name="tagIds" multiple size="3">${tags.items.map((t) => option(t.id, t.name, (a.tagIds || []).includes(t.id))).join("") || '<option disabled>Chưa có thẻ</option>'}</select></label>
               ${area("Giới thiệu tác giả", "authorBio", a.authorBio || "")}
               <ul id="cms-related-products">${(a.relatedProductIds || []).map(relatedProductChip).join("")}</ul>
               <div class="cms-related-picker">${referencePicker()}${button("Thêm sản phẩm liên quan", "cms-related-add")}</div>
             </fieldset>
-          </section>
+          </details>
           <div class="cms-publication">
             <section class="panel cms-editor-section" id="cms-publish-panel"><h2>Xuất bản</h2>${stateBadge(status)}
               ${article?.scheduled_at ? `<p>Lịch đăng ${e(new Date(article.scheduled_at).toLocaleString("vi-VN"))}</p>` : ""}
@@ -1281,19 +1283,26 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
 
       if (action?.startsWith("banner-preview:")) {
         previewMode = action.split(":")[1];
-        root
-          .querySelectorAll('[data-editor-action^="banner-preview:"]')
-          .forEach((b) =>
-            b.setAttribute(
-              "aria-pressed",
-              String(b.dataset.editorAction.endsWith(previewMode)),
-            ),
-          );
         previewBanner();
+      }
+      if (action === "banner-cancel") {
+        if ($("#banner-form [data-banner-upload]")?.disabled) return;
+        $("#banner-editor").hidden = true;
+        $("#banner-list").hidden = false;
+        $('#banner-list [data-editor-action="banner-new"]')?.focus();
+        return;
       }
       if (action === "banner-new" || action?.startsWith("banner-edit:")) {
         const form = $("#banner-form");
+        if (!form) return;
         form.reset();
+        previewMode = "desktop";
+        $("#banner-schedule").open = false;
+        $("#banner-advanced").open = false;
+        $("#banner-editor-title").textContent = action === "banner-new" ? "Tạo banner" : "Chỉnh sửa banner";
+        $("#editor-error").textContent = "";
+        $("#banner-list").hidden = true;
+        $("#banner-editor").hidden = false;
         form.elements.bannerId.value = "";
         form.elements.version.value = "";
         if (action !== "banner-new") {
@@ -1642,11 +1651,14 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         await refresh("taxonomy-editor");
       }
       if (form.dataset.cmsTax) {
-        await api("/api/admin/cms/" + form.dataset.cmsTax, {
+        const kind = form.dataset.cmsTax;
+        await api("/api/admin/cms/" + kind, {
           method: "POST",
-          body: data,
+          body: { ...data, slug: data.slug.trim() || slugFromName(data.name) },
         });
         await refresh("cms-editor");
+        $("#cms-taxonomy").open = true;
+        $(`[data-cms-tax="${kind}"] [name="name"]`).focus();
       }
       if (form.getAttribute("id") === "article-form") {
         const { article: a } = await api(
@@ -1772,9 +1784,131 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       if (submit?.isConnected) submit.disabled = false;
     }
   });
+  const canEditBanners = () => has("banners.write") || has("settings.write");
+  const bannerGroups = {
+    "Trang chủ": ["home_hero", "home_side_top", "home_side_bottom", "home_wide"],
+    "Danh mục sản phẩm": ["category_hero"],
+    "Tin tức": ["article_featured", "list_top", "list_left", "list_right"],
+    "Bên trong bài viết": ["article_inline", "article_left", "article_right", "sidebar_mid"],
+  };
+  const bannerSizes = {
+    home_hero: "1600 × 900", home_side_top: "700 × 550",
+    home_side_bottom: "700 × 550", home_wide: "1600 × 450",
+    article_left: "160 × 600", article_right: "160 × 600",
+    list_left: "160 × 600", list_right: "160 × 600",
+    article_inline: "700 × 90", sidebar_mid: "300 × 250", list_top: "728 × 90",
+  };
+  const bannerPositionOptions = () => Object.entries(bannerGroups).map(
+    ([label, slots]) => `<optgroup label="${e(label)}">${slots.map((slot) => option(slot, bannerSlots[slot])).join("")}</optgroup>`,
+  ).join("");
+
+  function bannerStatus(banner) {
+    if (banner.status !== "published") return stateBadge(banner.status);
+    const now = Date.now();
+    const label = banner.starts_at && +new Date(banner.starts_at) > now ? "Sắp hiển thị"
+      : banner.ends_at && +new Date(banner.ends_at) <= now ? "Đã hết lịch" : "Đang hiển thị";
+    return `<span class="status-pill status-published">${label}</span>`;
+  }
+
+  function bannerWorkspace() {
+    const editable = canEditBanners();
+    return `<div class="banner-workspace">
+      <div id="banner-list">
+        ${heading("Banner & Poster Studio", "Chọn banner để chỉnh sửa hoặc tạo banner mới.", editable ? button("+ Tạo banner", "banner-new") : "")}
+        <section class="panel">
+          <div class="content-list-controls"><label>Vị trí<select id="banner-slot-filter"><option value="">Tất cả vị trí</option>${bannerPositionOptions()}</select></label>
+          <span data-banner-count role="status">${bannerRows.length} banner</span></div>
+          <div class="banner-library">${bannerRows.map((b) => `<article data-banner-slot="${e(b.slot)}">
+            <img src="${e(b.url)}" alt="${e(b.alt || b.alt_text)}" width="84" height="56">
+            <div class="banner-row-name"><b>${e(b.title)}</b><p>${e(bannerSlots[b.slot] || b.slot)}</p></div>
+            ${bannerStatus(b)}
+            ${editable ? button("Chỉnh sửa", "banner-edit:" + b.id) : ""}
+          </article>`).join("")}</div>
+          <p class="content-list-empty" data-banner-empty ${bannerRows.length ? "hidden" : ""}>${bannerRows.length ? "Không có banner ở vị trí này." : "Chưa có banner. Bấm Tạo banner để thêm ảnh lên website."}</p>
+        </section>
+      </div>
+      ${editable ? `<section id="banner-editor" hidden>
+        <div class="content-editor-heading">${button("← Danh sách", "banner-cancel")}<h1 id="banner-editor-title">Tạo banner</h1></div>
+        <div class="banner-editor-layout">
+          <form id="banner-form" class="panel banner-fields">
+            <input type="hidden" name="bannerId"><input type="hidden" name="version">
+            <h2>Thông tin banner</h2>
+            ${field("Tên banner", "title", "", "text", 'required maxlength="150" placeholder="Ví dụ: Ưu đãi tháng 12"')}
+            <label>Hiển thị ở đâu?<select name="slot">${bannerPositionOptions()}</select></label>
+            <p class="muted banner-field-hint" data-banner-size></p>
+            <label>Ảnh banner<select name="assetId" required><option value="">Chọn ảnh đã tải</option>${assets.map((a) => option(a.id, a.alt_text)).join("")}</select></label>
+            ${has("media.upload") ? `<label class="banner-upload">Hoặc tải ảnh từ máy<input type="file" data-banner-upload accept="image/jpeg,image/png,image/webp"><small>JPEG, PNG hoặc WebP, tối đa 5 MB.</small></label>` : ""}
+            <div class="banner-field-pair">${field("Trang mở khi bấm vào ảnh", "targetPath", "/san-pham", "text", 'required placeholder="/san-pham"')}
+            <label>Trạng thái<select name="status">${["draft", "published", "archived"].map((v) => option(v, states[v])).join("")}</select></label></div>
+            <p class="muted banner-field-hint" data-banner-status-hint></p>
+            <details class="content-options" id="banner-schedule"><summary>Đặt lịch hiển thị</summary>
+              <div class="banner-field-pair">${field("Bắt đầu (giờ máy bạn)", "startsAt", "", "datetime-local")}${field("Kết thúc (giờ máy bạn)", "endsAt", "", "datetime-local")}</div>
+              <p class="muted">Để trống để banner có hiệu lực khi xuất bản và hiển thị đến khi bạn dừng.</p>
+            </details>
+            <details class="content-options" id="banner-advanced"><summary>Ảnh điện thoại và tùy chỉnh</summary>
+              ${select("Ảnh riêng cho điện thoại", "assetMobileId", assets.map((a) => ({ id: a.id, name: a.alt_text })))}
+              ${field("Mô tả ngắn trên banner", "subtitle", "", "text", 'maxlength="500"')}
+              ${field("Mô tả thay thế cho ảnh", "alt", "", "text", 'maxlength="500"')}
+              ${field("Chữ trên nút", "ctaLabel", "Khám phá", "text", 'required maxlength="60"')}
+              ${field("Thứ tự hiển thị (số nhỏ lên trước)", "sortOrder", 0, "number", 'required min="-10000" max="10000"')}
+              <div class="banner-field-pair">${field("Lấy nét ngang (%)", "focalX", 50, "number", 'required min="0" max="100"')}${field("Lấy nét dọc (%)", "focalY", 50, "number", 'required min="0" max="100"')}</div>
+            </details>
+            ${result}
+            <div class="form-actions"><button type="submit" class="primary">Lưu banner</button>${button("Hủy", "banner-cancel")}</div>
+          </form>
+          <aside class="panel banner-preview-panel"><h2>Xem trước</h2>
+            <div class="workspace-tabs"><button type="button" data-editor-action="banner-preview:desktop" aria-pressed="true">Máy tính</button><button type="button" data-editor-action="banner-preview:mobile" aria-pressed="false">Điện thoại</button></div>
+            <div id="banner-preview-frame" class="banner-preview-frame"><div class="banner-live-preview"><img id="banner-preview-image" alt="" hidden><div><small id="banner-preview-slot"></small><h2 id="banner-preview-title"></h2><p id="banner-preview-subtitle"></p><span id="banner-preview-cta"></span></div></div></div>
+          </aside>
+        </div>
+      </section>` : ""}
+      ${editable ? "" : result}
+    </div>`;
+  }
+
+  async function uploadBannerImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const form = input.form;
+    const save = form.querySelector("button.primary");
+    const back = $("#banner-editor [data-editor-action='banner-cancel']");
+    input.disabled = save.disabled = back.disabled = true;
+    try {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024)
+        throw Error("Chọn ảnh JPEG, PNG hoặc WebP tối đa 5 MB.");
+      const alt = form.elements.title.value.trim() || file.name.replace(/\.[^.]+$/, "") || "Ảnh banner";
+      const { asset } = await api("/api/admin/media/uploads", {
+        method: "POST", rawBody: file,
+        extraHeaders: { "Content-Type": file.type, "X-Image-Alt": encodeURIComponent(alt.slice(0, 200)) },
+      });
+      if (!form.isConnected) return;
+      assets.unshift(asset);
+      for (const name of ["assetId", "assetMobileId"])
+        form.elements[name].insertAdjacentHTML("beforeend", option(asset.id, asset.alt_text));
+      form.elements.assetId.value = String(asset.id);
+      previewBanner();
+      notify("Đã tải và chọn ảnh banner.");
+    } catch (error) {
+      if (form.isConnected) notify(error.message);
+    } finally {
+      input.value = "";
+      input.disabled = save.disabled = back.disabled = false;
+    }
+  }
+
   function previewBanner() {
     const form = $("#banner-form");
     if (!form) return;
+    const slot = form.elements.slot.value;
+    const size = bannerSizes[slot];
+    $("[data-banner-size]").textContent = size ? "Kích thước gợi ý " + size + " px." : "";
+    $("[data-banner-status-hint]").textContent = {
+      draft: "Lưu để hoàn thiện sau. Banner chưa hiện trên website.",
+      published: "Hiển thị theo lịch đã chọn. Để trống lịch để hiển thị ngay.",
+      archived: "Banner đã lưu trữ và ẩn khỏi website.",
+    }[form.elements.status.value];
+    root.querySelectorAll('[data-editor-action^="banner-preview:"]').forEach((control) =>
+      control.setAttribute("aria-pressed", String(control.dataset.editorAction === "banner-preview:" + previewMode)));
     $("#banner-preview-title").textContent =
       form.elements.title.value || "Tiêu đề banner của bạn";
     $("#banner-preview-frame").classList.toggle("banner-article-rail",
@@ -1807,6 +1941,11 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     event.preventDefault();
     event.target.closest(".cms-product-picker").querySelector('[data-editor-action="cms-find-product"]').click();
   });
+  root.addEventListener("invalid", (event) => {
+    if (event.target.form?.getAttribute("id") !== "banner-form") return;
+    const details = event.target.closest("details");
+    if (details) details.open = true;
+  }, true);
   root.addEventListener("change", (event) => {
     if (event.target.matches("[data-product-upload]")) {
       void uploadProductPhotos(event.target);
@@ -1821,15 +1960,19 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         .filter(Boolean)
         .join(",");
     }
-    if (event.target.id === "banner-slot-filter")
-      root
-        .querySelectorAll("[data-banner-slot]")
-        .forEach(
-          (el) =>
-            (el.hidden =
-              !!event.target.value &&
-              el.dataset.bannerSlot !== event.target.value),
-        );
+    if (event.target.id === "banner-slot-filter") {
+      let visible = 0;
+      root.querySelectorAll(".banner-library [data-banner-slot]").forEach((row) => {
+        row.hidden = Boolean(event.target.value && row.dataset.bannerSlot !== event.target.value);
+        if (!row.hidden) visible++;
+      });
+      $("[data-banner-count]").textContent = visible + " banner";
+      $("[data-banner-empty]").hidden = visible > 0;
+    }
+    if (event.target.matches("[data-banner-upload]")) {
+      void uploadBannerImage(event.target);
+      return;
+    }
     if (event.target.closest("#banner-form")) previewBanner();
   });
   root.addEventListener("input", (event) => {

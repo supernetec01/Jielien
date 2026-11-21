@@ -250,7 +250,7 @@ try {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(f.base + "/quan-tri");
   await page.locator('[data-section="banners-editor"]').click();
-  await page.locator("#banner-form").waitFor();
+  await page.locator("#banner-list").waitFor();
   await page
     .locator('[data-editor-action="banner-edit:' + f.banners[1].id + '"]')
     .click();
@@ -264,6 +264,7 @@ try {
     String(f.assets[1].id),
   );
   await form.locator('[name="title"]').fill("Poster được sửa từ Studio");
+  await form.locator("#banner-advanced > summary").click();
   await form.locator('[name="sortOrder"]').fill("-2");
   await page.locator('[data-editor-action="banner-preview:mobile"]').click();
   assert.equal(await page.locator("#banner-preview-frame.mobile").count(), 1);
@@ -343,6 +344,7 @@ try {
   await staffPage.locator('a[href="/quan-tri"]').click();
   await staffPage.waitForURL("**/quan-tri");
   await staffPage.locator('[data-section="banners-editor"]').click();
+  await staffPage.locator('[data-editor-action="banner-new"]').click();
   await staffPage.locator("#banner-form").waitFor();
   assert.equal(
     await staffPage.locator('[data-section="settings-editor"]').count(),
