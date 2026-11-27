@@ -6,6 +6,7 @@ import {
   renderHome,
   renderListing,
   renderDetail,
+  renderProductDescription,
   renderHero,
   renderCard,
   hydratePublicShell,
@@ -238,7 +239,7 @@ function detailTab(p, tab) {
       .join("")}</tbody></table>`;
   if (tab === "notes")
     return "<h3>Bạn đọc kỹ trước khi sử dụng</h3><p>Kiểm tra thông tin trên nhãn sản phẩm và hướng dẫn từ nhà sản xuất trước khi sử dụng. Khi dùng sản phẩm thật, mẹ cần kiểm tra nguồn gốc, hạn sử dụng, độ tuổi và hướng dẫn từ nhà sản xuất. Bảo quản theo điều kiện ghi trên bao bì và hỏi chuyên gia y tế khi cần.</p>";
-  return `<h3>${escape(p.name)}</h3><p>${escape(p.description)}</p>${p.descriptionHtml || ""}<ul>${p.features.map((feature) => `<li>${escape(feature)}</li>`).join("")}</ul><p class="notice">Thông tin chi tiết theo sản phẩm và phân loại bạn đang xem.</p>`;
+  return renderProductDescription(p);
 }
 function quantityControl(id, quantity, detail = false) {
   const p = products.find((p) => p.id === id);
@@ -546,7 +547,32 @@ function restoreDraft(data) {
   }
   if ($("#place-order")) $("#place-order").textContent = orderButtonLabel();
 }
+const productPhoto = "img.product-source-image";
+function fitProductPhoto(image) {
+  if (!image.complete || !image.naturalWidth) return;
+  if (/\.svg(?:[?#]|$)/i.test(image.currentSrc)) {
+    image.style.removeProperty("--photo-max-width");
+    image.style.removeProperty("--photo-max-height");
+    return;
+  }
+  image.style.setProperty("--photo-max-width", `${image.naturalWidth / devicePixelRatio}px`);
+  image.style.setProperty("--photo-max-height", `${image.naturalHeight / devicePixelRatio}px`);
+}
+function fitProductPhotos() {
+  $$(productPhoto, $("#main")).forEach(fitProductPhoto);
+}
+$("#main").addEventListener("load", (event) => {
+  if (event.target.matches(productPhoto)) fitProductPhoto(event.target);
+}, true);
+$("#main").addEventListener("focusin", (event) => {
+  if (event.target.matches(".gallery-thumbs [data-gallery]:focus-visible"))
+    event.target.scrollIntoView({ block: "nearest", inline: "nearest" });
+});
+window.addEventListener("resize", fitProductPhotos);
+fitProductPhotos();
+
 function bindPage() {
+  fitProductPhotos();
   startTransferTimers();
   if ($("#checkout-form") && identity) prefillCheckout();
   $$("[data-tab]").forEach((tab, i) => {
@@ -805,8 +831,9 @@ document.addEventListener("click", async (event) => {
   }
   const gallery = event.target.closest("[data-gallery]");
   if (gallery) {
-    $("#detail-image").src = gallery.dataset.gallery;
-    $("#detail-image").alt = gallery.dataset.alt;
+    const image = $("#detail-image");
+    image.src = gallery.dataset.gallery;
+    image.alt = gallery.dataset.alt;
     gallery.parentElement
       .querySelector('[aria-current="true"]')
       ?.setAttribute("aria-current", "false");

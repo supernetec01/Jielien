@@ -42,21 +42,28 @@ async function checkGalleryFrame(page, width) {
   });
 }
 
-async function checkImageResolution(image, width) {
-  const pixels = await image.evaluate(async (element) => {
-    await element.decode();
+async function checkImageResolution(page, image, width) {
+  await image.evaluate((element) => element.decode());
+  await page.waitForFunction((element) => (
+    element.complete &&
+    Number.parseFloat(element.style.getPropertyValue("--photo-max-width")) ===
+      element.naturalWidth / devicePixelRatio
+  ), await image.elementHandle());
+  const pixels = await image.evaluate((element) => {
+    const { width, height } = element.getBoundingClientRect();
     return {
       url: element.currentSrc,
-      actual: element.naturalWidth,
-      needed: Math.ceil(element.getBoundingClientRect().width * devicePixelRatio),
-      dpr: devicePixelRatio,
+      naturalWidth: element.naturalWidth,
+      naturalHeight: element.naturalHeight,
+      width: width * devicePixelRatio,
+      height: height * devicePixelRatio,
     };
   });
-  if (pixels.actual < pixels.needed) {
-    console.warn(
-      `Ảnh cần thêm pixel ở ${width}px/DPR ${pixels.dpr}: ${pixels.url} (${pixels.actual}px, cần khoảng ${pixels.needed}px theo độ rộng CSS)`,
-    );
-  }
+  assert.ok(
+    pixels.width <= pixels.naturalWidth + 1 && pixels.height <= pixels.naturalHeight + 1,
+    `raster image fits its native pixels at ${width}px: ${JSON.stringify(pixels)}`,
+  );
+  return pixels;
 }
 
 const fixture = await frontendFixture();
@@ -117,7 +124,7 @@ try {
       assert.equal(await image.getAttribute("width"), "640");
       assert.equal(await image.getAttribute("height"), "640");
       await checkStyles(image, { "object-fit": "contain" });
-      await checkImageResolution(image, width);
+      await checkImageResolution(page, image, width);
       if (!interactionWidths.includes(width)) continue;
 
       const gallery = page.getByRole("group", { name: "Ảnh sản phẩm" });
@@ -129,6 +136,10 @@ try {
         "border-top-color": "rgb(135, 187, 42)",
         "border-top-width": "2px",
       });
+      if (width >= 1024) {
+        await checkStyles(gallery, { "flex-direction": "column", "scroll-snap-type": "y mandatory" });
+        assert.ok((await gallery.boundingBox()).x < (await page.locator(".gallery-main").boundingBox()).x);
+      }
       if (width === 375) {
         await checkStyles(gallery, { "overflow-x": "auto", "scroll-snap-type": "x mandatory" });
         assert.ok(await gallery.evaluate((element) => element.scrollWidth > element.clientWidth));
@@ -154,7 +165,7 @@ try {
       assert.equal(await lastThumb.getAttribute("aria-current"), "true");
       assert.equal(await gallery.locator('[aria-current="true"]').count(), 1);
       assert.equal(await activeThumb.getAttribute("aria-current"), "false");
-      await checkImageResolution(image, width);
+      await checkImageResolution(page, image, width);
       page.off("request", trackGalleryRequests);
       assert.deepEqual(galleryRequests, [], "gallery navigation uses the existing image URLs");
 
@@ -188,9 +199,10 @@ try {
       assert.equal(await unavailableOption.locator(".variant-availability svg").count(), 1);
       await checkStyles(unavailableOption, { ...outOfStockColors, ...selectedOutline });
       assert.equal((await page.locator(".stock-status").innerText()).trim(), "Hết hàng");
-      assert.equal((await page.locator(".purchase-stock-note").innerText()).trim(), "Phân loại này tạm hết hàng");
       assert.equal(await image.getAttribute("src"), smallCover.url);
-      await checkImageResolution(image, width);
+      const small = await checkImageResolution(page, image, width);
+      assert.equal(small.naturalWidth, 360);
+      assert.equal(small.naturalHeight, 405);
       await checkGalleryFrame(page, width);
 
       const quantity = page.locator("#detail-quantity");
@@ -203,18 +215,51 @@ try {
         assert.equal(await button.isDisabled(), true);
         await checkStyles(button, { ...outOfStockColors, opacity: "1" });
       }
-      await checkStyles(page.locator(".detail-label"), { "font-size": "14px" });
 
       await unavailableOption.press("ArrowLeft");
       await page.waitForURL("**/san-pham/" + inStock.slug);
       await availableOption.and(page.locator('[aria-checked="true"]')).waitFor();
       assert.equal(await page.locator("[data-buy]").isEnabled(), true);
-      assert.equal(await page.locator(".purchase-stock-note").count(), 0);
+      assert.equal((await page.locator(".stock-status").innerText()).trim(), "Còn hàng");
       console.log(`PASS ${width}px / DPR ${dpr} — gallery, thumbnail, SKU và điều khiển mua hàng`);
     }
     assert.deepEqual(errors, []);
     await page.close();
   }
+
+  const [single, inactive] = fixture.products[1].variants;
+  // The fixture has two SKUs by default; hide one in the disposable schema.
+  await fixture.db.pool.query("UPDATE product_variants SET status='inactive' WHERE id=$1", [inactive.id]);
+  const compact = await browser.newPage({
+    viewport: { width: 1440, height: 1000 },
+    deviceScaleFactor: 2,
+    reducedMotion: "reduce",
+  });
+  await compact.goto(fixture.base + "/san-pham/" + single.slug);
+  await compact.locator("#main[data-hydrated=true]:not([aria-busy])").waitFor();
+  assert.equal(await compact.locator(".gallery-thumbs,[data-variant]").count(), 0);
+  assert.equal(await compact.locator(".detail-pricing small").count(), 0);
+  assert.equal(await compact.locator("[data-detail-add]").isEnabled(), true);
+  const description = await compact.locator("#detail-tab-content").innerHTML();
+  await compact.locator('[data-tab="specs"]').click();
+  await compact.locator('[data-tab="description"]').click();
+  assert.equal(await compact.locator("#detail-tab-content").innerHTML(), description);
+
+  for (const width of layoutWidths) {
+    await compact.setViewportSize({ width, height: 1000 });
+    await compact.goto(fixture.base + "/san-pham");
+    await compact.locator("#main[data-hydrated=true]:not([aria-busy])").waitFor();
+    const soldOutCard = compact.locator(".product-card").filter({
+      has: compact.locator(`[data-add="${outOfStock.id}"]`),
+    });
+    assert.equal(await soldOutCard.getByText("Hết hàng", { exact: true }).count(), 1);
+    assert.equal(await soldOutCard.locator(".sku-note,.product-brand").count(), 0);
+    assert.equal(await soldOutCard.locator("[data-add]").isDisabled(), true);
+    await checkImageResolution(compact, soldOutCard.locator("img"), width);
+    assert.ok(await compact.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  }
+  await compact.close();
+  console.log("PASS danh sách gọn và sản phẩm chỉ có một ảnh/một SKU");
 
   const ssr = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 1280, height: 1000 } });
   await ssr.goto(fixture.base + "/san-pham/" + outOfStock.slug);
