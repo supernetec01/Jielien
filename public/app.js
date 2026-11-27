@@ -807,6 +807,10 @@ document.addEventListener("click", async (event) => {
   if (gallery) {
     $("#detail-image").src = gallery.dataset.gallery;
     $("#detail-image").alt = gallery.dataset.alt;
+    gallery.parentElement
+      .querySelector('[aria-current="true"]')
+      ?.setAttribute("aria-current", "false");
+    gallery.setAttribute("aria-current", "true");
     return;
   }
   const add = event.target.closest("[data-add]");
@@ -1406,7 +1410,7 @@ function enhancePage() {
     );
     document.body.insertAdjacentHTML(
       "beforeend",
-      `<div id="sticky-purchase" hidden><div><b>${money(p.price)}</b><small>${escape(p.weight)}</small></div><button class="secondary" data-sticky-add="${p.id}" ${!p.stock ? "disabled" : ""} aria-label="Thêm vào giỏ">${icon("cart")}</button><button class="primary" data-sticky-buy="${p.id}" ${!p.stock ? "disabled" : ""}>${p.stock ? "Mua ngay" : "Tạm hết hàng"} ${icon("arrow")}</button></div>`,
+      `<div id="sticky-purchase" hidden><div><b>${money(p.price)}</b><small>${escape(p.weight)}</small></div><button class="secondary" data-sticky-add="${p.id}" ${!p.stock ? "disabled" : ""} aria-label="Thêm vào giỏ">${icon("cart")}</button><button class="primary" data-sticky-buy="${p.id}" ${!p.stock ? "disabled" : ""}>${p.stock ? "Mua ngay" : "Hết hàng"} ${icon("arrow")}</button></div>`,
     );
     purchaseObserver = new IntersectionObserver(
       (entries) => {

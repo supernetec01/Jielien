@@ -235,30 +235,68 @@ export function renderListing({
 }
 
 export function renderDetail(p, variants, { ready = true } = {}) {
-  return `${breadcrumbs([[p.category, href({ category: p.category })], [p.name]])}<section class="panel detail-top"><div><div class="gallery-main">${p.oldPrice > p.price ? `<span class="product-badge product-discount">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span>` : ""}${p.image ? `<img id="detail-image" src="${escape(p.image)}" alt="${escape(p.name)}" width="800" height="800" fetchpriority="high">` : `<span class="image-placeholder">${icon("box")}<small>Chưa có ảnh</small></span>`}</div><div class="gallery-thumbs">${(p
-    .gallery?.length
-    ? p.gallery
-    : [{ url: p.image, alt: p.name }]
-  )
-    .filter((m) => m.url)
-    .map(
-      (m, i) =>
-        `<button ${!ready ? "disabled" : ""} data-gallery="${escape(m.url)}" data-alt="${escape(m.alt || p.name)}" aria-label="Ảnh sản phẩm ${i + 1}"><img src="${escape(m.url)}" alt="${escape(m.alt || p.name)}"></button>`,
-    )
-    .join(
-      "",
-    )}</div><p class="detail-label">Kiểm tra quy cách và thông tin sản phẩm trước khi đặt hàng.</p></div><div class="detail-info"><div class="product-brand">${escape(p.brand)}</div><h1>${escape(p.name)}</h1><div class="detail-meta"><span>Mã SKU: ${escape(p.sku || String(p.id))}</span><span class="in-stock">${p.stock > 5 ? "Còn hàng" : p.stock > 0 ? `Chỉ còn ${p.stock} sản phẩm` : "Tạm hết hàng"}</span></div><div class="detail-pricing"><strong>${p.priceVaries ? "Từ " : ""}${money(p.price)}</strong>${p.oldPrice > p.price ? `<del>${money(p.oldPrice)}</del>` : ""}<small>Giá theo kho còn hàng; báo giá cuối được xác nhận ở bước thanh toán</small></div><div class="variant-label">Lựa chọn đang xem: <b>${escape(p.weight)}</b></div><div class="variants" role="radiogroup" aria-label="Chọn quy cách">${[
-    p,
-    ...variants,
-  ]
-    .sort((a, b) => a.id - b.id)
-    .map(
-      (v) =>
-        `<button type="button" role="radio" aria-checked="${v.id === p.id}" tabindex="${v.id === p.id ? 0 : -1}" class="${v.id === p.id ? "active" : ""}" data-variant="${v.id}" ${!ready ? "disabled" : ""}>${escape(v.weight || v.name)}${v.stock ? "" : " · Hết hàng"}</button>`,
-    )
-    .join(
-      "",
-    )}</div><div class="variant-label">Số lượng</div>${quantityControl(p.id, 1, true, p, ready)}<div class="buy-row"><button class="secondary" data-detail-add="${p.id}" ${!p.stock || !ready ? "disabled" : ""}>+ Thêm vào giỏ</button><button class="primary" data-buy="${p.id}" ${!p.stock || !ready ? "disabled" : ""}>Mua ngay →</button></div><div class="delivery-note">Phí giao hàng và ưu đãi được xác nhận trong bước thanh toán.</div><div class="delivery-note">Nhập mã ưu đãi ở giỏ hàng.</div><ul class="features">${p.features.map((f) => `<li>${escape(f)}</li>`).join("")}</ul></div></section>
+  const gallery = (
+    p.gallery?.length ? p.gallery : [{ url: p.image, alt: p.name }]
+  ).filter((image) => image.url);
+  const currentImage = gallery.findIndex((image) => image.url === p.image);
+  const outOfStock = !p.stock;
+
+  return `${breadcrumbs([[p.category, href({ category: p.category })], [p.name]])}
+  <section class="panel detail-top${outOfStock ? " is-out-of-stock" : ""}">
+    <div class="detail-gallery">
+      <div class="gallery-main">
+        ${p.oldPrice > p.price ? `<span class="product-badge product-discount">-${Math.round((1 - p.price / p.oldPrice) * 100)}%</span>` : ""}
+        ${p.image ? `<img id="detail-image" src="${escape(p.image)}" alt="${escape(p.name)}" width="640" height="640" loading="eager" fetchpriority="high" decoding="async">` : `<span class="image-placeholder">${icon("box")}<small>Chưa có ảnh</small></span>`}
+      </div>
+      ${gallery.length ? `<div class="gallery-thumbs" role="group" aria-label="Ảnh sản phẩm">
+        ${gallery.map((image, index) => `<button type="button" ${!ready ? "disabled" : ""}
+          data-gallery="${escape(image.url)}" data-alt="${escape(image.alt || p.name)}"
+          aria-label="Xem ảnh ${index + 1}/${gallery.length}" aria-current="${index === currentImage}">
+          <img src="${escape(image.url)}" alt="" width="72" height="72" loading="lazy" decoding="async">
+        </button>`).join("")}
+      </div>` : ""}
+    </div>
+    <div class="detail-info">
+      <div class="product-brand">${escape(p.brand)}</div>
+      <h1>${escape(p.name)}</h1>
+      <div class="detail-meta">
+        <span>Mã SKU: ${escape(p.sku || String(p.id))}</span>
+        <span class="stock-status${outOfStock ? " is-out-of-stock" : ""}">
+          ${icon(outOfStock ? "alert" : "check", { size: 16 })}
+          <span>${outOfStock ? "Hết hàng" : "Còn hàng"}${p.stock > 0 && p.stock <= 5 ? ` · Chỉ còn ${p.stock} sản phẩm` : ""}</span>
+        </span>
+      </div>
+      <div class="detail-pricing">
+        <strong>${p.priceVaries ? "Từ " : ""}${money(p.price)}</strong>
+        ${p.oldPrice > p.price ? `<del>${money(p.oldPrice)}</del>` : ""}
+        <small>Giá theo kho còn hàng; báo giá cuối được xác nhận ở bước thanh toán</small>
+      </div>
+      <div class="variant-label">Phân loại: <b>${escape(p.weight || p.name)}</b></div>
+      <div class="variants" role="radiogroup" aria-label="Chọn quy cách">
+        ${[p, ...variants].sort((a, b) => a.id - b.id).map((variant) => {
+          const selected = variant.id === p.id;
+          const unavailable = !variant.stock;
+          return `<button type="button" role="radio" aria-checked="${selected}" tabindex="${selected ? 0 : -1}"
+            class="variant-option${selected ? " active" : ""}${unavailable ? " is-out-of-stock" : ""}"
+            data-variant="${variant.id}" ${!ready ? "disabled" : ""}>
+            <span class="variant-name">${selected ? icon("check", { size: 16 }) : ""}<span>${escape(variant.weight || variant.name)}</span></span>
+            ${unavailable ? `<span class="variant-availability">${icon("alert", { size: 14 })} Hết hàng</span>` : ""}
+          </button>`;
+        }).join("")}
+      </div>
+      <div class="variant-label">Số lượng</div>
+      ${quantityControl(p.id, 1, true, p, ready)}
+      ${outOfStock ? '<p class="purchase-stock-note">Phân loại này tạm hết hàng</p>' : ""}
+      <div class="buy-row">
+        <button class="secondary" data-detail-add="${p.id}" ${!p.stock || !ready ? "disabled" : ""}>+ Thêm vào giỏ</button>
+        <button class="primary" data-buy="${p.id}" ${!p.stock || !ready ? "disabled" : ""}>Mua ngay →</button>
+      </div>
+      <p class="detail-label">Kiểm tra quy cách và thông tin sản phẩm trước khi đặt hàng.</p>
+      <div class="delivery-note">Phí giao hàng và ưu đãi được xác nhận trong bước thanh toán.</div>
+      <div class="delivery-note">Nhập mã ưu đãi ở giỏ hàng.</div>
+      <ul class="features">${p.features.map((f) => `<li>${escape(f)}</li>`).join("")}</ul>
+    </div>
+  </section>
   <section class="panel"><div class="tabs" role="tablist" aria-label="Thông tin sản phẩm"><button class="active" role="tab" id="tab-description" aria-selected="true" aria-controls="detail-tab-content" data-tab="description" ${!ready ? "disabled" : ""}>Mô tả sản phẩm</button><button role="tab" id="tab-specs" aria-selected="false" aria-controls="detail-tab-content" data-tab="specs" ${!ready ? "disabled" : ""}>Thông số</button><button role="tab" id="tab-notes" aria-selected="false" aria-controls="detail-tab-content" data-tab="notes" ${!ready ? "disabled" : ""}>Lưu ý sử dụng</button></div><div class="tab-content" id="detail-tab-content" role="tabpanel" aria-labelledby="tab-description" data-product="${p.id}">${`<h3>${escape(p.name)}</h3><p>${escape(p.description)}</p>${p.descriptionHtml || ""}<ul>${(p.features || []).map((f) => `<li>${escape(f)}</li>`).join("")}</ul>`}</div></section>`;
 }
 

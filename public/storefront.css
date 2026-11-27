@@ -14,6 +14,12 @@
   --shadow: 0 10px 35px rgba(11, 27, 52, 0.055);
   --round: 20px;
   --page: 1360px;
+  --jl-detail-navy: #091432;
+  --jl-detail-green: #87bb2a;
+  --jl-gallery-border: #e5e7eb;
+  --jl-oos-bg: #e9ebef;
+  --jl-oos-border: #c9cdd4;
+  --jl-oos-text: #4b5563;
 }
 * {
   box-sizing: border-box;
@@ -2780,6 +2786,117 @@ main {
 .detail-top {
   margin-top: 24px;
 }
+.detail-info,
+.detail-gallery {
+  min-width: 0;
+}
+.detail-gallery {
+  width: 100%;
+  max-width: 640px;
+}
+.gallery-main {
+  position: relative;
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 1px solid var(--jl-gallery-border);
+  border-radius: 16px;
+  background: #fff;
+}
+.gallery-main img,
+.gallery-thumbs img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.gallery-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.gallery-thumbs button {
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--jl-gallery-border);
+  border-radius: 8px;
+  background: #fff;
+}
+.gallery-thumbs button[aria-current="true"] {
+  border: 2px solid var(--jl-detail-green);
+}
+.gallery-thumbs button:focus-visible {
+  outline: 2px solid var(--jl-detail-navy) !important;
+  outline-offset: -4px;
+}
+@media (max-width: 700px) {
+  .gallery-thumbs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  .gallery-thumbs button {
+    scroll-snap-align: start;
+  }
+}
+.detail-meta {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.stock-status,
+.variant-name,
+.variant-availability {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.stock-status {
+  color: #4e7a0e;
+  font-weight: 700;
+}
+.stock-status.is-out-of-stock,
+.purchase-stock-note {
+  color: var(--jl-oos-text);
+}
+.purchase-stock-note {
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.purchase-stock-note + .buy-row {
+  margin-top: 8px;
+}
+.detail-label {
+  color: var(--muted);
+  font-size: 14px;
+}
+.detail-top button:hover:not(:disabled),
+#sticky-purchase button:hover:not(:disabled) {
+  filter: none;
+}
+.detail-top button:disabled,
+#sticky-purchase button:disabled {
+  opacity: 1;
+}
+.buy-row button:disabled,
+#sticky-purchase button:disabled {
+  background: var(--jl-oos-bg) !important;
+  border-color: var(--jl-oos-border);
+  color: var(--jl-oos-text) !important;
+}
+.detail-top.is-out-of-stock .quantity-control {
+  border-color: var(--jl-oos-border);
+}
+.detail-top.is-out-of-stock .quantity-control :is(button, input) {
+  background: var(--jl-oos-bg);
+  color: var(--jl-oos-text);
+}
 .detail-info h1 {
   font-size: 32px;
 }
@@ -3107,9 +3224,6 @@ main {
   .storefront-v3 .checkout-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-  }
-  .gallery-main {
-    height: 290px;
   }
   .detail-info h1 {
     font-size: 26px;
@@ -3502,18 +3616,37 @@ main {
     padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
   }
 }
-.variants button {
+.variant-option {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 2px;
+  min-width: 0;
   min-height: 44px;
-  padding: 12px;
-  border: 1px solid var(--line);
+  padding: 8px 12px;
+  border: 1px solid var(--jl-detail-green);
   border-radius: 8px;
-  background: white;
-  color: var(--navy);
+  background: #fff;
+  color: var(--jl-detail-navy);
   font-size: 14px;
+  text-align: start;
+  overflow-wrap: anywhere;
 }
-.variants button.active {
-  border: 2px solid var(--navy);
-  background: var(--soft-green);
+.variant-option.is-out-of-stock {
+  background: var(--jl-oos-bg);
+  border-color: var(--jl-oos-border);
+  color: var(--jl-oos-text);
+}
+.variant-option.active,
+.variant-option:focus-visible {
+  outline: 2px solid var(--jl-detail-navy) !important;
+  outline-offset: 2px;
+}
+.variant-option.active .variant-name > .ui-icon {
+  color: var(--jl-detail-navy);
+}
+.variant-availability {
+  font-size: 12px;
 }
 .quantity-control button {
   min-width: 44px;
