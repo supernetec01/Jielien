@@ -336,18 +336,29 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
   const productWritable = () =>
     has(product ? "catalog.edit" : "catalog.create");
   let productPhotos = [], stockBySku = new Map(), localSku = 0;
+  let stockData = { items: [], balances: [], warehouses: [] };
 
   async function productEditor(productId) {
-    const [record, library, inventory] = await Promise.all([
+    const [record, library, inventory, , warehouses] = await Promise.all([
       productId ? api("/api/admin/catalog/products/" + productId) : null,
       has("media.read") ? api("/api/admin/media") : { items: [] },
       productId && has("inventory.read")
         ? api("/api/admin/catalog/products/" + productId + "/stock")
-        : { items: [] },
+        : { items: [], balances: [], warehouses: [] },
       loadTax(),
+      !productId && has("inventory.read")
+        ? api("/api/admin/warehouses")
+        : null,
     ]);
     assets = library.items;
-    stockBySku = new Map(inventory.items.map((row) => [row.id, row.available]));
+    stockData = {
+      items: inventory.items || [],
+      balances: inventory.balances || [],
+      warehouses: inventory.warehouses?.length
+        ? inventory.warehouses
+        : warehouses?.warehouses || [],
+    };
+    stockBySku = new Map(stockData.items.map((row) => [row.id, row.available]));
     setProductRecord(record?.product || null);
     renderProductEditor();
   }
@@ -374,13 +385,15 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       p.id && p.status !== "draft" && canUpdate ? '<button class="primary" type="submit" name="intent" value="update">Lưu thay đổi</button>' : "",
       canPublish && p.status !== "active" ? '<button class="primary" type="submit" name="intent" value="active">Xuất bản</button>' : "",
     ].join("");
+    const showStock = has("inventory.read") && (editParts || p.id);
     const sections = [
       ["product-basics", "image", "Ảnh và thông tin cơ bản"],
       ["product-details", "file", "Mô tả sản phẩm"],
-      ["product-variants", "tag", "Giá và biến thể"],
-      ["product-shipping", "truck", "Vận chuyển"],
+      ...(editParts || p.id ? [["product-variants", "tag", "Giá và biến thể"]] : []),
+      ...(editParts || p.id ? [["product-shipping", "truck", "Vận chuyển"]] : []),
+      ...(showStock ? [["product-stock", "box", "Tồn kho"]] : []),
     ];
-    const sectionLinks = sections.slice(0, editParts || p.id ? 4 : 2)
+    const sectionLinks = sections
       .map(([id, symbol, label]) => `<a href="#${id}">${icon(symbol)}${label}</a>`).join("");
     const library = assets.length ? `<div class="product-library">${select("Chọn ảnh đã tải", "libraryAsset", assets.map((a) => ({ id: a.id, name: a.alt_text })))}
       ${button("Thêm vào bộ ảnh", "product-library-add")}</div>` : "";
@@ -428,6 +441,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
               </div>
             </section>
             ${editParts || p.id ? productSales(p, editParts) : ""}
+            ${showStock ? productStockSection(p) : ""}
             ${canDeactivate || canDelete ? `<details class="panel catalog-details product-management">
               <summary>Trạng thái và thao tác khác</summary>
               <div class="product-management-actions">
@@ -452,6 +466,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
           </div>
         </div>
       </form>
+      ${p.id && has("inventory.read") && has("inventory.manage") ? stockDialogMarkup() : ""}
     </div>`;
     const form = $("#product-form");
     form.querySelectorAll(".sku-line[data-sku-id]").forEach((line) => {
@@ -480,7 +495,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       ${editable ? `<div class="product-bulk">${field("Giá bán chung (₫)", "bulkPrice", "", "number", 'min="1"')}${button("Áp dụng cho tất cả SKU", "product-price-all")}</div>` : ""}
       <div id="sku-lines">${rows.map(skuLine).join("")}</div>
       ${editable ? button("+ Thêm biến thể", "add-sku") : ""}
-      ${has("inventory.read") ? '<p class="muted product-inventory-note">Tồn khả dụng là số lượng có thể bán tại các kho đang hoạt động. Nhập và điều chỉnh tồn tại mục Kho & tồn hàng.</p>' : ""}
+      ${has("inventory.read") ? `<p class="muted product-inventory-note">${p.id ? "Tồn khả dụng là số lượng có thể bán tại các kho đang hoạt động. Bấm Sửa tồn trên dòng SKU hoặc xuống mục Tồn kho để điều chỉnh; mỗi lần lưu đều ghi nhật ký." : "Nhập tồn lúc tạo cho từng SKU bên trên; số lượng vào kho chọn ở mục Tồn kho bên dưới."}</p>` : ""}
     </section>
     <section class="panel catalog-section" id="product-shipping">
       <h2>Vận chuyển</h2>
@@ -499,7 +514,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
         ${field("Tên biến thể", "name", v.name || "", "text", 'maxlength="200" placeholder="Mặc định"')}
         ${field("SKU người bán", "sku", v.sku || "", "text", 'maxlength="80" placeholder="VD: SS-1M"')}
         ${field("Giá bán (₫)", "price", v.price ?? "", "number", 'min="0" step="1"')}
-        ${has("inventory.read") ? `<div class="product-stock"><span>Tồn khả dụng</span><strong>${v.id ? Number(stockBySku.get(v.id) ?? 0).toLocaleString("vi-VN") : "—"}</strong></div>` : ""}
+        ${skuStockControl(v)}
       </div>
       <div class="product-sku-media">${skuPhotoMarkup(key)}</div>
       <details class="catalog-details"><summary>Thông tin SKU</summary><div class="editor-form">
@@ -518,6 +533,165 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       <input type="hidden" name="attributes" value="${e(selected.join(","))}">
       ${has("catalog.edit") && !v.id ? button("Bỏ dòng", "product-sku-remove") : ""}
     </fieldset>`;
+  }
+
+  function skuStockControl(v) {
+    if (!has("inventory.read")) return "";
+    if (v.id)
+      return `<div class="product-stock"><span>Tồn khả dụng</span><strong data-stock-available>${Number(stockBySku.get(v.id) ?? 0).toLocaleString("vi-VN")}</strong>${has("inventory.manage") ? button("Sửa tồn", "product-stock-edit:" + v.id) : ""}</div>`;
+    if (!product?.id && has("inventory.manage"))
+      return `<label class="product-stock product-stock-input"><span>Tồn lúc tạo</span><input data-opening-stock type="number" min="0" max="1000000" step="1" value="0" aria-label="Tồn lúc tạo"></label>`;
+    return `<div class="product-stock"><span>Tồn khả dụng</span><strong>—</strong>${product?.id ? '<small class="muted">Lưu SKU trước khi nhập tồn.</small>' : ""}</div>`;
+  }
+
+  function productStockSection(p) {
+    const manage = has("inventory.manage");
+    if (!p.id) {
+      const active = stockData.warehouses.filter((w) => w.status === "active");
+      const preferred = active.find((w) => w.type === "normal") || active[0];
+      return `<section class="panel catalog-section" id="product-stock">
+        <h2>Tồn kho lúc tạo</h2>
+        <p class="muted">Số lượng nhập ở từng dòng SKU phía trên sẽ vào kho này và được ghi nhật ký nhập kho ban đầu. Có thể bỏ qua và nhập tồn sau.</p>
+        ${manage
+          ? active.length
+            ? `<div class="editor-form"><label>Kho nhận hàng<select name="openingWarehouse">${active.map((w) => option(w.id, w.name + (w.type === "damaged" ? " · kho hư hỏng" : ""), w.id === preferred?.id)).join("")}</select></label></div>`
+            : emptyState("Chưa có kho hoạt động", "Tạo kho trong mục Kho & tồn hàng trước khi nhập tồn lúc tạo sản phẩm.")
+          : '<p class="muted">Bạn không có quyền nhập tồn kho. Sản phẩm vẫn tạo được; người quản lý kho sẽ nhập tồn sau.</p>'}
+      </section>`;
+    }
+    const variants = p.variants || [];
+    const rows = variants.map((v) => {
+      const balances = stockData.balances.filter((b) => b.variant_id === v.id);
+      if (!balances.length)
+        return `<tr><td><b>${e(v.name)}</b><small class="row-description">${e(v.sku)}</small></td><td colspan="4" class="muted">Chưa có tồn tại kho nào.</td><td>${manage ? button("Nhập tồn", "product-stock-edit:" + v.id) : "—"}</td></tr>`;
+      return balances.map((b, i) => `<tr>
+        <td>${i === 0 ? `<b>${e(v.name)}</b><small class="row-description">${e(v.sku)}</small>` : ""}</td>
+        <td>${e(b.warehouse_name)}${b.warehouse_type === "damaged" ? '<small class="row-description">Kho hư hỏng · không bán</small>' : ""}${b.warehouse_status !== "active" ? '<small class="row-description">Ngừng hoạt động</small>' : ""}</td>
+        <td>${b.on_hand}</td>
+        <td>${b.reserved}</td>
+        <td>${b.warehouse_type === "damaged" || b.warehouse_status !== "active" ? "—" : b.on_hand - b.reserved}</td>
+        <td>${manage && b.warehouse_status === "active" ? button("Sửa tồn", "product-stock-edit:" + v.id + ":" + b.warehouse_id) : "Chỉ xem"}</td>
+      </tr>`).join("");
+    }).join("");
+    return `<section class="panel catalog-section" id="product-stock">
+      <h2>Tồn kho theo từng kho</h2>
+      <p class="muted">Mỗi SKU có tồn riêng tại từng kho. Không thể giảm tồn thấp hơn lượng đang giữ cho đơn. Muốn nhập/xuất có duyệt, dùng Phiếu kho.</p>
+      <div class="table-wrap"><table class="data-table product-stock-table">
+        <thead><tr><th>SKU</th><th>Kho</th><th>Tồn</th><th>Giữ</th><th>Bán được</th><th>Thao tác</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6">Chưa có SKU nào.</td></tr>'}</tbody>
+      </table></div>
+    </section>`;
+  }
+
+  function stockDialogMarkup() {
+    return `<dialog id="quick-stock-dialog" class="stock-dialog" aria-labelledby="quick-stock-title">
+      <form id="quick-stock-form" class="editor-form" novalidate>
+        <div class="dialog-header"><div><span class="page-eyebrow">ĐIỀU CHỈNH TỒN KHO</span><h2 id="quick-stock-title">Sửa tồn kho</h2></div><button type="button" class="secondary" data-editor-action="product-stock-cancel" aria-label="Đóng">×</button></div>
+        <div class="stock-dialog-body">
+          <p class="stock-dialog-sku" data-stock-sku></p>
+          <label>Kho<select name="warehouseId" required></select></label>
+          <p class="stock-dialog-current" data-stock-current role="status"></p>
+          <label>Cách cập nhật tồn<select name="mode"><option value="set">Kiểm kê: đặt tồn thực tế mới</option><option value="receive">Nhập thêm: cộng vào tồn hiện tại</option></select></label>
+          <label>Số lượng<input name="quantity" type="number" required min="0" max="1000000" step="1" value="0"></label>
+          <label>Lý do / chứng từ<input name="reason" required minlength="3" maxlength="500" placeholder="VD: Kiểm kê đầu ca, nhập hàng nhà cung cấp…"></label>
+          <p class="form-error" role="alert" data-stock-error></p>
+          <div class="form-actions"><button class="primary" type="submit">Lưu tồn kho</button><button class="secondary" type="button" data-editor-action="product-stock-cancel">Hủy</button></div>
+        </div>
+      </form>
+    </dialog>`;
+  }
+
+  const variantBalances = (variantId) =>
+    stockData.balances.filter((b) => b.variant_id === variantId);
+
+  function syncStockDialog() {
+    const dialog = $("#quick-stock-dialog");
+    const form = dialog.querySelector("form");
+    const balance = variantBalances(Number(dialog.dataset.variantId))
+      .find((b) => b.warehouse_id === Number(form.elements.warehouseId.value));
+    const current = dialog.querySelector("[data-stock-current]");
+    form.elements.mode.querySelector('[value="receive"]').disabled = !balance;
+    form.elements.mode.value = "set";
+    form.elements.quantity.min = "0";
+    if (balance) {
+      current.innerHTML = `Tồn hiện tại: <b>${balance.on_hand}</b> · Đang giữ cho đơn: <b>${balance.reserved}</b> · Bán được: <b>${balance.on_hand - balance.reserved}</b>`;
+      form.elements.quantity.value = balance.on_hand;
+    } else {
+      current.textContent = "SKU chưa có tại kho này. Số lượng nhập sẽ là tồn đầu tiên.";
+      form.elements.quantity.value = 0;
+    }
+  }
+
+  function openStockDialog(variantId, warehouseId) {
+    const dialog = $("#quick-stock-dialog");
+    const variant = product?.variants.find((v) => v.id === variantId);
+    if (!dialog || !variant) throw Error("Lưu sản phẩm trước khi sửa tồn kho.");
+    const form = dialog.querySelector("form");
+    const active = stockData.warehouses.filter((w) => w.status === "active");
+    if (!active.length) throw Error("Chưa có kho hoạt động. Tạo kho trong mục Kho & tồn hàng.");
+    const balances = variantBalances(variantId);
+    const chosen = warehouseId || balances[0]?.warehouse_id ||
+      (active.find((w) => w.type === "normal") || active[0]).id;
+    dialog.dataset.variantId = variantId;
+    dialog.querySelector("[data-stock-sku]").textContent = variant.name + " · " + variant.sku;
+    form.elements.warehouseId.innerHTML = active
+      .map((w) => option(w.id, w.name + (w.type === "damaged" ? " · kho hư hỏng" : ""), w.id === chosen)).join("");
+    form.elements.reason.value = "";
+    dialog.querySelector("[data-stock-error]").textContent = "";
+    syncStockDialog();
+    dialog.showModal();
+    form.elements.quantity.focus();
+  }
+
+  async function saveQuickStock(form) {
+    const dialog = $("#quick-stock-dialog");
+    const error = dialog.querySelector("[data-stock-error]");
+    error.textContent = "";
+    const variantId = Number(dialog.dataset.variantId);
+    const warehouseId = Number(form.elements.warehouseId.value);
+    const balance = variantBalances(variantId).find((b) => b.warehouse_id === warehouseId);
+    const quantity = Number(form.elements.quantity.value);
+    const mode = form.elements.mode.value;
+    const reason = form.elements.reason.value.trim();
+    if (!warehouseId) return void (error.textContent = "Chọn kho.");
+    if (reason.length < 3) return void (error.textContent = "Nhập lý do / chứng từ ít nhất 3 ký tự.");
+    if (form.elements.quantity.value === "" || !Number.isSafeInteger(quantity) || quantity < 0 || quantity > 1000000)
+      return void (error.textContent = "Số lượng phải là số nguyên từ 0 đến 1.000.000.");
+    if (mode === "receive" && (!balance || quantity < 1))
+      return void (error.textContent = "Nhập thêm cần số lượng từ 1 và SKU đã có tại kho.");
+    const submit = form.querySelector("button.primary");
+    submit.disabled = true;
+    try {
+      await api(`/api/admin/warehouses/${warehouseId}/skus/${variantId}`, {
+        method: balance ? "PUT" : "POST",
+        body: { quantity, mode, reason, ...(balance ? { version: balance.row_version } : {}) },
+      });
+      dialog.close();
+      await reloadProductStock();
+      notify("Đã lưu tồn kho.");
+    } catch (err) {
+      error.textContent = err.message;
+    } finally {
+      submit.disabled = false;
+    }
+  }
+
+  async function reloadProductStock() {
+    if (!product?.id || !has("inventory.read")) return;
+    const data = await api("/api/admin/catalog/products/" + product.id + "/stock");
+    stockData = {
+      items: data.items || [],
+      balances: data.balances || [],
+      warehouses: data.warehouses || [],
+    };
+    stockBySku = new Map(stockData.items.map((row) => [row.id, row.available]));
+    const section = $("#product-stock");
+    if (section) section.outerHTML = productStockSection(product);
+    $("#product-form")?.querySelectorAll(".sku-line[data-sku-id]").forEach((line) => {
+      const strong = line.querySelector("[data-stock-available]");
+      if (strong)
+        strong.textContent = Number(stockBySku.get(Number(line.dataset.skuId)) ?? 0).toLocaleString("vi-VN");
+    });
   }
 
   function skuPhotoMarkup(key) {
@@ -630,11 +804,16 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     }
   }
 
-  function productEditorAction(action, target) {
+  async function productEditorAction(action, target) {
     const form = $("#product-form");
     if (form.dataset.busy === "true") return;
     $("#editor-error").textContent = "";
     if (action === "product-deactivate") return saveProductEditor(form, "inactive");
+    if (action.startsWith("product-stock-edit:")) {
+      const [, variantId, warehouseId] = action.split(":");
+      return openStockDialog(Number(variantId), warehouseId ? Number(warehouseId) : null);
+    }
+    if (action === "product-stock-cancel") return $("#quick-stock-dialog")?.close();
     if (action === "product-pick-gallery") $("#product-gallery-upload")?.click();
     if (action === "product-pick-sku") target.closest(".sku-line").querySelector("[data-product-upload]")?.click();
     if (action === "product-library-add") {
@@ -696,6 +875,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
 
   function skuHasContent(line, values, mediaOwners) {
     return line.dataset.skuId || mediaOwners.has(line.dataset.skuKey) ||
+      Number(line.querySelector("[data-opening-stock]")?.value || 0) > 0 ||
       ["name", "sku", "price", "originalPrice", "attributes", "barcode", "age", "weight", "slug",
         ...shippingFields.map(([name]) => name)]
         .some((name) => values[name]) ||
@@ -783,6 +963,16 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
             existingMediaId, assetId, variantSku: skuByKey.get(skuKey),
           }));
         }
+        if (!current && has("inventory.manage") && form.elements.openingWarehouse?.value) {
+          const items = [];
+          for (const line of form.querySelectorAll(".sku-line")) {
+            const sku = skuByKey.get(line.dataset.skuKey);
+            if (sku)
+              items.push({ sku, quantity: Number(line.querySelector("[data-opening-stock]")?.value || 0) });
+          }
+          if (items.length)
+            payload.stock = { warehouseId: Number(form.elements.openingWarehouse.value), items };
+        }
         if (status === "active" && !partsOnly) {
           if (!categoryIds.length) throw Error("Chọn danh mục trước khi xuất bản.");
           if (!productPhotos.length) throw Error("Thêm ảnh sản phẩm trước khi xuất bản.");
@@ -798,6 +988,7 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
       );
       if (!form.isConnected) return;
       setProductRecord(saved);
+      await reloadProductStock();
       renderProductEditor();
       const savedMessage = status === "draft" ? "Đã lưu bản nháp." :
         intent === "active" ? "Đã xuất bản sản phẩm." : "Đã lưu thay đổi.";
@@ -1514,6 +1705,11 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
   }
   root.addEventListener("submit", async (event) => {
     const form = event.target;
+    if (form.getAttribute("id") === "quick-stock-form") {
+      event.preventDefault();
+      await saveQuickStock(form);
+      return;
+    }
     if (form.getAttribute("id") === "product-form") {
       event.preventDefault();
       await saveProductEditor(form, event.submitter?.value || (product ? "update" : "draft"));
@@ -1950,6 +2146,17 @@ export function createCommerceEditors({ root, api, has, escape: e, notify }) {
     if (details) details.open = true;
   }, true);
   root.addEventListener("change", (event) => {
+    if (event.target.closest("#quick-stock-form")) {
+      const f = event.target.form;
+      if (event.target.name === "warehouseId") syncStockDialog();
+      if (event.target.name === "mode") {
+        const balance = variantBalances(Number($("#quick-stock-dialog").dataset.variantId))
+          .find((b) => b.warehouse_id === Number(f.elements.warehouseId.value));
+        f.elements.quantity.value = event.target.value === "receive" ? "" : (balance?.on_hand ?? 0);
+        f.elements.quantity.min = event.target.value === "receive" ? "1" : "0";
+      }
+      return;
+    }
     if (event.target.matches("[data-product-upload]")) {
       void uploadProductPhotos(event.target);
       return;

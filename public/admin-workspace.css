@@ -2162,11 +2162,14 @@
   gap: 10px;
 }
 .product-sku-fields:has(.product-stock) {
-  grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 1fr)) minmax(66px, 0.7fr);
+  grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 1fr)) minmax(112px, 0.8fr);
 }
 .product-stock { display: grid; align-content: start; gap: 6px; }
 .product-stock > span { color: #52677f; font-weight: 600; }
 .product-stock strong { padding: 10px 0; }
+.product-stock > button { justify-self: start; min-height: 40px; }
+.product-stock-input input { width: 100%; }
+.product-stock .muted { font-size: 12px; }
 .product-sku-media, .product-sku-photo {
   display: flex;
   align-items: center;
@@ -2176,6 +2179,54 @@
 .product-sku-photo img { width: 52px; height: 52px; object-fit: contain; border-radius: 6px; }
 .product-sku-media button { display: inline-flex; align-items: center; gap: 6px; }
 .product-inventory-note { margin-top: 14px !important; }
+.product-stock-table { min-width: 620px; }
+.product-stock-table td { vertical-align: top; }
+.product-stock-table .row-description { display: block; }
+.admin-workspace .stock-dialog {
+  padding: 0;
+  overflow: hidden;
+  width: 560px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 32px);
+  border: 1px solid #dce5ee;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px #0b1b3440;
+}
+.admin-workspace .stock-dialog[open] { display: flex; flex-direction: column; }
+.admin-workspace .stock-dialog::backdrop { background: #0b1b3480; }
+.admin-workspace .stock-dialog form { display: flex; flex-direction: column; min-height: 0; }
+.stock-dialog .dialog-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid #dce5ee;
+  background: white;
+}
+.stock-dialog .dialog-header h2 { font-size: 20px; line-height: 1.4; margin: 2px 0 0; }
+.stock-dialog .dialog-header button { min-width: 44px; min-height: 44px; font-size: 22px; }
+.stock-dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 22px;
+  display: grid;
+  gap: 12px;
+}
+.stock-dialog-sku { margin: 0; font-weight: 650; overflow-wrap: anywhere; }
+.stock-dialog-current {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #d5e0e9;
+  border-radius: 8px;
+  background: #f4f8fb;
+  font-size: 14px;
+}
+.stock-dialog-body .form-error { margin: 0; }
+.stock-dialog-body .form-error:empty { display: none; }
+.warehouse-product-filter { margin-top: 10px; }
+.warehouse-filter-empty { margin: 10px 0 0; }
 .product-shipping-fields {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
