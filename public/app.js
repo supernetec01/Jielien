@@ -179,10 +179,11 @@ function heroMarkup() {
     Object.fromEntries(
       (siteData.settings || []).map((s) => [s.key, s.value_json]),
     ),
+    bannerPaused,
   );
 }
 function home() {
-  document.title = "Jielien International — Lựa chọn cho cuộc sống";
+  document.title = "Lựa chọn cho cuộc sống | Jielien International";
   return renderHome({
     products: listingData.items.slice(0, 8),
     categories,
@@ -190,6 +191,7 @@ function home() {
     newsItems,
     favorites,
     heroIndex,
+    bannerPaused,
     selected: homeCategory,
   });
 }
@@ -488,7 +490,15 @@ async function render({ scroll = true } = {}) {
       html = contentPage(path.split("/")[2], true);
     else html = notFound();
     if (version !== renderVersion) return;
-    main.innerHTML = html;
+    document.body.classList.toggle("home-page", path === "/");
+    const currentHero = path === "/" ? $("#hero-container", main) : null;
+    if (currentHero) {
+      const template = document.createElement("template");
+      template.innerHTML = html;
+      const nextHero = $("#hero-container", template.content);
+      if (currentHero.isEqualNode(nextHero)) nextHero.replaceWith(currentHero);
+      main.replaceChildren(template.content);
+    } else main.innerHTML = html;
     main.dataset.hydrated = "true";
     if (scroll) main.focus({ preventScroll: true });
     $("#search").value = new URLSearchParams(location.search).get("q") || "";
@@ -881,12 +891,14 @@ document.addEventListener("click", async (event) => {
   if (categoryTab) {
     homeCategory = categoryTab.dataset.homeCategory;
     await render({ scroll: false });
+    $$("[data-home-category]").find((tab) => tab.dataset.homeCategory === homeCategory)?.focus({ preventScroll: true });
     return;
   }
   const banner = event.target.closest("[data-hero]");
   if (banner) {
     heroIndex = Number(banner.dataset.hero);
     $("#hero-container").innerHTML = heroMarkup();
+    $(`[data-hero="${heroIndex}"]`)?.focus({ preventScroll: true });
     return;
   }
   const tab = event.target.closest("[data-tab]");
@@ -1629,7 +1641,8 @@ async function init() {
     }
     updateCartCount();
     hydratePublicShell(categories, siteData);
-    await render();
+    await render({ scroll: !location.hash });
+    if (location.hash === "#catalog-brands") $("#catalog-brands")?.scrollIntoView();
   } catch (error) {
     $("#main").innerHTML =
       `<div class="server-error"><h1>Chưa kết nối được cửa hàng</h1><p>${escape(error.message)}</p><button id="retry-init" class="primary">Thử kết nối lại</button></div>`;

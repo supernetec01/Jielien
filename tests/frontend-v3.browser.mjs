@@ -52,7 +52,7 @@ try {
   }
   await go("/");
   assert.equal(await page.locator(".poster-stack .poster").count(), 2);
-  assert.equal(await page.locator(".category-card").count(), 8);
+  assert.equal(await page.locator(".category-card").count(), 3);
   assert.equal(await page.locator(".product-card").count(), 8);
   assert.equal(await page.locator('a[href="/quan-tri"]').count(), 0);
   assert.ok(!requests.includes("/api/products"));
@@ -432,7 +432,7 @@ try {
     "INSERT INTO categories(name,slug,sort_order,status) SELECT 'Ngành hàng kiểm thử '||i,'category-stress-'||i,100+i,'active' FROM generate_series(1,100) i",
   );
   await go("/");
-  assert.equal(await page.locator(".category-card").count(), 8);
+  assert.equal(await page.locator(".category-card").count(), 3);
   assert.equal(await page.locator("#category-dropdown a").count(), 108);
   await page.setViewportSize({ width: 320, height: 900 });
   assert.ok(

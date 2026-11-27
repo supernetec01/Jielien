@@ -16,7 +16,13 @@ test("V3 empty deployment has no seeded catalog or fake campaigns", async () => 
       0,
     );
     const html = await (await fetch(empty.base + "/")).text();
-    assert.ok(html.includes("Chưa có sản phẩm"));
+    assert.doesNotMatch(html, /Chưa có sản phẩm|Chưa có bài viết|id="home-products"|id="home-journal"/);
+    assert.equal((html.match(/<h1>/g) || []).length, 1);
+    assert.match(html, /<link rel="canonical" href="https:\/\/jielien\.example\/"/);
+    assert.match(html, /property="og:image" content="https:\/\/jielien\.example\/assets\/home-family-1440\.webp"/);
+    assert.match(html, /name="twitter:image"/);
+    assert.match(html, /"@type":"Organization"/);
+    assert.match(html, /"@type":"WebSite"/);
     assert.doesNotMatch(
       html,
       /href=["']\/quan-tri|JIELIEN DESIGN CONCEPT|Newsletter|staff-admin-link/,
@@ -25,6 +31,19 @@ test("V3 empty deployment has no seeded catalog or fake campaigns", async () => 
   } finally {
     await empty.cleanup();
   }
+});
+test("storefront CSS negotiates compression without changing content", async () => {
+  const asset = f.base + "/homepage.css";
+  const [compressed, plain] = await Promise.all([
+    fetch(asset, { headers: { "Accept-Encoding": "gzip" } }),
+    fetch(asset, { headers: { "Accept-Encoding": "gzip;q=0, identity" } }),
+  ]);
+  assert.equal(compressed.status, 200);
+  assert.equal(plain.status, 200);
+  assert.equal(compressed.headers.get("content-encoding"), "gzip");
+  assert.equal(plain.headers.get("content-encoding"), null);
+  assert.equal(plain.headers.get("vary"), "Accept-Encoding");
+  assert.equal(await compressed.text(), await plain.text());
 });
 test("V3 catalog pages/filter/sort are bounded in SQL, categories are dynamic and SKU lookup is targeted", async () => {
   const data = (await f.request("/api/products?limit=3&page=2")).data;

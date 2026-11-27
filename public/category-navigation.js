@@ -8,9 +8,9 @@ export function setupCategoryNavigation() {
   );
   let timer,
     openedByHover = false;
+  const onHome = () => document.body.classList.contains("home-page");
   const desktop = () =>
-    matchMedia("(hover: hover) and (pointer: fine) and (min-width: 901px)")
-      .matches;
+    matchMedia(`(hover: hover) and (pointer: fine) and (min-width: ${onHome() ? 1024 : 901}px)`).matches;
   function close() {
     openedByHover = false;
     clearTimeout(timer);
@@ -21,9 +21,9 @@ export function setupCategoryNavigation() {
     openedByHover = hover;
     clearTimeout(timer);
     const rect = trigger.getBoundingClientRect();
-    const top = desktop()
-      ? document.querySelector(".nav").getBoundingClientRect().bottom
-      : document.querySelector(".site-header").getBoundingClientRect().bottom;
+    const top = onHome()
+      ? document.querySelector(".public-chrome").getBoundingClientRect().bottom
+      : document.querySelector(desktop() ? ".nav" : ".site-header").getBoundingClientRect().bottom;
     menu.style.top = backdrop.style.top = `${top}px`;
     menu.style.left = desktop()
       ? `${Math.max(12, Math.min(rect.left, innerWidth - 300))}px`

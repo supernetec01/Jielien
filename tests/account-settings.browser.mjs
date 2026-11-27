@@ -1,3 +1,4 @@
+import { clickAccountNav } from "./support/account-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { chromium } from "playwright-core";
@@ -47,11 +48,29 @@ try {
     "responsive registration opens the editable profile with HttpOnly session",
   );
 
+  const menu = page.locator("#account-menu");
+  await menu.focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await menu.getAttribute("aria-expanded"), "true");
+  assert.equal(await page.locator('[data-view="profile"]').getAttribute("aria-current"), "page");
+  await page.keyboard.press("Escape");
+  assert.equal(await menu.getAttribute("aria-expanded"), "false");
+  await clickAccountNav(page, '[data-view="orders"]');
+  await page.locator(".account-order-summary").waitFor();
+  assert.deepEqual(await page.locator(".account-order-stat strong").allTextContents(), ["0", "0", "0", "0"]);
+  assert.equal(await page.locator('[data-view="orders"]').getAttribute("aria-current"), "page");
+  await clickAccountNav(page, '[data-view="notifications"]');
+  await page.getByRole("heading", { name: "Thông báo", exact: true }).waitFor();
+  await clickAccountNav(page, '[data-view="profile"]');
+  await page.locator("#profile-form").waitFor();
+  pass("keyboard mobile menu exposes current view and the empty order summary displays zeroes");
+
   await page.locator("#profile-name").fill("Mẹ đã cập nhật");
   await page.locator("#profile-form button").click();
   await page.waitForFunction(() =>
     document.querySelector("#notice")?.textContent.includes("Đã lưu thông tin"),
   );
+  assert.equal(await page.locator("#account-name").textContent(), "Mẹ đã cập nhật");
   await page.reload();
   await page.locator("#profile-name").waitFor();
   assert.equal(
@@ -88,7 +107,7 @@ try {
     "email cannot change without reauthentication and persists with current password",
   );
 
-  await page.locator('[data-view="addresses"]').click();
+  await clickAccountNav(page, '[data-view="addresses"]');
   await page.locator("#addressProvince").fill("TP Hồ Chí Minh");
   await page.locator("#addressDistrict").fill("Phường Bến Nghé");
   await page.locator("#addressDetail").fill("123 Đường Thử Nghiệm");
@@ -154,7 +173,7 @@ try {
   );
   assert.equal(await page.locator(".address-card .badge").count(), 1);
   await page.reload();
-  await page.locator('[data-view="addresses"]').click();
+  await clickAccountNav(page, '[data-view="addresses"]');
   await page.locator(".address-card").waitFor();
   assert.equal(await page.locator(".address-card").count(), 1);
   assert.equal(await page.locator(".address-card .badge").count(), 1);
@@ -169,7 +188,7 @@ try {
   });
   assert.equal(otherLogin.status, 200);
   const otherSessionCookie = otherLogin.headers.get("set-cookie").split(";")[0];
-  await page.locator('[data-view="security"]').click();
+  await clickAccountNav(page, '[data-view="security"]');
   await page.locator("#current-password").fill(password);
   await page.locator("#new-password").fill(newPassword);
   await page.locator("#confirm-password").fill("Different-Confirmation-2026");

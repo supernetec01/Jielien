@@ -39,6 +39,9 @@ export const paths = {
   percent:
     '<path d="m5 19 14-14"/><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/>',
   return: '<path d="m8 3-5 5 5 5M3 8h11a7 7 0 0 1 0 14h-3"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4M12 15v2"/>',
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 6-3 6-3 9h18c0-3-3-3-3-9m-8 12a2 2 0 0 0 4 0"/>',
+  logout: '<path d="M11 5H5v14h6m3-11 4 4-4 4m-6-4h10"/>',
   shield: '<path d="m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6ZM8 12l3 3 5-6"/>',
   download: '<path d="M12 3v12m-5-5 5 5 5-5M3 16v5h18v-5"/>',
   news: '<path d="M3 3h18v18H3ZM7 7h4v4H7ZM14 7h3M14 11h3M7 15h10M7 18h10"/>',

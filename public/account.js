@@ -1,3 +1,4 @@
+import { icon } from "/ui-icons.js";
 import { resolveAdminRoute } from "/admin-nav.js";
 import { logoutSession } from "/auth-session.js";
 import { canAccessAdmin } from "/admin-access.js";
@@ -24,6 +25,20 @@ const statusNames = {
   delivered: "Đã giao",
   cancelled: "Đã hủy",
 };
+const accountViews = [
+  ["profile", "user", "Thông tin tài khoản"],
+  ["orders", "receipt", "Đơn hàng"],
+  ["addresses", "home", "Địa chỉ"],
+  ["security", "shield", "Bảo mật"],
+  ["favorites", "heart", "Yêu thích", "/yeu-thich"],
+  ["notifications", "bell", "Thông báo"],
+];
+const accountRoleLabels = new Map(Object.entries({
+  admin: "Quản trị viên", boss: "Chủ cửa hàng", sales: "Bán hàng",
+  warehouse: "Nhân viên kho", finance: "Kế toán", catalog_manager: "Quản lý sản phẩm",
+  banner_manager: "Quản lý banner", writer: "Biên tập viên", seo: "Tối ưu tìm kiếm",
+  content: "Quản lý nội dung", viewer: "Chỉ xem", customer: "Khách hàng",
+}));
 const root = $("#account-main");
 let user = null;
 let csrfToken = "";
@@ -46,7 +61,7 @@ async function completeAuth(result) {
 }
 function renderRecovery(){
   const reset=recoveryMode==='reset';
-  root.innerHTML=`<section class="panel auth-form-panel"><h1>${reset?'Đặt lại mật khẩu':'Quên mật khẩu'}</h1><p>${reset?'Chọn mật khẩu mới. Sau khi hoàn tất, mọi phiên cũ sẽ được đăng xuất.':'Nhập số điện thoại hoặc email. Link khôi phục chỉ được gửi tới email đã lưu; tài khoản chỉ có số điện thoại cần cửa hàng xác minh và hỗ trợ.'}</p>${reset&&!resetToken?'<p class="form-error" role="alert">Thiếu mã khôi phục. Hãy mở lại link trong email hoặc yêu cầu link mới.</p>':`<form id="recovery-form">${reset?'<div class="field"><label for="reset-password">Mật khẩu mới</label><input id="reset-password" name="newPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div><div class="field"><label for="reset-confirmation">Nhập lại mật khẩu</label><input id="reset-confirmation" name="confirmation" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div>':'<div class="field"><label for="recovery-identifier">Số điện thoại hoặc email</label><input id="recovery-identifier" name="identifier" autocomplete="username" required maxlength="200"></div>'}<div id="recovery-error" class="form-error" role="alert"></div><button class="primary">${reset?'Lưu mật khẩu mới':'Yêu cầu link khôi phục'}</button><p id="recovery-message" role="status"></p></form>`}<button type="button" class="secondary" id="back-to-login">Quay lại đăng nhập</button>${reset?'<button type="button" class="secondary" id="forgot-password">Yêu cầu link mới</button>':''}</section>`;
+  root.innerHTML=`<section class="panel auth-form-panel"><h1>${reset?'Đặt lại mật khẩu':'Quên mật khẩu'}</h1><p>${reset?'Chọn mật khẩu mới. Sau khi hoàn tất, mọi phiên cũ sẽ được đăng xuất.':'Nhập số điện thoại hoặc email. Liên kết khôi phục chỉ được gửi tới email đã lưu; tài khoản chỉ có số điện thoại cần cửa hàng xác minh và hỗ trợ.'}</p>${reset&&!resetToken?'<p class="form-error" role="alert">Thiếu mã khôi phục. Hãy mở lại liên kết trong email hoặc yêu cầu liên kết mới.</p>':`<form id="recovery-form">${reset?'<div class="field"><label for="reset-password">Mật khẩu mới</label><input id="reset-password" name="newPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div><div class="field"><label for="reset-confirmation">Nhập lại mật khẩu</label><input id="reset-confirmation" name="confirmation" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div>':'<div class="field"><label for="recovery-identifier">Số điện thoại hoặc email</label><input id="recovery-identifier" name="identifier" autocomplete="username" required maxlength="200"></div>'}<div id="recovery-error" class="form-error" role="alert"></div><button class="primary">${reset?'Lưu mật khẩu mới':'Yêu cầu liên kết khôi phục'}</button><p id="recovery-message" role="status"></p></form>`}<button type="button" class="secondary" id="back-to-login">Quay lại đăng nhập</button>${reset?'<button type="button" class="secondary" id="forgot-password">Yêu cầu liên kết mới</button>':''}</section>`;
 }
 async function api(path, { method = "GET", body } = {}) {
   const headers = {};
@@ -63,7 +78,7 @@ async function api(path, { method = "GET", body } = {}) {
   try {
     data = await response.json();
   } catch {
-    throw new Error("Máy chủ chưa trả lời đúng định dạng. Mẹ thử lại nhé.");
+    throw new Error("Máy chủ chưa trả lời đúng định dạng. Vui lòng thử lại.");
   }
   if (!response.ok) {
     const error = new Error(data.message || "Chưa hoàn tất được yêu cầu.");
@@ -87,7 +102,7 @@ function badge(status) {
   return `<span class="badge ${["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"].includes(status) ? status : ""}">${escape(labelStatus(status))}</span>`;
 }
 function empty(title, text, link = "") {
-  return `<div class="empty"><span class="empty-icon" aria-hidden="true">♡</span><h3>${escape(title)}</h3><p>${escape(text)}</p>${link ? `<a class="primary" href="${escape(link)}">Khám phá sản phẩm →</a>` : ""}</div>`;
+  return `<div class="empty"><span class="empty-icon">${icon("bag", { size: 26 })}</span><h3>${escape(title)}</h3><p>${escape(text)}</p>${link ? `<a class="primary" href="${escape(link)}">Khám phá sản phẩm</a>` : ""}</div>`;
 }
 function safeRedirect() {
   const target = new URLSearchParams(location.search).get("redirect");
@@ -96,29 +111,86 @@ function safeRedirect() {
     : null;
 }
 function authMarkup() {
-  return `<section class="auth-layout"><div class="auth-intro"><span class="eyebrow">JIELIEN INTERNATIONAL</span><h1>Mỗi lần ghé,<br>thêm một chút<br>yêu thương.</h1><p>Đăng nhập để quản lý địa chỉ nhận hàng<br>và theo dõi những đơn hàng của bạn.</p><div class="auth-heart" aria-hidden="true">♡</div><div class="intro-list">✓ Lưu địa chỉ cho những lần mua sau<br>✓ Xem lịch sử và trạng thái đơn hàng<br>✓ Thông tin cá nhân được quản lý trong tài khoản</div></div><div class="auth-form-panel"><div class="tabs" role="tablist" aria-label="Đăng nhập hoặc đăng ký"><button class="${authMode === "login" ? "active" : ""}" id="auth-login-tab" data-auth-mode="login" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "login"}" tabindex="${authMode === "login" ? 0 : -1}">Đăng nhập</button><button class="${authMode === "register" ? "active" : ""}" id="auth-register-tab" data-auth-mode="register" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "register"}" tabindex="${authMode === "register" ? 0 : -1}">Tạo tài khoản</button></div><div id="auth-panel" role="tabpanel" aria-labelledby="auth-${authMode}-tab"><form id="auth-form">${authMode === "register" ? '<div class="field"><label for="fullName">Họ và tên <span class="required">*</span></label><input id="fullName" name="fullName" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên của bạn"></div><div class="field"><label for="phone">Số điện thoại <span class="required">*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" placeholder="Email của bạn"><small>Dùng email bạn kiểm soát để nhận link khôi phục mật khẩu.</small></div>' : '<div class="field"><label for="identifier">Tên đăng nhập, số điện thoại hoặc email</label><input id="identifier" name="identifier" autocomplete="username" required maxlength="200" placeholder="Tên đăng nhập / số điện thoại / email"></div>'}<div class="field"><label for="password">Mật khẩu <span class="required">*</span></label><input id="password" name="password" type="password" autocomplete="${authMode === "register" ? "new-password" : "current-password"}" required minlength="${authMode === "register" ? 10 : 1}" maxlength="72" placeholder="${authMode === "register" ? "Tối thiểu 10 ký tự" : "Mật khẩu của mẹ"}">${authMode === "register" ? "<small>Tối thiểu 10 ký tự, tối đa 72 byte UTF-8; chữ có dấu có thể chiếm nhiều byte.</small>" : ""}</div><label class="check-label"><input type="checkbox" id="show-password"> Hiển thị mật khẩu</label><div id="auth-error" class="form-error" role="alert"></div><button class="primary" id="auth-submit">${authMode === "register" ? "Tạo tài khoản →" : "Đăng nhập →"}</button></form>${authMode==='login'?'<button type="button" class="secondary" id="forgot-password">Quên mật khẩu?</button>':''}<p class="form-note">${authMode === "register" ? "Khi đăng ký, mẹ đồng ý với " : "Thông tin tài khoản được bảo vệ theo "}<a href="/chinh-sach/bao-mat">chính sách thông tin cá nhân</a>. Không dùng mật khẩu của dịch vụ khác cho tài khoản thử nghiệm.</p></div></div></section>`;
+  return `<section class="auth-layout"><div class="auth-intro"><span class="eyebrow">JIELIEN INTERNATIONAL</span><h1>Tài khoản Jielien</h1><p>Đăng nhập để theo dõi đơn hàng và quản lý thông tin nhận hàng.</p></div><div class="auth-form-panel"><div class="tabs" role="tablist" aria-label="Đăng nhập hoặc đăng ký"><button class="${authMode === "login" ? "active" : ""}" id="auth-login-tab" data-auth-mode="login" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "login"}" tabindex="${authMode === "login" ? 0 : -1}">Đăng nhập</button><button class="${authMode === "register" ? "active" : ""}" id="auth-register-tab" data-auth-mode="register" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "register"}" tabindex="${authMode === "register" ? 0 : -1}">Tạo tài khoản</button></div><div id="auth-panel" role="tabpanel" aria-labelledby="auth-${authMode}-tab"><form id="auth-form">${authMode === "register" ? '<div class="field"><label for="fullName">Họ và tên <span class="required">*</span></label><input id="fullName" name="fullName" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên của bạn"></div><div class="field"><label for="phone">Số điện thoại <span class="required">*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" placeholder="Email của bạn"><small>Dùng email bạn kiểm soát để nhận liên kết khôi phục mật khẩu.</small></div>' : '<div class="field"><label for="identifier">Tên đăng nhập, số điện thoại hoặc email</label><input id="identifier" name="identifier" autocomplete="username" required maxlength="200" placeholder="Tên đăng nhập / số điện thoại / email"></div>'}<div class="field"><label for="password">Mật khẩu <span class="required">*</span></label><input id="password" name="password" type="password" autocomplete="${authMode === "register" ? "new-password" : "current-password"}" required minlength="${authMode === "register" ? 10 : 1}" maxlength="72" placeholder="${authMode === "register" ? "Tối thiểu 10 ký tự" : "Mật khẩu của bạn"}">${authMode === "register" ? "<small>Tối thiểu 10 ký tự, tối đa 72 byte UTF-8; chữ có dấu có thể chiếm nhiều byte.</small>" : ""}</div><label class="check-label"><input type="checkbox" id="show-password"> Hiển thị mật khẩu</label><div id="auth-error" class="form-error" role="alert"></div><button class="primary" id="auth-submit">${authMode === "register" ? "Tạo tài khoản" : "Đăng nhập"}</button></form>${authMode==='login'?'<button type="button" class="secondary" id="forgot-password">Quên mật khẩu?</button>':''}<p class="form-note">${authMode === "register" ? "Khi đăng ký, bạn đồng ý với " : "Thông tin tài khoản được bảo vệ theo "}<a href="/chinh-sach/bao-mat">chính sách thông tin cá nhân</a>. Không dùng mật khẩu của dịch vụ khác cho tài khoản thử nghiệm.</p></div></div></section>`;
 }
 function renderAuth(focus = false) {
   root.innerHTML = authMarkup();
   if (focus) $("#identifier, #fullName")?.focus();
 }
+function updateAccountIdentity() {
+  const name = user.fullName || user.full_name || "Bạn";
+  const initials = name.trim().split(/\s+/u).slice(-2)
+    .map((part) => Array.from(part)[0] || "").join("").toLocaleUpperCase("vi");
+  const roles = (user.roles || []).map((role) => accountRoleLabels.get(role)).filter(Boolean);
+  $("#account-avatar").textContent = initials;
+  $("#account-name").textContent = name;
+  $("#account-email").textContent = user.email || "Chưa thêm địa chỉ email";
+  $("#account-role").textContent = roles.join(", ") || "Tài khoản Jielien";
+}
 function accountShell() {
   const canManage = canAccessAdmin(user);
-  root.innerHTML = `<div class="account-banner"><div>${user.isDemo?'<p role="status">TÀI KHOẢN DEMO LOCALHOST · Số/email chưa được xác minh thật.</p>':""}<h1>Chào ${escape(user.fullName || user.full_name || "mẹ")} ♡</h1><p>Mọi thông tin mua sắm của mẹ, ở cùng một nơi.</p></div><div class="actions">${canManage ? '<a href="/quan-tri" class="secondary">Quản trị cửa hàng ↗</a>' : ""}<button class="secondary" id="logout">Đăng xuất</button></div></div><div class="account-layout"><nav class="panel side-nav" aria-label="Mục tài khoản"><button data-view="profile" class="active">◎ Thông tin tài khoản</button><button data-view="orders">▤ Đơn hàng của mẹ</button><button data-view="addresses">⌂ Địa chỉ nhận hàng</button><button data-view="security">♢ Đổi mật khẩu</button></nav><section id="account-content" class="panel" tabindex="-1" aria-live="polite"></section></div>`;
+  const navItems = accountViews.map(([view, symbol, label, href]) => {
+    const text = `${icon(symbol)} ${label}`;
+    return href
+      ? `<a href="${href}">${text}</a>`
+      : `<button type="button" data-view="${view}">${text}</button>`;
+  });
+  root.innerHTML = `<header class="account-heading">
+    <h1>Tài khoản của bạn</h1>
+    ${canManage ? '<a href="/quan-tri" class="secondary">Quản trị cửa hàng</a>' : ""}
+  </header>
+  <div class="account-identity">
+    <span id="account-avatar" class="account-avatar" data-no-translate aria-hidden="true"></span>
+    <div class="account-identity-copy">
+      <p id="account-name" data-no-translate></p>
+      <p id="account-email"></p>
+    </div>
+    <p class="account-role" id="account-role"></p>
+    ${user.isDemo ? '<p class="account-demo" role="status">Tài khoản thử nghiệm. Số điện thoại và địa chỉ email chưa được xác minh.</p>' : ""}
+  </div>
+  <div class="account-layout">
+    <div class="account-navigation">
+      <button type="button" id="account-menu" aria-label="Danh mục tài khoản" aria-describedby="account-current-view" aria-controls="account-nav" aria-expanded="false">
+        ${icon("menu")} <span id="account-current-view"></span> ${icon("chevronDown")}
+      </button>
+      <nav id="account-nav" class="account-nav" aria-label="Điều hướng tài khoản">
+        ${navItems.join("")}
+        <button type="button" id="logout">${icon("logout")} Đăng xuất</button>
+      </nav>
+    </div>
+    <section id="account-content" class="panel" tabindex="-1"></section>
+  </div>`;
+  updateAccountIdentity();
 }
 function profileMarkup() {
-  return `<div class="content-header"><div><h2>Thông tin tài khoản</h2><p>Mẹ có thể cập nhật thông tin liên hệ tại đây.</p></div></div><form id="profile-form"><div class="fields"><div class="field"><label for="profile-name">Họ và tên</label><input id="profile-name" name="fullName" required minlength="2" maxlength="100" value="${escape(user.fullName)}" autocomplete="name"></div><div class="field"><label for="profile-phone">Số điện thoại đăng nhập</label><input id="profile-phone" readonly value="${escape(user.phone)}"><small>Số điện thoại đăng nhập hiện được giữ nguyên.</small></div><div class="field full"><label for="profile-email">Email</label><input id="profile-email" name="email" type="email" maxlength="200" value="${escape(user.email || "")}" autocomplete="email"></div><div class="field full"><label for="profile-password">Mật khẩu hiện tại khi đổi email</label><input id="profile-password" name="currentPassword" type="password" autocomplete="current-password"><small>Chỉ cần nhập khi thay đổi hoặc xóa email.</small></div></div><div id="profile-error" class="form-error" role="alert"></div><button class="primary">Lưu thông tin</button></form>`;
+  return `<div class="content-header"><div><h2>Thông tin tài khoản</h2><p>Cập nhật họ tên và địa chỉ email của bạn.</p></div></div><form id="profile-form"><div class="fields"><div class="field"><label for="profile-name">Họ và tên</label><input id="profile-name" name="fullName" required minlength="2" maxlength="100" value="${escape(user.fullName)}" autocomplete="name"></div><div class="field"><label for="profile-phone">Số điện thoại đăng nhập</label><input id="profile-phone" class="readonly-field" aria-describedby="profile-phone-help" readonly value="${escape(user.phone)}"><small id="profile-phone-help" class="readonly-note">${icon("lock", { size: 15 })} Không thể thay đổi</small></div><div class="field full"><label for="profile-email">Email</label><input id="profile-email" name="email" type="email" maxlength="200" value="${escape(user.email || "")}" autocomplete="email"></div><div class="field full"><label for="profile-password">Mật khẩu hiện tại khi đổi email</label><input id="profile-password" aria-describedby="profile-password-help" name="currentPassword" type="password" autocomplete="current-password"><small id="profile-password-help">Chỉ cần nhập khi thay đổi hoặc xóa email.</small></div></div><div id="profile-error" class="form-error" role="alert"></div><button class="primary">Lưu thông tin</button></form>`;
 }
 function securityMarkup() {
   return `<div class="content-header"><div><h2>Đổi mật khẩu</h2><p>Sau khi đổi, các phiên đăng nhập sẽ được đăng xuất để bảo vệ tài khoản.</p></div></div><form id="password-form"><div class="field"><label for="current-password">Mật khẩu hiện tại</label><input id="current-password" name="currentPassword" type="password" autocomplete="current-password" required></div><div class="field"><label for="new-password">Mật khẩu mới</label><input id="new-password" name="newPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="72"><small>Tối thiểu 10 ký tự, tối đa 72 byte UTF-8.</small></div><div class="field"><label for="confirm-password">Nhập lại mật khẩu mới</label><input id="confirm-password" name="confirmation" type="password" autocomplete="new-password" required minlength="10" maxlength="72"></div><div id="password-error" class="form-error" role="alert"></div><button class="primary">Đổi mật khẩu</button></form>`;
 }
+function orderOverview(orders) {
+  const counts = { pending: 0, processing: 0, shipped: 0, delivered: 0 };
+  for (const { status } of orders) {
+    const group = status === "confirmed" ? "processing" : status;
+    if (Object.hasOwn(counts, group)) counts[group]++;
+  }
+  const labels = [
+    ["pending", "clock", "Chờ xác nhận"],
+    ["processing", "box", "Đang xử lý"],
+    ["shipped", "truck", "Đang giao"],
+    ["delivered", "check", "Hoàn thành"],
+  ];
+  return `<div class="account-order-summary" role="group" aria-label="Tổng quan đơn hàng">${labels.map(([status, symbol, title]) =>
+    `<article class="account-order-stat">${icon(symbol)}<h3>${title}</h3><strong>${counts[status]}</strong></article>`
+  ).join("")}</div>`;
+}
 function orderCard(order) {
   const items = Array.isArray(order.items) ? order.items : [];
-  return `<article class="order-card"><div class="order-card-header"><div><b>${escape(order.id)}</b><small>${date(order.createdAt)}</small></div>${badge(order.status)}</div><div class="order-card-items">${items
+  return `<article class="order-card"><div class="order-card-header"><div><h3>Đơn hàng ${escape(order.id)}</h3><small>${date(order.createdAt)}</small></div>${badge(order.status)}</div><div class="order-card-items">${items
     .slice(0, 2)
     .map(
       (item) =>
-        `<div class="order-preview"><img src="${escape(item.image)}" alt=""><span>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></span></div>`,
+        `<div class="order-preview"><img src="${escape(item.image)}" alt="" width="45" height="45" loading="lazy" decoding="async"><span>${escape(item.name)}<b>${escape(item.quantity)} × ${money(item.price)}</b></span></div>`,
     )
     .join(
       "",
@@ -128,10 +200,10 @@ function addressValue(address, camel, snake) {
   return address[camel] ?? address[snake] ?? "";
 }
 function addressesMarkup(addresses) {
-  return `<div class="content-header"><div><h2>Địa chỉ nhận hàng</h2><p>Thêm địa chỉ để chuẩn bị cho những lần mua sắm sau.</p></div></div><div class="address-list">${addresses.length ? addresses.map((address) => `<article class="address-card"><h3>${escape(addressValue(address, "recipientName", "recipient_name"))}${addressValue(address, "isDefault", "is_default") ? '<span class="badge active">Mặc định</span>' : ""}</h3><div class="address-actions"><button class="secondary" type="button" data-edit-address="${address.id}">Sửa</button><button class="secondary" type="button" data-delete-address="${address.id}">Xóa</button></div><p>${escape(address.phone)}</p><p>${escape(addressValue(address, "addressDetail", "address_detail"))}</p><p>${escape(address.district || addressValue(address, "wardCode", "ward_code"))}${(address.district || addressValue(address, "wardCode", "ward_code")) && (address.province || addressValue(address, "provinceCode", "province_code")) ? ", " : ""}${escape(address.province || addressValue(address, "provinceCode", "province_code"))}</p></article>`).join("") : '<p class="muted small">Mẹ chưa lưu địa chỉ nhận hàng nào.</p>'}</div><form id="address-form" class="address-form"><input type="hidden" name="id" id="address-id" value=""><h3>Thêm địa chỉ mới</h3><div class="fields"><div class="field"><label for="recipientName">Họ tên người nhận <span class="required">*</span></label><input id="recipientName" name="recipientName" required minlength="2" maxlength="100" autocomplete="name" value="${escape(user.fullName || user.full_name || "")}"></div><div class="field"><label for="addressPhone">Số điện thoại <span class="required">*</span></label><input id="addressPhone" name="phone" type="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" autocomplete="tel" value="${escape(user.phone || "")}"></div><div class="field"><label for="addressProvince">Tỉnh / Thành phố <span class="required">*</span></label><input id="addressProvince" name="province" required maxlength="100" autocomplete="address-level1" placeholder="Tỉnh / thành phố nhận hàng"></div><div class="field"><label for="addressDistrict">Phường / Xã <span class="required">*</span></label><input id="addressDistrict" name="district" required maxlength="100" autocomplete="address-level2" placeholder="Phường / xã nhận hàng"></div><div class="field full"><label for="addressDetail">Địa chỉ chi tiết <span class="required">*</span></label><input id="addressDetail" name="addressDetail" required minlength="5" maxlength="250" autocomplete="street-address" placeholder="Số nhà, tên đường"></div></div><label class="check-label"><input type="checkbox" name="isDefault"> Đặt làm địa chỉ mặc định</label><div id="address-error" class="form-error" role="alert"></div><button class="primary" style="margin-top:15px">Lưu địa chỉ →</button></form>`;
+  return `<div class="content-header"><div><h2>Địa chỉ nhận hàng</h2><p>Thêm địa chỉ để chuẩn bị cho những lần mua sắm sau.</p></div></div><div class="address-list">${addresses.length ? addresses.map((address) => `<article class="address-card"><h3>${escape(addressValue(address, "recipientName", "recipient_name"))}${addressValue(address, "isDefault", "is_default") ? '<span class="badge active">Mặc định</span>' : ""}</h3><div class="address-actions"><button class="secondary" type="button" data-edit-address="${escape(address.id)}">Sửa</button><button class="secondary" type="button" data-delete-address="${escape(address.id)}">Xóa</button></div><p>${escape(address.phone)}</p><p>${escape(addressValue(address, "addressDetail", "address_detail"))}</p><p>${escape(address.district || addressValue(address, "wardCode", "ward_code"))}${(address.district || addressValue(address, "wardCode", "ward_code")) && (address.province || addressValue(address, "provinceCode", "province_code")) ? ", " : ""}${escape(address.province || addressValue(address, "provinceCode", "province_code"))}</p></article>`).join("") : '<p class="muted small">Bạn chưa lưu địa chỉ nhận hàng nào.</p>'}</div><form id="address-form" class="address-form"><input type="hidden" name="id" id="address-id" value=""><h3>Thêm địa chỉ mới</h3><div class="fields"><div class="field"><label for="recipientName">Họ tên người nhận <span class="required">*</span></label><input id="recipientName" name="recipientName" required minlength="2" maxlength="100" autocomplete="name" value="${escape(user.fullName || user.full_name || "")}"></div><div class="field"><label for="addressPhone">Số điện thoại <span class="required">*</span></label><input id="addressPhone" name="phone" type="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" autocomplete="tel" value="${escape(user.phone || "")}"></div><div class="field"><label for="addressProvince">Tỉnh / Thành phố <span class="required">*</span></label><input id="addressProvince" name="province" required maxlength="100" autocomplete="address-level1" placeholder="Tỉnh / thành phố nhận hàng"></div><div class="field"><label for="addressDistrict">Phường / Xã <span class="required">*</span></label><input id="addressDistrict" name="district" required maxlength="100" autocomplete="address-level2" placeholder="Phường / xã nhận hàng"></div><div class="field full"><label for="addressDetail">Địa chỉ chi tiết <span class="required">*</span></label><input id="addressDetail" name="addressDetail" required minlength="5" maxlength="250" autocomplete="street-address" placeholder="Số nhà, tên đường"></div></div><label class="check-label"><input type="checkbox" name="isDefault"> Đặt làm địa chỉ mặc định</label><div id="address-error" class="form-error" role="alert"></div><button class="primary" style="margin-top:15px">Lưu địa chỉ</button></form>`;
 }
 async function renderView(view, focus = true) {
-  activeView = ["profile", "orders", "addresses", "security"].includes(view)
+  activeView = accountViews.some(([key, , , href]) => key === view && !href)
     ? view
     : "profile";
   const version = ++viewVersion;
@@ -143,15 +215,20 @@ async function renderView(view, focus = true) {
       button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
   });
+  $("#account-current-view").textContent = accountViews.find(([key]) => key === activeView)[2];
+  $("#account-menu").setAttribute("aria-expanded", "false");
   content.setAttribute("aria-busy", "true");
-  content.innerHTML = '<div class="loading">Đang tải thông tin…</div>';
+  if (activeView === "orders" || activeView === "addresses")
+    content.innerHTML = '<div class="loading" role="status">Đang tải thông tin…</div>';
   try {
     let html;
     if (activeView === "profile") html = profileMarkup();
     else if (activeView === "security") html = securityMarkup();
-    else if (activeView === "orders") {
+    else if (activeView === "notifications") {
+      html = '<div class="content-header"><div><h2>Thông báo</h2><p>Thông báo trong tài khoản chưa khả dụng. Bạn có thể xem trạng thái mua hàng trong mục Đơn hàng.</p></div></div><button class="secondary" type="button" data-open-orders>Xem đơn hàng</button>';
+    } else if (activeView === "orders") {
       const { orders = [] } = await api("/api/account/orders");
-      html = `<div class="content-header"><div><h2>Đơn hàng của mẹ</h2><p>Những đơn hàng được đặt khi đăng nhập tài khoản này.</p></div></div>${orders.length ? `<div class="order-list">${orders.map(orderCard).join("")}</div>` : empty("Chưa có đơn hàng nào", "Mẹ bắt đầu chọn những món đồ cho bé yêu nhé.", "/san-pham")}`;
+      html = `<div class="content-header"><div><h2>Đơn hàng</h2><p>Tổng quan theo lịch sử hiển thị của tài khoản.</p></div></div>${orderOverview(orders)}${orders.length ? `<div class="order-list">${orders.map(orderCard).join("")}</div>` : empty("Chưa có đơn hàng nào", "Các đơn đặt từ tài khoản này sẽ hiển thị tại đây.", "/san-pham")}`;
     } else {
       const { addresses = [] } = await api("/api/account/addresses");
       addressRows = addresses;
@@ -159,7 +236,11 @@ async function renderView(view, focus = true) {
     }
     if (version !== viewVersion) return;
     content.innerHTML = html;
-    if (focus) content.focus({ preventScroll: true });
+    if (focus) {
+      const heading = $("h2", content);
+      heading?.setAttribute("tabindex", "-1");
+      (heading || content).focus();
+    }
   } catch (error) {
     if (version === viewVersion)
       content.innerHTML = `<div class="form-error" role="alert">${escape(error.message)}</div><button class="secondary" id="retry-view">Thử tải lại</button>`;
@@ -177,7 +258,7 @@ async function submitAuth(form) {
     new TextEncoder().encode(data.password).byteLength > 72
   ) {
     errorBox.textContent =
-      "Mật khẩu tối đa 72 byte UTF-8. Mẹ chọn mật khẩu ngắn hơn một chút nhé.";
+      "Mật khẩu tối đa 72 byte UTF-8. Bạn hãy chọn mật khẩu ngắn hơn.";
     return;
   }
   authBusy = true;
@@ -197,13 +278,13 @@ async function submitAuth(form) {
     if (button.isConnected) {
       button.disabled = false;
       button.textContent =
-        authMode === "register" ? "Tạo tài khoản →" : "Đăng nhập →";
+        authMode === "register" ? "Tạo tài khoản" : "Đăng nhập";
     }
   }
 }
 function orderDetail(order) {
   const c = order.customer || {};
-  return `<div class="detail-split"><div><h3>Người nhận</h3><p><b>${escape(c.name)}</b></p><p>${escape(c.phone)}</p><p>${escape(c.address)}</p><p>${escape(c.district)}, ${escape(c.province)}</p></div><div><h3>Thông tin đơn</h3><p>${escape(order.id)}</p><p>${date(order.createdAt)}</p><p>${badge(order.status)}</p><p>Thanh toán: ${order.payment === "bank_transfer" ? "Chuyển khoản ngân hàng / VietQR" : "COD"}</p><p>${order.paymentStatus === "paid" ? "Đã ghi nhận thu tiền" : "Chưa ghi nhận thu tiền"}</p></div></div>${(order.items || []).map((item) => `<div class="order-preview"><img src="${escape(item.image)}" alt=""><span>${escape(item.name)}<b>${item.quantity} × ${money(item.price)}</b></span><strong class="small">${money(item.lineTotal)}</strong></div>`).join("")}<div class="total-row"><span>Tiền hàng</span><b>${money(order.subtotal)}</b></div><div class="total-row"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="total-row"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="total-row grand"><span>Tổng cộng</span><b>${money(order.total)}</b></div>${order.payment === "bank_transfer" && order.paymentStatus !== "paid" && order.status !== "cancelled" ? `<p><a class="secondary" href="/don-hang/${encodeURIComponent(order.id)}">Xem VietQR và thông tin chuyển khoản →</a></p>` : ""}${order.note ? `<p class="dialog-note">Ghi chú: ${escape(order.note)}</p>` : ""}`;
+  return `<div class="detail-split"><div><h3>Người nhận</h3><p><b>${escape(c.name)}</b></p><p>${escape(c.phone)}</p><p>${escape(c.address)}</p><p>${escape(c.district)}, ${escape(c.province)}</p></div><div><h3>Thông tin đơn</h3><p>${escape(order.id)}</p><p>${date(order.createdAt)}</p><p>${badge(order.status)}</p><p>Thanh toán: ${order.payment === "bank_transfer" ? "Chuyển khoản ngân hàng / VietQR" : "Thanh toán khi nhận hàng"}</p><p>${order.paymentStatus === "paid" ? "Đã ghi nhận thu tiền" : "Chưa ghi nhận thu tiền"}</p></div></div>${(order.items || []).map((item) => `<div class="order-preview"><img src="${escape(item.image)}" alt="" width="45" height="45" loading="lazy" decoding="async"><span>${escape(item.name)}<b>${escape(item.quantity)} × ${money(item.price)}</b></span><strong class="small">${money(item.lineTotal)}</strong></div>`).join("")}<div class="total-row"><span>Tiền hàng</span><b>${money(order.subtotal)}</b></div><div class="total-row"><span>Giảm giá</span><b>−${money(order.discount)}</b></div><div class="total-row"><span>Giao hàng</span><b>${order.shipping ? money(order.shipping) : "Miễn phí"}</b></div><div class="total-row grand"><span>Tổng cộng</span><b>${money(order.total)}</b></div>${order.payment === "bank_transfer" && order.paymentStatus !== "paid" && order.status !== "cancelled" ? `<p><a class="secondary" href="/don-hang/${encodeURIComponent(order.id)}">Xem VietQR và thông tin chuyển khoản</a></p>` : ""}${order.note ? `<p class="dialog-note">Ghi chú: ${escape(order.note)}</p>` : ""}`;
 }
 async function openOrder(id) {
   $("#order-dialog-title").textContent = "Đơn hàng " + id;
@@ -263,8 +344,14 @@ root.addEventListener("submit", async (event) => {
           method: "PATCH",
           body: data,
         });
+        if (!user || user.id !== result.user.id) return;
         user = result.user;
-        await renderView("profile", false);
+        updateAccountIdentity();
+        if (form.isConnected) {
+          form.elements.fullName.value = user.fullName || "";
+          form.elements.email.value = user.email || "";
+          form.elements.currentPassword.value = "";
+        }
         notify("Đã lưu thông tin tài khoản.");
       } else {
         await api("/api/account/password", {
@@ -280,7 +367,7 @@ root.addEventListener("submit", async (event) => {
         localStorage.removeItem("jielien-cart-owner");
         authMode = "login";
         renderAuth(true);
-        notify("Đã đổi mật khẩu. Mẹ đăng nhập lại bằng mật khẩu mới nhé.");
+        notify("Đã đổi mật khẩu. Bạn hãy đăng nhập lại bằng mật khẩu mới.");
       }
     } catch (error) {
       if (errorBox.isConnected) errorBox.textContent = error.message;
@@ -365,9 +452,18 @@ root.addEventListener("click", async (event) => {
     $("#auth-" + authMode + "-tab").focus();
     return;
   }
+  const menu = event.target.closest("#account-menu");
+  if (menu) {
+    menu.setAttribute("aria-expanded", String(menu.getAttribute("aria-expanded") !== "true"));
+    return;
+  }
   const view = event.target.closest("[data-view]");
   if (view) {
     renderView(view.dataset.view);
+    return;
+  }
+  if (event.target.closest("[data-open-orders]")) {
+    renderView("orders");
     return;
   }
   const order = event.target.closest("[data-order]");
@@ -382,7 +478,7 @@ root.addEventListener("click", async (event) => {
     await logoutSession({ button: logout, api, notify, onSignedOut() {
       user = null;
       csrfToken = "";
-      renderAuth();
+      renderAuth(true);
     } });
   }
 });
@@ -391,6 +487,12 @@ root.addEventListener("change", (event) => {
     $("#password").type = event.target.checked ? "text" : "password";
 });
 root.addEventListener("keydown", (event) => {
+  const menu = $("#account-menu");
+  if (event.key === "Escape" && menu?.getAttribute("aria-expanded") === "true" && event.target.closest(".account-navigation")) {
+    menu.setAttribute("aria-expanded", "false");
+    menu.focus();
+    return;
+  }
   if (
     event.target.matches("[data-auth-mode]") &&
     ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)

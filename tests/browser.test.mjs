@@ -82,7 +82,7 @@ try {
     0,
     "No fake slideshow without configured banners",
   );
-  await page.locator("#dynamic-nav a").first().waitFor();
+  await page.locator("#dynamic-nav a").first().waitFor({ state: "attached" });
   await page.locator("#category-menu").click();
   assert.equal(
     await page.locator("#category-menu").getAttribute("aria-expanded"),

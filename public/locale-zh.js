@@ -11,6 +11,37 @@ Danh mục sản phẩm|商品分类
 Tất cả danh mục|所有分类
 Tất cả sản phẩm|所有商品
 Sản phẩm|商品
+Lựa chọn cho cuộc sống|为生活而选
+Mang đến những sản phẩm chất lượng cho gia đình hiện đại|为现代家庭带来优质商品
+Khám phá những sản phẩm được tuyển chọn giúp cuộc sống tiện nghi, hiện đại và đáng tin cậy hơn.|探索精选好物，让现代生活更便捷、更安心。
+Xem bộ sưu tập|查看系列
+Danh mục nổi bật|精选分类
+Vì sao chọn Jielien?|为何选择 Jielien？
+Thông tin giao hàng|配送信息
+Chính sách vận chuyển|配送政策
+Hỗ trợ khách hàng|客户服务
+Bộ sưu tập được yêu thích|热门系列
+Hãy chọn danh mục khác để tiếp tục khám phá.|请选择其他分类继续探索。
+Lọc sản phẩm theo danh mục|按分类筛选商品
+Giới thiệu Jielien|关于 Jielien
+Khám phá|探索
+Hỗ trợ|帮助
+Tài khoản của bạn|您的账户
+Chưa thêm địa chỉ email|尚未添加电子邮箱
+Điều hướng tài khoản|账户导航
+Thông báo|通知
+Bảo mật|安全
+Không thể thay đổi|无法更改
+Cập nhật họ tên và địa chỉ email của bạn.|更新您的姓名和电子邮箱。
+Đăng nhập để theo dõi đơn hàng và quản lý thông tin nhận hàng.|登录以跟踪订单及管理收货信息。
+Thông báo trong tài khoản chưa khả dụng. Bạn có thể xem trạng thái mua hàng trong mục Đơn hàng.|账户通知暂不可用。您可以在订单中查看购物状态。
+Tổng quan đơn hàng|订单概览
+Tổng quan theo lịch sử hiển thị của tài khoản.|根据账户显示的订单历史汇总。
+Đang xử lý|处理中
+Hoàn thành|已完成
+Xem đơn hàng|查看订单
+Khách hàng|客户
+Tài khoản thử nghiệm. Số điện thoại và địa chỉ email chưa được xác minh.|测试账户。手机号与电子邮箱尚未验证。
 Mẹ và Bé|母婴用品
 Sữa cho bé|婴幼儿奶粉
 Bỉm & tã|纸尿裤
@@ -29,6 +60,7 @@ Tin tức|资讯
 Tin tức & Cẩm nang|资讯与指南
 Tìm kiếm|搜索
 Tìm kiếm sản phẩm|搜索商品
+Tìm sản phẩm|搜索商品
 Tìm sản phẩm, thương hiệu, danh mục...|搜索商品、品牌、分类…
 Tìm sản phẩm, thương hiệu, danh mục…|搜索商品、品牌、分类…
 Chào mừng bạn|欢迎光临

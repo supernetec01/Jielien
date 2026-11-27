@@ -10,12 +10,36 @@ export const escape = (v) =>
 const money = (v) => Number(v).toLocaleString("vi-VN") + "\u00a0₫";
 export const categoryLink = (c) => "/danh-muc/" + encodeURIComponent(c.slug);
 export function bannerPicture(b, { priority = false } = {}) {
-  return `<picture>${b.mobile_url ? `<source media="(max-width:680px)" srcset="${escape(b.mobile_url)}">` : ""}<img src="${escape(b.url)}" alt="${escape(b.alt || b.alt_text)}" width="1600" height="900" sizes="(max-width:900px) 100vw, 65vw" ${priority ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"'} decoding="async" style="object-position:${Number(b.focal_x ?? 50)}% ${Number(b.focal_y ?? 50)}%"></picture>`;
+  return `<picture>${b.mobile_url ? `<source media="(max-width:680px)" srcset="${escape(b.mobile_url)}">` : ""}<img src="${escape(b.url)}" alt="${escape(b.alt || b.alt_text)}" width="1600" height="900" sizes="(max-width:900px) 100vw, 65vw" ${priority ? 'fetchpriority="high" loading="eager"' : 'loading="lazy" decoding="async"'} style="object-position:${Number(b.focal_x ?? 50)}% ${Number(b.focal_y ?? 50)}%"></picture>`;
 }
-export function renderHero(banners, index = 0, settings = {}) {
-  const list = banners.filter((b) => b.slot === "home_hero"),
-    b = list[index % Math.max(1, list.length)];
-  return `<div class="hero hero-main${b ? " has-campaign" : ""}">${b ? bannerPicture(b, { priority: true }) : ""}<div class="hero-copy"><span class="hero-kicker">${escape(settings.companyName || "JIELIEN INTERNATIONAL")}</span><h1>${b ? escape(b.title) : "Khám phá điều hay.<br><em>Sống thêm tiện nghi.</em>"}</h1><p>${escape(b?.subtitle || settings.tagline || "Khám phá những lựa chọn phù hợp cho gia đình và cuộc sống của bạn.")}</p><a class="btn btn-primary" href="${escape(b?.target_path || "/san-pham")}" data-link>${escape(b?.cta_label || "Khám phá sản phẩm")} ${icon("arrow")}</a></div>${list.length > 1 ? `<div class="hero-pager banner-controls" aria-label="Chọn banner">${list.map((_, i) => `<button data-hero="${i}" class="${i === index ? "active" : ""}" aria-label="Banner ${i + 1}" aria-pressed="${i === index}"></button>`).join("")}<button type="button" data-banner-pause aria-pressed="false">Tạm dừng</button></div>` : ""}</div>`;
+const articleDate = new Intl.DateTimeFormat("vi-VN", {
+  dateStyle: "medium",
+  timeZone: "Asia/Ho_Chi_Minh",
+});
+function homeImage(asset, { priority = false, alt = "" } = {}) {
+  const srcset = [480, 960, 1440]
+    .map((width) => `/assets/${asset}-${width}.webp ${width}w`)
+    .join(", ");
+  const sizes = priority ? "(min-width:1024px) 580px, 100vw" : "(min-width:1280px) 1200px, 100vw";
+  return `<img src="/assets/${asset}-960.webp" srcset="${srcset}" sizes="${sizes}" width="1440" height="960" alt="${escape(alt)}" ${priority ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'}>`;
+}
+
+export function renderHero(banners, index = 0, settings = {}, paused = false) {
+  const list = banners.filter((b) => b.slot === "home_hero");
+  const banner = list[index % Math.max(1, list.length)];
+  return `<div class="hero home-hero">
+    <div class="hero-copy">
+      <p class="home-kicker">${escape(settings.tagline || "Lựa chọn cho cuộc sống")}</p>
+      <h1>${escape(banner?.title || "Mang đến những sản phẩm chất lượng cho gia đình hiện đại")}</h1>
+      <p class="home-hero-description">${escape(banner?.subtitle || "Khám phá những sản phẩm được tuyển chọn giúp cuộc sống tiện nghi, hiện đại và đáng tin cậy hơn.")}</p>
+      <div class="home-hero-actions">
+        <a class="home-button home-button-primary" href="${escape(banner?.target_path || "/san-pham")}" data-link>${escape(banner?.cta_label || "Khám phá ngay")} ${icon("arrow")}</a>
+        <a class="home-button home-button-outline" href="#home-collection">Xem bộ sưu tập</a>
+      </div>
+      ${list.length > 1 ? `<div class="home-hero-controls" role="group" aria-label="Chọn banner">${list.map((_, i) => `<button type="button" data-hero="${i}" aria-label="Banner ${i + 1}" aria-pressed="${i === index}">${i + 1}</button>`).join("")}<button type="button" data-banner-pause aria-pressed="${paused}">${paused ? "Phát banner" : "Tạm dừng"}</button></div>` : ""}
+    </div>
+    <div class="home-hero-media">${banner ? bannerPicture(banner, { priority: true }) : homeImage("home-family", { priority: true, alt: "Mẹ và bé bên bàn trong căn nhà ngập ánh sáng" })}</div>
+  </div>`;
 }
 export function renderCard(p, saved = false, ready = true) {
   const discount =
@@ -29,6 +53,7 @@ export function renderHome({
   newsItems,
   favorites = [],
   heroIndex = 0,
+  bannerPaused = false,
   selected = "",
   ready = true,
 }) {
@@ -45,22 +70,63 @@ export function renderHome({
     })
     .join("");
   const wide = banners.find((b) => b.slot === "home_wide");
-  const trust = [1, 2, 3, 4].map((i) => settings["trust" + i]).filter(Boolean);
-  return `<section class="hero-area"><div class="hero-grid"><div id="hero-container">${renderHero(banners, heroIndex, settings)}</div>${sides ? `<div class="poster-stack">${sides}</div>` : ""}</div>${trust.length ? `<div class="trust-row">${trust.map((t) => `<div class="trust-item"><span class="trust-icon">${icon("check")}</span><b>${escape(t)}</b></div>`).join("")}</div>` : ""}</section>
-  ${
-    categories.length
-      ? `<section class="section"><div class="section-title"><div><span class="eyebrow">KHÁM PHÁ JIELIEN</span><h2>Điều bạn cần, ở ngay đây.</h2><p>Lựa chọn theo sở thích và nhu cầu của bạn.</p></div><a class="textlink" href="/san-pham" data-link>Tất cả danh mục ${icon("arrow")}</a></div><div class="category-grid">${categories
-          .slice(0, 8)
-          .map(
-            (c) =>
-              `<a class="category-card" href="${categoryLink(c)}" data-link><div class="category-visual"><span class="category-blob"></span>${c.image_url ? `<img src="${escape(c.image_url)}" alt="" width="120" height="120" loading="lazy">` : icon("box")}</div><span>${escape(c.name)}</span></a>`,
-          )
-          .join("")}</div></section>`
-      : ""
-  }
-  ${wide ? `<a class="campaign-wide" href="${escape(wide.target_path)}" data-link>${bannerPicture(wide)}<div><small>${escape(wide.subtitle)}</small><h2>${escape(wide.title)}</h2><span class="btn btn-primary">${escape(wide.cta_label)} ${icon("arrow")}</span></div></a>` : ""}
-  <section class="section"><div class="section-title"><div><span class="eyebrow">LỰA CHỌN CHO BẠN</span><h2>Khám phá sản phẩm</h2><p>Giá và tình trạng hàng theo từng phân loại.</p></div><a class="textlink" href="/san-pham" data-link>Xem tất cả ${icon("arrow")}</a></div><div class="filter-tabs"><button class="filter-tab ${!selected ? "active" : ""}" data-home-category="">Tất cả</button>${categories.map((c) => `<button class="filter-tab ${selected === c.slug ? "active" : ""}" data-home-category="${escape(c.slug)}">${escape(c.name)}</button>`).join("")}</div><div class="product-grid products-grid">${products.map((p) => renderCard(p, favorites.includes(p.id), ready)).join("") || '<div class="empty"><h3>Chưa có sản phẩm</h3><p>Sản phẩm được xuất bản sẽ xuất hiện tại đây.</p></div>'}</div></section>
-  <section class="section"><div class="section-title"><div><span class="eyebrow">JIELIEN JOURNAL</span><h2>Cảm hứng cho mỗi ngày</h2><p>Câu chuyện và kiến thức từ đội ngũ Jielien.</p></div><a class="textlink" href="/tin-tuc">Đọc thêm ${icon("arrow")}</a></div><div class="feature-news">${newsItems.map((a) => `<article class="article-card"><a class="article-visual" href="/tin-tuc/${escape(a.slug)}"><img src="${escape(a.coverUrl)}" alt="${escape(a.coverAlt)}" width="640" height="400" loading="lazy"></a><div class="article-content"><h3><a href="/tin-tuc/${escape(a.slug)}">${escape(a.title)}</a></h3><p>${escape(a.excerpt)}</p><a class="read" href="/tin-tuc/${escape(a.slug)}">Đọc bài viết ${icon("arrow")}</a></div></article>`).join("") || '<p class="empty-editorial">Chưa có bài viết được xuất bản.</p>'}</div></section>`;
+  const preferredNames = [/^phụ kiện xe$/i, /^mỹ phẩm$/i, /^(thiết bị )?âm thanh$/i];
+  const preferred = preferredNames
+    .map((name) => categories.find((category) => name.test(category.name)))
+    .filter(Boolean);
+  const featuredCategories = [
+    ...preferred,
+    ...categories.filter((category) => !preferred.includes(category)),
+  ].slice(0, 3);
+  const benefits = [
+    ["truck", "Thông tin giao hàng", "/chinh-sach/giao-hang"],
+    ["shield", "Thông tin sản phẩm", "/san-pham"],
+    ["return", "Chính sách đổi trả", "/chinh-sach/doi-tra"],
+    ["chat", "Hỗ trợ khách hàng", "/chinh-sach/gioi-thieu"],
+  ];
+  return `<section class="hero-area home-hero-section" aria-label="Giới thiệu Jielien"><div id="hero-container">${renderHero(banners, heroIndex, settings, bannerPaused)}</div></section>
+    ${categories.length ? `<section class="home-section" aria-labelledby="home-categories">
+      <div class="home-section-heading"><h2 id="home-categories">Danh mục nổi bật</h2><a href="/san-pham" data-link>Tất cả sản phẩm ${icon("arrow")}</a></div>
+      <div class="home-category-grid">${featuredCategories.map((c) => `<a class="category-card home-category" href="${categoryLink(c)}" data-link>${c.image_url ? `<img src="${escape(c.image_url)}" alt="" width="640" height="400" loading="lazy" decoding="async">` : `<div class="home-category-placeholder">${icon("box", { size: 44 })}</div>`}<h3>${escape(c.name)}</h3></a>`).join("")}</div>
+    </section>` : ""}
+    ${products.length || selected ? `<section class="home-section" aria-labelledby="home-products">
+      <div class="home-section-heading"><h2 id="home-products">Sản phẩm nổi bật</h2><a href="/san-pham" data-link>Xem tất cả ${icon("arrow")}</a></div>
+      ${categories.length ? `<div class="filter-tabs" role="group" aria-label="Lọc sản phẩm theo danh mục"><button type="button" class="filter-tab ${!selected ? "active" : ""}" aria-pressed="${!selected}" data-home-category="">Tất cả</button>${categories.map((c) => `<button type="button" class="filter-tab ${selected === c.slug ? "active" : ""}" aria-pressed="${selected === c.slug}" data-home-category="${escape(c.slug)}">${escape(c.name)}</button>`).join("")}</div>` : ""}
+      ${products.length ? `<div class="product-grid products-grid">${products.map((p) => renderCard(p, favorites.includes(p.id), ready)).join("")}</div>` : '<p role="status">Hãy chọn danh mục khác để tiếp tục khám phá.</p>'}
+    </section>` : ""}
+    <section class="home-section" aria-labelledby="home-benefits">
+      <div class="home-section-heading"><h2 id="home-benefits">Vì sao chọn Jielien?</h2></div>
+      <div class="home-benefits">${benefits.map(([symbol, label, link], index) => {
+        const configured = settings["trust" + (index + 1)];
+        const content = `${icon(symbol, { size: 26 })}<h3>${escape(configured || label)}</h3>`;
+        return configured
+          ? `<div class="home-benefit">${content}</div>`
+          : `<a class="home-benefit" href="${link}" data-link>${content}</a>`;
+      }).join("")}</div>
+    </section>
+    <section id="home-collection" class="home-section" aria-labelledby="home-collection-title">
+      <div class="home-collection-media">${wide ? bannerPicture(wide) : homeImage("home-collection")}<div class="home-collection-copy">
+        <h2 id="home-collection-title">${escape(wide?.title || "Bộ sưu tập được yêu thích")}</h2>
+        ${wide?.subtitle ? `<p>${escape(wide.subtitle)}</p>` : ""}
+        <a class="home-button home-button-light" href="${escape(wide?.target_path || "/san-pham")}" data-link>${escape(wide?.cta_label || "Khám phá ngay")} ${icon("arrow")}</a>
+      </div></div>
+      ${sides ? `<div class="poster-stack">${sides}</div>` : ""}
+    </section>
+    ${newsItems.length ? `<section class="home-section" aria-labelledby="home-journal">
+      <div class="home-section-heading"><div><p class="home-kicker">Jielien Journal</p><h2 id="home-journal">Cảm hứng cho mỗi ngày</h2></div><a href="/tin-tuc">Đọc thêm ${icon("arrow")}</a></div>
+      <div class="home-journal-grid">${newsItems.map((article) => {
+        const link = "/tin-tuc/" + encodeURIComponent(article.slug);
+        const date = new Date(article.publishedAt);
+        return `<article class="home-journal-card">
+          ${article.coverUrl ? `<img src="${escape(article.coverUrl)}" alt="${escape(article.coverAlt)}" width="640" height="400" loading="lazy" decoding="async">` : ""}
+          <div class="home-journal-copy">
+            <p class="home-article-meta">Journal${Number.isFinite(+date) ? ` <time datetime="${date.toISOString()}">${articleDate.format(date)}</time>` : ""}</p>
+            <h3><a href="${link}">${escape(article.title)}</a></h3>
+            ${article.excerpt ? `<p>${escape(article.excerpt)}</p>` : ""}
+          </div>
+        </article>`;
+      }).join("")}</div>
+    </section>` : ""}`;
 }
 export function hydratePublicShell(categories, siteData = {}) {
   const settings = Object.fromEntries(
@@ -79,6 +145,7 @@ export function hydratePublicShell(categories, siteData = {}) {
   for (const [id, key] of [
     ["company-tagline", "tagline"],
     ["company-phone", "contactPhone"],
+    ["footer-phone", "contactPhone"],
     ["company-address", "address"],
     ["company-email", "contactEmail"],
     ["company-footer", "footerText"],
@@ -143,7 +210,7 @@ export function renderListing({
     categories.map((c) => c.name),
     currentCategory?.name || params.category,
     "Tất cả danh mục",
-  )}</select></div><div class="filter-group"><h3>Thương hiệu</h3><select data-select-filter="brand" aria-label="Lọc thương hiệu">${options(listingData.facets.brands, params.brand, "Tất cả thương hiệu")}</select></div><div class="filter-group"><h3>Độ tuổi</h3><select data-select-filter="age" aria-label="Lọc độ tuổi">${options(listingData.facets.ages, params.age, "Tất cả độ tuổi")}</select></div><form id="price-filter" class="filter-group"><h3>Khoảng giá (đ)</h3><div class="filter-price"><input type="number" name="min" aria-label="Giá từ" min="0" max="100000000" placeholder="Từ" value="${escape(params.min || "")}"><input type="number" name="max" aria-label="Giá đến" min="0" max="100000000" placeholder="Đến" value="${escape(params.max || "")}"></div><button class="secondary">Áp dụng</button></form><div class="filter-group"><a href="/san-pham" data-link class="clear-filters">Xóa tất cả bộ lọc</a></div></aside>
+  )}</select></div><div class="filter-group"><h3>Thương hiệu</h3><select id="catalog-brands" data-select-filter="brand" aria-label="Lọc thương hiệu">${options(listingData.facets.brands, params.brand, "Tất cả thương hiệu")}</select></div><div class="filter-group"><h3>Độ tuổi</h3><select data-select-filter="age" aria-label="Lọc độ tuổi">${options(listingData.facets.ages, params.age, "Tất cả độ tuổi")}</select></div><form id="price-filter" class="filter-group"><h3>Khoảng giá (đ)</h3><div class="filter-price"><input type="number" name="min" aria-label="Giá từ" min="0" max="100000000" placeholder="Từ" value="${escape(params.min || "")}"><input type="number" name="max" aria-label="Giá đến" min="0" max="100000000" placeholder="Đến" value="${escape(params.max || "")}"></div><button class="secondary">Áp dụng</button></form><div class="filter-group"><a href="/san-pham" data-link class="clear-filters">Xóa tất cả bộ lọc</a></div></aside>
   <section class="catalog-content"><div class="catalog-toolbar"><span><b>${total}</b> sản phẩm</span><button class="secondary filter-toggle" id="filter-toggle" aria-expanded="${filterOpen}">☷ Bộ lọc</button><label>Sắp xếp: <select id="sort" aria-label="Sắp xếp sản phẩm">${[
     ["", "Đề xuất cho bạn"],
     ["price-asc", "Giá thấp đến cao"],

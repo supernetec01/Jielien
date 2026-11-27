@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="/style.css" />
     <link rel="stylesheet" href="/storefront.css" />
     <link rel="stylesheet" href="/language.css">
+    <link rel="stylesheet" href="/homepage.css">
     <script type="module" src="/sentry-browser.js"></script>
   </head>
   <body class="storefront-v3">
@@ -25,79 +26,84 @@
         ><span id="company-phone" hidden></span>
       </div>
     </div>
-    <header class="head site-header">
-      <div class="container head-content">
-        <button
-          id="mobile-menu"
-          class="mobile-menu-toggle"
-          aria-label="Mở danh mục"
-          aria-controls="category-dropdown"
-          aria-expanded="false"
-        >
-          <span data-v3-icon="menu"></span></button
-        ><a class="brand" href="/" data-link aria-label="Jielien trang chủ"
-          ><img
-            src="/assets/jielien-logo.jpg"
-            alt="Jielien International"
-            width="154"
-            height="93"
-        /></a>
-        <form class="searchbox" id="search-form" role="search">
-          <label class="sr-only" for="search">Tìm kiếm sản phẩm</label
-          ><input
-            id="search"
-            type="search"
-            placeholder="Tìm sản phẩm, thương hiệu, danh mục…"
-            autocomplete="off"
-            maxlength="120"
-          /><button aria-label="Tìm kiếm">
-            <span data-v3-icon="search"></span>
-          </button>
-          <div id="suggestions" hidden></div>
-        </form>
-        <div class="head-actions">
-          <a class="head-action" href="/tai-khoan"
-            ><span data-v3-icon="user"></span
-            ><span
-              ><small>Chào mừng bạn</small
-              ><strong id="account-label">Tài khoản</strong></span
-            ></a
-          ><a
-            class="head-action"
-            href="/yeu-thich"
-            data-link
-            aria-label="Sản phẩm yêu thích"
-            ><span data-v3-icon="heart"></span
-            ><span><small>Danh sách</small><strong>Yêu thích</strong></span></a
-          ><a
-            class="head-action"
-            href="/gio-hang"
-            data-link
-            aria-label="Giỏ hàng"
-            ><span class="bag-icon"
-              ><span data-v3-icon="bag"></span
-              ><b class="count-bubble" id="cart-count">0</b></span
-            ><span
-              ><small>Đơn mua của bạn</small><strong>Giỏ hàng</strong></span
-            ></a
+    <div class="public-chrome">
+      <header class="head site-header">
+        <div class="container head-content">
+          <button
+            id="mobile-menu"
+            class="mobile-menu-toggle"
+            aria-label="Mở danh mục"
+            aria-controls="category-dropdown"
+            aria-expanded="false"
           >
+            <span data-v3-icon="menu"></span></button
+          ><a class="brand" href="/" data-link aria-label="Jielien trang chủ"
+            ><img
+              src="/assets/jielien-logo.jpg"
+              alt="Jielien International"
+              width="154"
+              height="93"
+          /></a>
+          <form class="searchbox" id="search-form" role="search" action="/san-pham" method="get">
+            <label class="sr-only" for="search">Tìm kiếm sản phẩm</label
+            ><input
+              id="search" name="q"
+              type="search"
+              placeholder="Tìm sản phẩm"
+              autocomplete="off"
+              maxlength="120"
+            /><button aria-label="Tìm kiếm">
+              <span data-v3-icon="search"></span>
+            </button>
+            <div id="suggestions" hidden></div>
+          </form>
+          <div class="head-actions">
+            <a class="head-action" href="/tai-khoan" aria-label="Tài khoản"
+              ><span data-v3-icon="user"></span
+              ><span
+                ><small>Chào mừng bạn</small
+                ><strong id="account-label">Tài khoản</strong></span
+              ></a
+            ><a
+              class="head-action"
+              href="/yeu-thich"
+              data-link
+              aria-label="Sản phẩm yêu thích"
+              ><span data-v3-icon="heart"></span
+              ><span><small>Danh sách</small><strong>Yêu thích</strong></span></a
+            ><a
+              class="head-action"
+              href="/gio-hang"
+              data-link
+              aria-label="Giỏ hàng"
+              ><span class="bag-icon"
+                ><span data-v3-icon="bag"></span
+                ><b class="count-bubble" id="cart-count">0</b></span
+              ><span
+                ><small>Đơn mua của bạn</small><strong>Giỏ hàng</strong></span
+              ></a
+            >
+          </div>
         </div>
-      </div>
-    </header>
-    <nav class="nav" aria-label="Điều hướng chính">
-      <div class="container nav-content">
-        <button
-          class="all-cats"
-          id="category-menu"
-          aria-controls="category-dropdown"
-          aria-expanded="false"
-        >
-          <span data-v3-icon="grid"></span> Khám phá danh mục</button
-        ><a class="navlink" href="/" data-link>Trang chủ</a>
-        <div id="dynamic-nav" class="dynamic-nav"></div>
-        <a class="navlink" href="/tin-tuc">Góc cảm hứng</a>
-      </div>
-    </nav>
+      </header>
+      <nav class="nav" aria-label="Điều hướng chính">
+        <div class="container nav-content">
+          <button
+            class="all-cats"
+            id="category-menu"
+            aria-controls="category-dropdown"
+            aria-expanded="false"
+          >
+            <span data-v3-icon="grid"></span> Khám phá danh mục</button
+          ><a class="navlink" href="/" data-link>Trang chủ</a>
+          <div id="dynamic-nav" class="dynamic-nav"></div>
+          <a class="navlink home-nav-link" href="/san-pham" data-link>Sản phẩm</a>
+          <a class="navlink home-nav-link" href="/san-pham#catalog-brands">Thương hiệu</a>
+          <a class="navlink" href="/tin-tuc">Góc cảm hứng</a>
+          <a class="navlink home-nav-link" href="#jielien-contact">Liên hệ</a>
+        </div>
+      </nav>
+    </div>
     <div id="menu-backdrop" hidden></div>
     <nav
       id="category-dropdown"
@@ -125,12 +131,15 @@
             <p id="company-contact"></p>
           </div>
           <div>
-            <h3>KHÁM PHÁ</h3>
+            <h2>Khám phá</h2>
             <a href="/san-pham" data-link>Tất cả sản phẩm</a>
+            <a href="/chinh-sach/gioi-thieu" data-link>Giới thiệu Jielien</a>
             <div id="footer-categories"></div>
           </div>
           <div>
-            <h3>HỖ TRỢ KHÁCH HÀNG</h3>
+            <h2>Hỗ trợ</h2>
+            <a href="/chinh-sach/doi-tra" data-link>Chính sách đổi trả</a>
+            <a href="/chinh-sach/giao-hang" data-link>Chính sách vận chuyển</a>
             <a href="/tai-khoan">Tài khoản của tôi</a
             ><a href="/gio-hang" data-link>Giỏ hàng</a
             ><a href="/tra-cuu-don-hang" data-link>Tra cứu đơn hàng</a
@@ -138,12 +147,12 @@
             ><a href="/chinh-sach/bao-mat" data-link>Thông tin cá nhân</a>
           </div>
           <div>
-            <h3>VỀ JIELIEN</h3>
+            <h2 id="jielien-contact">Liên hệ</h2>
             <p id="company-legal" hidden></p>
             <p id="company-registration" hidden></p>
             <p id="company-address" hidden></p>
             <p id="company-email" hidden></p>
-            <a href="/chinh-sach/gioi-thieu" data-link>Giới thiệu</a>
+            <p id="footer-phone" hidden></p>
           </div>
         </div>
         <div class="footer-bottom">

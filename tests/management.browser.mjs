@@ -1,3 +1,4 @@
+import { clickAccountNav } from "./support/account-navigation.mjs";
 import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
@@ -41,14 +42,14 @@ try {
   await page.locator("#email").fill("buyer@example.test");
   await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
-  await page.locator('[data-view="addresses"]').waitFor();
+  await page.locator('[data-view="addresses"]').waitFor({ state: "attached" });
   const cookies = await customerContext.cookies();
   assert.equal(
     cookies.find((c) => c.name === "jielien_session").httpOnly,
     true,
   );
   pass("customer registration via responsive form creates HttpOnly session");
-  await page.locator('[data-view="addresses"]').click();
+  await clickAccountNav(page, '[data-view="addresses"]');
   await page.locator("#recipientName").fill("Mẹ kiểm thử");
   await page.locator("#addressProvince").fill("TP Hồ Chí Minh");
   await page.locator("#addressDistrict").fill("Phường Bến Nghé");
@@ -92,8 +93,9 @@ try {
   assert.equal(await page.locator("#cart-count").textContent(), "0");
   pass("authenticated checkout uses saved address and attaches order to user");
   await page.goto(base + "/tai-khoan");
-  await page.locator('[data-view="orders"]').click();
+  await clickAccountNav(page, '[data-view="orders"]');
   await page.locator("[data-order]").first().waitFor();
+  assert.deepEqual(await page.locator(".account-order-stat strong").allTextContents(), ["1", "0", "0", "0"]);
   assert.ok(
     (await page.locator("#account-content").textContent()).includes(
       orderNumber,
@@ -224,7 +226,7 @@ try {
     );
   }
   await page.goto(base + "/tai-khoan");
-  await page.locator("#logout").click();
+  await clickAccountNav(page, "#logout");
   await page.locator("#identifier").waitFor();
   assert.equal(
     (await customerContext.cookies()).some((c) => c.name === "jielien_session"),

@@ -11,6 +11,8 @@ import { readFile, realpath } from "node:fs/promises";
 import { dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
+import { gzip } from "node:zlib";
 import { createPool } from "./lib/database.mjs";
 import { createStore } from "./db/store.mjs";
 import { createAuth } from "./lib/auth.mjs";
@@ -24,6 +26,18 @@ import QRCode from "qrcode";
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 const publicRoot = resolve(projectRoot, "public");
 const maxBodyBytes = 32 * 1024;
+const gzipStatic = promisify(gzip);
+const compressibleStaticTypes = new Set([".css", ".js"]);
+
+function acceptsGzip(header = "") {
+  return header.split(",").some((entry) => {
+    const [encoding, quality] = entry.trim().toLowerCase().split(/\s*;\s*/);
+    return encoding === "gzip" && (quality === undefined || (
+      /^q=(?:0(?:\.\d{0,3})?|1(?:\.0{0,3})?)$/.test(quality) &&
+      Number(quality.slice(2)) > 0
+    ));
+  });
+}
 const mime = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -741,16 +755,20 @@ export async function createApp({
       }
       if (!actual.startsWith(publicRoot + sep))
         fail(403, "forbidden", "Không thể truy cập đường dẫn này.");
-      const content = await readFile(actual);
+      const extension = extname(actual);
+      const varyEncoding = compressibleStaticTypes.has(extension);
+      const compressed = varyEncoding && acceptsGzip(req.headers["accept-encoding"]);
+      const content = req.method === "HEAD" ? undefined : await readFile(actual);
+      const body = compressed && content ? await gzipStatic(content) : content;
       res.writeHead(200, {
-        "Content-Type": mime[extname(actual)],
-        "Cache-Control": [".html", ".js", ".css", ".json"].includes(
-          extname(actual),
-        )
+        "Content-Type": mime[extension],
+        "Cache-Control": [".html", ".js", ".css", ".json"].includes(extension)
           ? "no-cache"
           : "public, max-age=3600",
+        ...(varyEncoding ? { Vary: "Accept-Encoding" } : {}),
+        ...(compressed ? { "Content-Encoding": "gzip" } : {}),
       });
-      res.end(req.method === "HEAD" ? undefined : content);
+      res.end(body);
     } catch (error) {
       if (res.headersSent) {
         res.end();

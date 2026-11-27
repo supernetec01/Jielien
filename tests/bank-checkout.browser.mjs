@@ -1,3 +1,4 @@
+import { clickAccountNav } from "./support/account-navigation.mjs";
 import { openAdminView } from "./support/admin-navigation.mjs";
 import assert from "node:assert/strict";
 import { once } from "node:events";
@@ -100,7 +101,7 @@ async function register(page, base, identity) {
   await page.locator("#email").fill(identity.email);
   await page.locator("#password").fill(password);
   await page.locator("#auth-submit").click();
-  await page.locator('[data-view="orders"]').waitFor();
+  await page.locator('[data-view="orders"]').waitFor({ state: "attached" });
 }
 
 async function checkout(page, base) {
@@ -338,7 +339,7 @@ try {
     /đã (?:nhận|ghi nhận).*?(?:tiền|chuyển khoản)|đã thanh toán/i,
   );
   await page.goto(enabled.base + "/tai-khoan");
-  await page.locator('[data-view="orders"]').click();
+  await clickAccountNav(page, '[data-view="orders"]');
   await page.locator(`[data-order="${order.id}"]`).click();
   await page.waitForFunction(() => {
     const text =
