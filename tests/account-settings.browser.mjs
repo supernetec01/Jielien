@@ -222,13 +222,38 @@ try {
   pass("password change returns to login and revokes sessions on both devices");
 
   await page.locator("#identifier").fill("updated@example.test");
-  await page.locator("#password").fill(password);
-  await page.locator("#auth-submit").click();
+  const passwordInput = page.locator("#password");
+  const passwordToggle = page.getByRole("button", { name: "Hiển thị mật khẩu" });
+  await passwordInput.fill(password);
+  await passwordInput.press("Tab");
+  assert.equal(await passwordToggle.evaluate((button) => button === document.activeElement), true);
+  await passwordToggle.press("Space");
+  assert.equal(await passwordToggle.getAttribute("aria-pressed"), "true");
+  assert.equal(await passwordInput.getAttribute("type"), "text");
+  await passwordToggle.press("Space");
+  assert.equal(await passwordInput.getAttribute("type"), "password");
+
+  let releaseLogin;
+  const holdLogin = new Promise((resolve) => { releaseLogin = resolve; });
+  await page.route("**/api/auth/login", async (route) => {
+    await holdLogin;
+    await route.continue();
+  }, { times: 1 });
+  const submit = page.locator("#auth-submit");
+  try {
+    await submit.click();
+    assert.equal(await submit.isDisabled(), true);
+    assert.equal(await submit.getAttribute("aria-busy"), "true");
+  } finally {
+    releaseLogin();
+  }
   await page.waitForFunction(() =>
     Boolean(document.querySelector("#auth-error")?.textContent),
   );
-  await page.locator("#password").fill(newPassword);
-  await page.locator("#auth-submit").click();
+  assert.equal(await submit.isEnabled(), true);
+  await passwordInput.fill(newPassword);
+  assert.equal(await page.locator("#auth-error").textContent(), "");
+  await submit.click();
   await page.locator("#profile-form").waitFor();
   assert.equal(
     await page.locator("#profile-name").inputValue(),
@@ -242,7 +267,7 @@ try {
     true,
   );
   pass(
-    "new email and new password sign in successfully; mobile layout has no overflow or script errors",
+    "keyboard password visibility, pending and failed login states, successful retry and no mobile overflow",
   );
 
   let injectedCartFailure = false;

@@ -1,3 +1,5 @@
+// Lucian UX/UI Prompt #403 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#403
+// Lucian UX/UI Prompt #062 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#062
 import { icon } from "/ui-icons.js";
 import { resolveAdminRoute } from "/admin-nav.js";
 import { logoutSession } from "/auth-session.js";
@@ -111,7 +113,52 @@ function safeRedirect() {
     : null;
 }
 function authMarkup() {
-  return `<section class="auth-layout"><div class="auth-intro"><span class="eyebrow">JIELIEN INTERNATIONAL</span><h1>Tài khoản Jielien</h1><p>Đăng nhập để theo dõi đơn hàng và quản lý thông tin nhận hàng.</p></div><div class="auth-form-panel"><div class="tabs" role="tablist" aria-label="Đăng nhập hoặc đăng ký"><button class="${authMode === "login" ? "active" : ""}" id="auth-login-tab" data-auth-mode="login" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "login"}" tabindex="${authMode === "login" ? 0 : -1}">Đăng nhập</button><button class="${authMode === "register" ? "active" : ""}" id="auth-register-tab" data-auth-mode="register" role="tab" aria-controls="auth-panel" aria-selected="${authMode === "register"}" tabindex="${authMode === "register" ? 0 : -1}">Tạo tài khoản</button></div><div id="auth-panel" role="tabpanel" aria-labelledby="auth-${authMode}-tab"><form id="auth-form">${authMode === "register" ? '<div class="field"><label for="fullName">Họ và tên <span class="required">*</span></label><input id="fullName" name="fullName" autocomplete="name" required minlength="2" maxlength="100" placeholder="Họ tên của bạn"></div><div class="field"><label for="phone">Số điện thoại <span class="required">*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder="09xxxxxxxx"></div><div class="field"><label for="email">Email (không bắt buộc)</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" placeholder="Email của bạn"><small>Dùng email bạn kiểm soát để nhận liên kết khôi phục mật khẩu.</small></div>' : '<div class="field"><label for="identifier">Tên đăng nhập, số điện thoại hoặc email</label><input id="identifier" name="identifier" autocomplete="username" required maxlength="200" placeholder="Tên đăng nhập / số điện thoại / email"></div>'}<div class="field"><label for="password">Mật khẩu <span class="required">*</span></label><input id="password" name="password" type="password" autocomplete="${authMode === "register" ? "new-password" : "current-password"}" required minlength="${authMode === "register" ? 10 : 1}" maxlength="72" placeholder="${authMode === "register" ? "Tối thiểu 10 ký tự" : "Mật khẩu của bạn"}">${authMode === "register" ? "<small>Tối thiểu 10 ký tự, tối đa 72 byte UTF-8; chữ có dấu có thể chiếm nhiều byte.</small>" : ""}</div><label class="check-label"><input type="checkbox" id="show-password"> Hiển thị mật khẩu</label><div id="auth-error" class="form-error" role="alert"></div><button class="primary" id="auth-submit">${authMode === "register" ? "Tạo tài khoản" : "Đăng nhập"}</button></form>${authMode==='login'?'<button type="button" class="secondary" id="forgot-password">Quên mật khẩu?</button>':''}<p class="form-note">${authMode === "register" ? "Khi đăng ký, bạn đồng ý với " : "Thông tin tài khoản được bảo vệ theo "}<a href="/chinh-sach/bao-mat">chính sách thông tin cá nhân</a>. Không dùng mật khẩu của dịch vụ khác cho tài khoản thử nghiệm.</p></div></div></section>`;
+  const register = authMode === "register";
+  const title = register ? "Tạo tài khoản" : "Đăng nhập";
+  return `<section class="ux u062 u403" aria-labelledby="auth-title">
+    <div class="u062-pane">
+      <span class="u062-logo" aria-hidden="true">${icon("user", { size: 22 })}</span>
+      <h1 id="auth-title">${title}</h1>
+      <p>${register ? "Tạo tài khoản để theo dõi đơn hàng và quản lý thông tin nhận hàng." : "Đăng nhập để theo dõi đơn hàng và quản lý thông tin nhận hàng."}</p>
+      <div class="tabs auth-tabs" role="tablist" aria-label="Đăng nhập hoặc đăng ký">
+        <button type="button" class="${register ? "" : "active"}" id="auth-login-tab" data-auth-mode="login" role="tab" aria-controls="auth-panel" aria-selected="${!register}" tabindex="${register ? -1 : 0}">Đăng nhập</button>
+        <button type="button" class="${register ? "active" : ""}" id="auth-register-tab" data-auth-mode="register" role="tab" aria-controls="auth-panel" aria-selected="${register}" tabindex="${register ? 0 : -1}">Tạo tài khoản</button>
+      </div>
+      <div id="auth-panel" role="tabpanel" aria-labelledby="auth-${authMode}-tab">
+        <form id="auth-form" class="u403-form">
+          ${register ? `<div class="u403-f">
+            <input class="u403-in" id="fullName" name="fullName" autocomplete="name" required minlength="2" maxlength="100" placeholder=" ">
+            <label for="fullName">Họ và tên</label>
+          </div>
+          <div class="u403-f">
+            <input class="u403-in" id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:0|\\+84)[35789][0-9]{8}" maxlength="12" placeholder=" ">
+            <label for="phone">Số điện thoại</label>
+          </div>
+          <div class="u403-f">
+            <input class="u403-in" id="email" name="email" type="email" autocomplete="email" maxlength="200" aria-describedby="auth-email-hint" placeholder=" ">
+            <label for="email">Email (không bắt buộc)</label>
+          </div>
+          <p class="auth-hint" id="auth-email-hint">Dùng email bạn kiểm soát để nhận liên kết khôi phục mật khẩu.</p>` : `<div class="u403-f">
+            <input class="u403-in" id="identifier" name="identifier" autocomplete="username" required maxlength="200" aria-describedby="auth-identifier-hint" placeholder=" " spellcheck="false" autocapitalize="none">
+            <label for="identifier">Tài khoản</label>
+          </div>
+          <p class="auth-hint" id="auth-identifier-hint">Tên đăng nhập, số điện thoại hoặc email</p>`}
+          <div class="u403-f u403-pw">
+            <input class="u403-in" id="password" name="password" type="password" autocomplete="${register ? "new-password" : "current-password"}" required minlength="${register ? 10 : 1}" maxlength="72" ${register ? 'aria-describedby="auth-password-hint"' : ""} placeholder=" ">
+            <label for="password">Mật khẩu</label>
+            <button type="button" id="show-password" class="u403-eye" aria-controls="password" aria-label="Hiển thị mật khẩu" aria-pressed="false">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><g class="lid"><path d="M2 10s3-5.2 8-5.2S18 10 18 10s-3 5.2-8 5.2S2 10 2 10z"/><circle cx="10" cy="10" r="2.4"/></g><g class="lash"><path d="M3 10.4c2 2.4 4.4 3.4 7 3.4s5-1 7-3.4M6 13l-1 1.6M10 14v1.8M14 13l1 1.6"/></g></svg>
+            </button>
+          </div>
+          ${register ? '<p class="auth-hint" id="auth-password-hint">Tối thiểu 10 ký tự, tối đa 72 byte UTF-8; chữ có dấu có thể chiếm nhiều byte.</p>' : '<div class="u062-row"><button type="button" id="forgot-password">Quên mật khẩu?</button></div>'}
+          <p id="auth-error" class="u403-msg" role="alert"></p>
+          <button type="submit" id="auth-submit" class="u403-go"><span>${title}</span><i aria-hidden="true"></i></button>
+          <p class="u403-live" role="status"></p>
+        </form>
+        <p class="form-note">${register ? "Khi đăng ký, bạn đồng ý với " : "Thông tin tài khoản được bảo vệ theo "}<a href="/chinh-sach/bao-mat">chính sách thông tin cá nhân</a>.</p>
+      </div>
+    </div>
+  </section>`;
 }
 function renderAuth(focus = false) {
   root.innerHTML = authMarkup();
@@ -251,8 +298,10 @@ async function renderView(view, focus = true) {
 async function submitAuth(form) {
   if (authBusy || !form.reportValidity()) return;
   const data = Object.fromEntries(new FormData(form));
-  const errorBox = $("#auth-error");
+  const errorBox = $("#auth-error", form);
+  const status = $(".u403-live", form);
   errorBox.textContent = "";
+  form.classList.remove("is-invalid");
   if (
     authMode === "register" &&
     new TextEncoder().encode(data.password).byteLength > 72
@@ -262,9 +311,10 @@ async function submitAuth(form) {
     return;
   }
   authBusy = true;
-  const button = $("#auth-submit");
+  const button = $("#auth-submit", form);
   button.disabled = true;
-  button.textContent = "Đang xử lý…";
+  button.setAttribute("aria-busy", "true");
+  status.textContent = "Đang xử lý…";
   try {
     const result = await api("/api/auth/" + authMode, {
       method: "POST",
@@ -272,13 +322,16 @@ async function submitAuth(form) {
     });
     await completeAuth(result);
   } catch (error) {
-    if ($("#auth-error")) $("#auth-error").textContent = error.message;
+    if (form.isConnected) {
+      errorBox.textContent = error.message;
+      if (authMode === "login" && error.status === 401) form.classList.add("is-invalid");
+    }
   } finally {
     authBusy = false;
     if (button.isConnected) {
       button.disabled = false;
-      button.textContent =
-        authMode === "register" ? "Tạo tài khoản" : "Đăng nhập";
+      button.removeAttribute("aria-busy");
+      status.textContent = "";
     }
   }
 }
@@ -445,6 +498,13 @@ root.addEventListener("click", async (event) => {
   }
 });
 root.addEventListener("click", async (event) => {
+  const toggle = event.target.closest("#show-password");
+  if (toggle) {
+    const show = toggle.getAttribute("aria-pressed") !== "true";
+    toggle.setAttribute("aria-pressed", String(show));
+    toggle.form.elements.password.type = show ? "text" : "password";
+    return;
+  }
   const authTab = event.target.closest("[data-auth-mode]");
   if (authTab && !authBusy) {
     authMode = authTab.dataset.authMode;
@@ -482,9 +542,12 @@ root.addEventListener("click", async (event) => {
     } });
   }
 });
-root.addEventListener("change", (event) => {
-  if (event.target.id === "show-password")
-    $("#password").type = event.target.checked ? "text" : "password";
+root.addEventListener("input", (event) => {
+  const form = event.target.closest("#auth-form.is-invalid");
+  if (form) {
+    form.classList.remove("is-invalid");
+    $("#auth-error", form).textContent = "";
+  }
 });
 root.addEventListener("keydown", (event) => {
   const menu = $("#account-menu");

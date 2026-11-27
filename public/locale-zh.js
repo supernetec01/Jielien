@@ -34,6 +34,12 @@ Bảo mật|安全
 Không thể thay đổi|无法更改
 Cập nhật họ tên và địa chỉ email của bạn.|更新您的姓名和电子邮箱。
 Đăng nhập để theo dõi đơn hàng và quản lý thông tin nhận hàng.|登录以跟踪订单及管理收货信息。
+Tạo tài khoản để theo dõi đơn hàng và quản lý thông tin nhận hàng.|创建账户以跟踪订单及管理收货信息。
+Đăng nhập hoặc đăng ký|登录或注册
+Tên đăng nhập, số điện thoại hoặc email|用户名、手机号码或电子邮箱
+Hiển thị mật khẩu|显示密码
+Dùng email bạn kiểm soát để nhận liên kết khôi phục mật khẩu.|请使用您能访问的电子邮箱接收密码恢复链接。
+Tối thiểu 10 ký tự, tối đa 72 byte UTF-8; chữ có dấu có thể chiếm nhiều byte.|至少 10 个字符，最多 72 个 UTF-8 字节。带重音符号的字母可能占多个字节。
 Thông báo trong tài khoản chưa khả dụng. Bạn có thể xem trạng thái mua hàng trong mục Đơn hàng.|账户通知暂不可用。您可以在订单中查看购物状态。
 Tổng quan đơn hàng|订单概览
 Tổng quan theo lịch sử hiển thị của tài khoản.|根据账户显示的订单历史汇总。
