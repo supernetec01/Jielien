@@ -113,3 +113,26 @@ Các cặp chữ và nền mới đều trên 4,5:1. Các dòng viền ghi riên
 ### Việc cần kiểm tra với catalog thật
 
 Đo URL của ảnh chính đang chọn trên thiết bị DPR 2. Nếu file nhỏ hơn gấp đôi vùng vẽ, hãy tải lại ảnh gốc đủ pixel và đặt làm ảnh chính của đúng SKU. Ảnh vuông hiển thị tối đa 640 px cần khoảng 1280 × 1280 pixel ở DPR 2. Nếu ảnh gốc đủ lớn nhưng file sau upload vẫn thiếu độ nét, so sánh ảnh trước và sau upload để đánh giá riêng giới hạn 1800 px và WebP quality 85.
+
+## Cập nhật bố cục danh sách và chi tiết
+
+Danh sách ưu tiên ảnh, tên, giá và một nhãn hoặc thao tác mua trên mỗi thẻ. Trang chi tiết đặt ảnh thu nhỏ bên trái trên desktop và dưới ảnh chính trên điện thoại. Một ảnh hoặc một SKU không cần bộ chọn riêng. Thông tin mua gồm giá, mã SKU, số lượng, trạng thái hàng và hai nút. Mô tả, thông số và lưu ý vẫn có ở phần dưới.
+
+Ứng dụng đo kích thước nội tại của ảnh raster sau khi tải và giới hạn phần hiển thị theo DPR của màn hình. Chromium đo ảnh fixture WebP 360 × 405 px hiển thị ở 360 × 405 CSS px tại DPR 1 và 180 × 202,5 CSS px tại DPR 2 trên viewport rộng 1440 px. Ảnh giữ tỉ lệ trong khung vuông. Chính sách upload và tệp WebP giữ nguyên. Chưa có tệp gốc hoặc URL đang bán của sản phẩm Khăn ướt để xác nhận nguyên nhân cụ thể của ảnh đó.
+
+Các màu chữ đã kiểm tra với công thức độ chói sRGB của WCAG.
+
+| Vị trí | Chữ | Nền | Tỉ lệ |
+| --- | --- | --- | ---: |
+| Nút chính Thêm vào giỏ | `#FFFFFF` | `#0B1B34` | 17,20:1 |
+| Chip và nút hết hàng | `#4B5563` | `#E9EBEF` | 6,33:1 |
+| Nhãn Hết hàng cạnh số lượng | `#4B5563` | `#F7F8F7` | 7,10:1 |
+| Nhãn Còn hàng cạnh số lượng | `#4E7A0E` | `#F7F8F7` | 4,79:1 |
+| Mã SKU và giá cũ | `#62716D` | `#F7F8F7` | 4,81:1 |
+
+Ảnh chụp dùng dữ liệu fixture từ PostgreSQL và ảnh minh họa tải qua trình tải ảnh của ứng dụng.
+
+| Màn hình | Desktop 1440 px | Điện thoại 375 px |
+| --- | --- | --- |
+| Danh sách | [Danh sách desktop](screenshots/product-display/catalog-desktop.png) | [Danh sách điện thoại](screenshots/product-display/catalog-mobile.png) |
+| Chi tiết | [Chi tiết desktop](screenshots/product-display/detail-desktop.png) | [Chi tiết điện thoại](screenshots/product-display/detail-mobile.png) |
