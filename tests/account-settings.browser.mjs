@@ -34,6 +34,14 @@ try {
   const password = "Account-Original-2026";
   const newPassword = "Account-Replacement-2026";
   await page.goto(base + "/tai-khoan?mode=register");
+  const thumb = await page.locator(".u416-th").elementHandle();
+  const registerTab = page.locator("#auth-register-tab");
+  await registerTab.press("ArrowLeft");
+  await page.locator("#identifier").waitFor();
+  assert.equal(await page.locator("#auth-panel").getAttribute("aria-labelledby"), "auth-login-tab");
+  assert.equal(await thumb.evaluate((indicator) => indicator.isConnected), true);
+  await page.locator("#auth-login-tab").press("End");
+  assert.equal(await registerTab.getAttribute("aria-selected"), "true");
   await page.locator("#fullName").fill("Mẹ kiểm thử tài khoản");
   await page.locator("#phone").fill("0912345678");
   await page.locator("#email").fill("account@example.test");
@@ -253,8 +261,21 @@ try {
   assert.equal(await submit.isEnabled(), true);
   await passwordInput.fill(newPassword);
   assert.equal(await page.locator("#auth-error").textContent(), "");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.evaluate(() => {
+    window.sawAuthSuccess = false;
+    const button = document.querySelector("#auth-submit");
+    const observer = new MutationObserver(() => {
+      if (button.classList.contains("is-ok")) {
+        window.sawAuthSuccess = true;
+        observer.disconnect();
+      }
+    });
+    observer.observe(button, { attributes: true, attributeFilter: ["class"] });
+  });
   await submit.click();
   await page.locator("#profile-form").waitFor();
+  assert.equal(await page.evaluate(() => window.sawAuthSuccess), true);
   assert.equal(
     await page.locator("#profile-name").inputValue(),
     "Mẹ đã cập nhật",
